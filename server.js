@@ -2536,6 +2536,559 @@ app.get(
 );
 
 /* =========================================================
+   PDF DA COMPRA
+========================================================= */
+
+app.get(
+  "/api/purchases/:id/pdf",
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const purchaseId = integer(req.params.id);
+
+    const purchaseResult = await pool.query(
+      `
+      SELECT
+        p.*,
+        s.name AS supplier_name,
+        s.phone AS supplier_phone,
+        s.whatsapp AS supplier_whatsapp,
+        s.document AS supplier_document,
+        s.address AS supplier_address
+      FROM purchases p
+      LEFT JOIN suppliers s
+        ON s.id = p.supplier_id
+      WHERE p.id = $1
+      `,
+      [purchaseId]
+    );
+
+    if (!purchaseResult.rows.length) {
+      return res.status(404).json({
+        error: "Compra não encontrada.",
+      });
+    }
+
+    const purchase = purchaseResult.rows[0];
+
+    const itemsResult = await pool.query(
+      `
+      SELECT
+        pi.*,
+        pr.name AS product_name,
+        pr.code AS product_code,
+        pr.brand AS product_brand,
+        pr.size AS product_size
+      FROM purchase_items pi
+      JOIN products pr
+        ON pr.id = pi.product_id
+      WHERE pi.purchase_id = $1
+      ORDER BY pi.id
+      `,
+      [purchaseId]
+    );
+
+    const installmentsResult = await pool.query(
+      `
+      SELECT *
+      FROM purchase_installments
+      WHERE purchase_id = $1
+      ORDER BY installment_no
+      `,
+      [purchaseId]
+    );
+
+    const paymentsResult = await pool.query(
+      `
+      SELECT *
+      FROM purchase_payments
+      WHERE purchase_id = $1
+      ORDER BY paid_at ASC, id ASC
+      `,
+      [purchaseId]
+    );
+
+    const doc = new PDFDocument({
+      size: "A4",
+      margin: 45,
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/pdf"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="compra-${purchaseId}.pdf"`
+    );
+
+    doc.pipe(res);
+
+    const pageWidth =
+      doc.page.width -
+      doc.page.margins.left -
+      doc.page.margins.right;
+
+    function brl(value) {
+      return Number(value || 0).toLocaleString(
+        "pt-BR",
+        {
+          style: "currency",
+          currency: "BRL",
+        }
+      );
+    }
+
+    function dateBR(value) {
+      if (!value) return "";
+
+      const text = String(value).slice(0, 10);
+      const parts = text.split("-");
+
+      if (parts.length !== 3) {
+        return text;
+      }
+
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    function line() {
+      doc
+        .moveTo(
+          doc.page.margins.left,
+          doc.y
+        )
+        .lineTo(
+          doc.page.width -
+            doc.page.margins.right,
+          doc.y
+        )
+        .stroke();
+    }
+
+    /* =====================================================
+       CABEÇALHO
+    ===================================================== */
+
+    doc
+      .fontSize(20)
+      .font("Helvetica-Bold")
+      .text(
+        "ESSÊNCIA & CHARME",
+        {
+          align: "center",
+        }
+      );
+
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .text(
+        "Perfumes, moda e charme para você.",
+        {
+          align: "center",
+        }
+      );
+
+    doc.moveDown(1);
+
+    doc
+      .fontSize(15)
+      .font("Helvetica-Bold")
+      .text(
+        `COMPRA #${purchase.id}`,
+        {
+          align: "center",
+        }
+      );
+
+    doc.moveDown(0.5);
+
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .text(
+        `Data: ${dateBR(purchase.date)}`
+      )
+      .text(
+        `Status: ${purchase.status || ""}`
+      );
+
+    doc.moveDown(0.7);
+
+    line();
+
+    doc.moveDown(0.7);
+
+    /* =====================================================
+       FORNECEDOR
+    ===================================================== */
+
+    doc
+      .fontSize(12)
+      .font("Helvetica-Bold")
+      .text("FORNECEDOR");
+
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .text(
+        `Nome: ${
+          purchase.supplier_name ||
+          "Não informado"
+        }`
+      );
+
+    if (purchase.supplier_phone) {
+      doc.text(
+        `Telefone: ${purchase.supplier_phone}`
+      );
+    }
+
+    if (purchase.supplier_whatsapp) {
+      doc.text(
+        `WhatsApp: ${purchase.supplier_whatsapp}`
+      );
+    }
+
+    if (purchase.supplier_document) {
+      doc.text(
+        `Documento: ${purchase.supplier_document}`
+      );
+    }
+
+    if (purchase.supplier_address) {
+      doc.text(
+        `Endereço: ${purchase.supplier_address}`
+      );
+    }
+
+    doc.moveDown(0.8);
+
+    line();
+
+    doc.moveDown(0.7);
+
+    /* =====================================================
+       ITENS DA COMPRA
+    ===================================================== */
+
+    doc
+      .fontSize(12)
+      .font("Helvetica-Bold")
+      .text("ITENS DA COMPRA");
+
+    doc.moveDown(0.4);
+
+    const x = doc.page.margins.left;
+
+    const itemWidth = pageWidth * 0.47;
+
+    const qtyX =
+      x + pageWidth * 0.49;
+
+    const unitX =
+      x + pageWidth * 0.62;
+
+    const totalX =
+      x + pageWidth * 0.79;
+
+    doc
+      .fontSize(9)
+      .font("Helvetica-Bold");
+
+    doc.text(
+      "Produto",
+      x,
+      doc.y,
+      {
+        width: itemWidth,
+      }
+    );
+
+    doc.text(
+      "Qtd.",
+      qtyX,
+      doc.y,
+      {
+        width: 45,
+      }
+    );
+
+    doc.text(
+      "Custo",
+      unitX,
+      doc.y,
+      {
+        width: 70,
+      }
+    );
+
+    doc.text(
+      "Total",
+      totalX,
+      doc.y,
+      {
+        width: 80,
+      }
+    );
+
+    doc.moveDown(0.5);
+
+    let calculatedTotal = 0;
+
+    for (const item of itemsResult.rows) {
+      const startY = doc.y;
+
+      const productName =
+        item.product_name || "";
+
+      const description = [
+        item.product_brand,
+        item.product_size,
+      ]
+        .filter(Boolean)
+        .join(" - ");
+
+      const fullName = description
+        ? `${productName} (${description})`
+        : productName;
+
+      const quantity =
+        integer(item.quantity);
+
+      const unitCost =
+        money(item.cost);
+
+      const itemTotal =
+        money(unitCost * quantity);
+
+      calculatedTotal += itemTotal;
+
+      doc
+        .fontSize(9)
+        .font("Helvetica")
+        .text(
+          fullName,
+          x,
+          startY,
+          {
+            width: itemWidth,
+          }
+        );
+
+      doc.text(
+        String(quantity),
+        qtyX,
+        startY,
+        {
+          width: 45,
+        }
+      );
+
+      doc.text(
+        brl(unitCost),
+        unitX,
+        startY,
+        {
+          width: 70,
+        }
+      );
+
+      doc.text(
+        brl(itemTotal),
+        totalX,
+        startY,
+        {
+          width: 80,
+        }
+      );
+
+      doc.moveDown(0.55);
+    }
+
+    doc.moveDown(0.4);
+
+    line();
+
+    doc.moveDown(0.6);
+
+    /* =====================================================
+       RESUMO FINANCEIRO
+    ===================================================== */
+
+    doc
+      .fontSize(10)
+      .font("Helvetica");
+
+    doc.text(
+      `Total da compra: ${brl(
+        purchase.total
+      )}`,
+      {
+        align: "right",
+      }
+    );
+
+    doc.text(
+      `Entrada: ${brl(
+        purchase.entry
+      )}`,
+      {
+        align: "right",
+      }
+    );
+
+    doc.text(
+      `Total pago: ${brl(
+        purchase.paid_amount
+      )}`,
+      {
+        align: "right",
+      }
+    );
+
+    doc
+      .fontSize(13)
+      .font("Helvetica-Bold")
+      .text(
+        `Saldo a pagar: ${brl(
+          purchase.balance
+        )}`,
+        {
+          align: "right",
+        }
+      );
+
+    if (purchase.payment) {
+      doc
+        .fontSize(10)
+        .font("Helvetica")
+        .text(
+          `Forma de pagamento: ${purchase.payment}`,
+          {
+            align: "right",
+          }
+        );
+    }
+
+    /* =====================================================
+       PARCELAS
+    ===================================================== */
+
+    if (installmentsResult.rows.length) {
+      doc.moveDown(0.8);
+
+      doc
+        .fontSize(12)
+        .font("Helvetica-Bold")
+        .text("PARCELAS");
+
+      doc.moveDown(0.3);
+
+      for (
+        const installment
+        of installmentsResult.rows
+      ) {
+        doc
+          .fontSize(9)
+          .font("Helvetica")
+          .text(
+            `${installment.installment_no}ª parcela — vencimento ${dateBR(
+              installment.due_date
+            )} — valor ${brl(
+              installment.amount
+            )} — pago ${brl(
+              installment.paid_amount
+            )} — ${
+              installment.status
+            }`
+          );
+      }
+    }
+
+    /* =====================================================
+       PAGAMENTOS
+    ===================================================== */
+
+    if (paymentsResult.rows.length) {
+      doc.moveDown(0.8);
+
+      doc
+        .fontSize(12)
+        .font("Helvetica-Bold")
+        .text(
+          "PAGAMENTOS REALIZADOS"
+        );
+
+      doc.moveDown(0.3);
+
+      for (
+        const payment
+        of paymentsResult.rows
+      ) {
+        doc
+          .fontSize(9)
+          .font("Helvetica")
+          .text(
+            `${dateBR(
+              payment.paid_at
+            )} — ${brl(
+              payment.amount
+            )}${
+              payment.payment
+                ? ` — ${payment.payment}`
+                : ""
+            }${
+              payment.note
+                ? ` — ${payment.note}`
+                : ""
+            }`
+          );
+      }
+    }
+
+    /* =====================================================
+       OBSERVAÇÕES
+    ===================================================== */
+
+    if (purchase.notes) {
+      doc.moveDown(0.8);
+
+      doc
+        .fontSize(12)
+        .font("Helvetica-Bold")
+        .text("OBSERVAÇÕES");
+
+      doc
+        .fontSize(9)
+        .font("Helvetica")
+        .text(
+          purchase.notes
+        );
+    }
+
+    doc.moveDown(1);
+
+    line();
+
+    doc.moveDown(0.6);
+
+    doc
+      .fontSize(9)
+      .font("Helvetica")
+      .text(
+        "Documento de controle interno — Essência & Charme.",
+        {
+          align: "center",
+        }
+      );
+
+    doc.end();
+  })
+);
+
+/* =========================================================
    CRIAÇÃO DE COMPRA
 ========================================================= */
 
