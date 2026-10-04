@@ -66,6 +66,10 @@ a{
   text-decoration:none;
 }
 
+.hidden{
+  display:none !important;
+}
+
 /* =========================
    LOGIN
 ========================= */
@@ -97,19 +101,45 @@ a{
   margin-bottom:30px;
 }
 
+.logo-symbol{
+  width:62px;
+  height:62px;
+  margin:0 auto 16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:18px;
+  background:linear-gradient(135deg,var(--rose),var(--gold));
+  color:#fff;
+  font-family:'Playfair Display',serif;
+  font-size:34px;
+  font-weight:700;
+  box-shadow:0 8px 20px rgba(91,61,99,.18);
+}
+
 .login-logo h1{
   margin:0;
   font-family:'Playfair Display',serif;
   color:var(--purple-dark);
   font-size:34px;
+  line-height:1.15;
 }
 
 .login-logo p{
-  margin:7px 0 0;
+  margin:8px 0 0;
   color:var(--gold-dark);
   letter-spacing:.08em;
   font-size:11px;
   text-transform:uppercase;
+}
+
+.login-logo small{
+  display:block;
+  margin-top:7px;
+  color:var(--rose-dark);
+  font-family:'Playfair Display',serif;
+  font-size:12px;
+  font-style:italic;
 }
 
 .login-card h2{
@@ -202,8 +232,17 @@ a{
   white-space:nowrap;
 }
 
+.brand-author{
+  margin-top:5px;
+  color:rgba(255,255,255,.72);
+  font-family:'Playfair Display',serif;
+  font-size:10px;
+  font-style:italic;
+  line-height:1.2;
+}
+
 /* =========================
-   SIDEBAR NAVIGATION
+   NAVIGATION
 ========================= */
 
 .main-nav{
@@ -241,7 +280,11 @@ a{
 }
 
 .nav-item.active{
-  background:linear-gradient(90deg,rgba(196,127,145,.95),rgba(196,127,145,.65));
+  background:linear-gradient(
+    90deg,
+    rgba(196,127,145,.95),
+    rgba(196,127,145,.65)
+  );
   color:#fff;
   box-shadow:0 5px 15px rgba(0,0,0,.10);
 }
@@ -481,7 +524,11 @@ a{
 }
 
 .btn-primary{
-  background:linear-gradient(135deg,var(--purple),var(--purple-dark));
+  background:linear-gradient(
+    135deg,
+    var(--purple),
+    var(--purple-dark)
+  );
   color:#fff;
   box-shadow:0 5px 15px rgba(91,61,99,.18);
 }
@@ -491,7 +538,11 @@ a{
 }
 
 .btn-rose{
-  background:linear-gradient(135deg,var(--rose),var(--rose-dark));
+  background:linear-gradient(
+    135deg,
+    var(--rose),
+    var(--rose-dark)
+  );
   color:#fff;
 }
 
@@ -951,22 +1002,15 @@ tbody tr:hover{
   .nav-item{
     justify-content:center;
     padding:13px 5px;
-  }
-
-  .nav-item span:first-child{
-    margin:0;
-  }
-
-  .nav-item:not(.active){
-    gap:0;
-  }
-
-  .nav-item{
     font-size:0;
   }
 
   .nav-item span:first-child{
     font-size:16px;
+  }
+
+  .nav-section-title{
+    display:none;
   }
 
   .sidebar-footer{
@@ -1018,6 +1062,10 @@ tbody tr:hover{
 
   .login-card{
     padding:28px 22px;
+  }
+
+  .login-logo h1{
+    font-size:28px;
   }
 
   .topbar-title{
