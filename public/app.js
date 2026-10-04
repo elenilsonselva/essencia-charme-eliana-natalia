@@ -4118,6 +4118,66 @@ function newPurchase() {
 }
 
 /* =========================================================
+   FUNÇÕES GLOBAIS PARA HTML INLINE
+========================================================= */
+
+window.login = login;
+window.logout = logout;
+
+window.showPage = showPage;
+
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.closeAllModals = closeAllModals;
+
+/* PRODUTOS */
+window.newProduct = newProduct;
+window.openProductModal = openProductModal;
+window.editProduct = editProduct;
+window.deleteProduct = deleteProduct;
+window.saveProduct = saveProduct;
+
+/* CLIENTES */
+window.newClient = newClient;
+window.openClientModal = openClientModal;
+window.editClient = editClient;
+window.deleteClient = deleteClient;
+window.saveClient = saveClient;
+
+/* FORNECEDORES */
+window.newSupplier = newSupplier;
+window.openSupplierModal = openSupplierModal;
+window.editSupplier = editSupplier;
+window.deleteSupplier = deleteSupplier;
+window.saveSupplier = saveSupplier;
+
+/* VENDAS */
+window.newSale = newSale;
+window.addSaleProduct = addSaleProduct;
+window.removeSaleProduct = removeSaleProduct;
+window.changeSaleQuantity = changeSaleQuantity;
+window.calculateSaleTotals = calculateSaleTotals;
+window.saveSale = saveSale;
+window.viewSale = viewSale;
+window.openSalePayment = openSalePayment;
+window.saveSalePayment = saveSalePayment;
+
+/* ESTOQUE */
+window.openStockModal = openStockModal;
+window.saveStockMove = saveStockMove;
+
+/* COMPRAS */
+window.newPurchase = newPurchase;
+window.openPurchaseModal = openPurchaseModal;
+window.addPurchaseItem = addPurchaseItem;
+window.calculatePurchaseTotal = calculatePurchaseTotal;
+window.savePurchase = savePurchase;
+window.viewPurchase = viewPurchase;
+window.openPurchasePayment = openPurchasePayment;
+window.savePurchasePayment = savePurchasePayment;
+
+
+/* =========================================================
    INICIALIZAÇÃO
 ========================================================= */
 
@@ -4125,28 +4185,81 @@ document.addEventListener(
   "DOMContentLoaded",
   async () => {
 
-    setupEvents();
+    console.log(
+      "ESSÊNCIA & CHARME: iniciando app..."
+    );
 
-    if ($("saleDate")) {
-      $("saleDate").value =
-        today();
-    }
+    try {
 
-    if ($("purchaseDate")) {
-      $("purchaseDate").value =
-        today();
-    }
+      /*
+       * Eventos precisam ser registrados primeiro.
+       */
+      setupEvents();
 
-    const logged =
-      await checkLogin();
+      /*
+       * Datas padrão.
+       */
+      if ($("saleDate")) {
+        $("saleDate").value = today();
+      }
 
-    if (logged) {
+      if ($("purchaseDate")) {
+        $("purchaseDate").value = today();
+      }
 
+      /*
+       * Verifica sessão.
+       */
+      const logged = await checkLogin();
+
+      if (!logged) {
+        console.log(
+          "ESSÊNCIA & CHARME: usuário não autenticado."
+        );
+        return;
+      }
+
+      /*
+       * Carrega dados.
+       *
+       * loadAll() já usa Promise.allSettled(),
+       * portanto uma API que falhar não deve
+       * impedir as demais de carregar.
+       */
       await loadAll();
 
-      showPage(
-        "dashboard"
+      /*
+       * Abre o dashboard.
+       */
+      showPage("dashboard");
+
+      console.log(
+        "ESSÊNCIA & CHARME: app carregado."
       );
+
+    } catch (error) {
+
+      /*
+       * Um erro de inicialização não pode
+       * simplesmente deixar todos os botões mortos.
+       */
+      console.error(
+        "ERRO CRÍTICO NA INICIALIZAÇÃO DO APP:",
+        error
+      );
+
+      /*
+       * Tenta pelo menos manter a interface utilizável.
+       */
+      try {
+        showApp();
+        showPage("dashboard");
+      } catch (fallbackError) {
+        console.error(
+          "Erro no fallback:",
+          fallbackError
+        );
+      }
 
     }
 
