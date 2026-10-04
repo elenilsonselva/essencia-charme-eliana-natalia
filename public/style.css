@@ -126,6 +126,7 @@ a{
   min-height:100vh;
 }
 
+.app-shell,
 .app-layout{
   min-height:100vh;
   display:flex;
@@ -145,28 +146,67 @@ a{
   box-shadow:8px 0 30px rgba(63,40,68,.12);
 }
 
-.sidebar-brand{
-  padding:28px 22px 22px;
+/* =========================
+   BRAND
+========================= */
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  padding:22px 20px;
   border-bottom:1px solid rgba(255,255,255,.12);
+  flex-shrink:0;
 }
 
-.sidebar-brand h1{
-  margin:0;
+.brand-mark{
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:12px;
+  background:linear-gradient(135deg,var(--rose),var(--gold));
+  color:#fff;
   font-family:'Playfair Display',serif;
-  font-size:26px;
+  font-size:24px;
+  font-weight:700;
+  line-height:1;
+  text-align:center;
+  box-shadow:0 5px 14px rgba(0,0,0,.15);
+}
+
+.brand > div:last-child{
+  min-width:0;
+}
+
+.brand-name{
+  margin:0;
+  color:#fff;
+  font-family:'Playfair Display',serif;
+  font-size:18px;
   font-weight:600;
+  line-height:1.15;
+  white-space:nowrap;
 }
 
-.sidebar-brand span{
-  display:block;
-  margin-top:5px;
+.brand-subtitle{
+  margin:4px 0 0;
   color:#ead9bc;
-  font-size:10px;
-  letter-spacing:.1em;
+  font-size:9px;
+  letter-spacing:.08em;
   text-transform:uppercase;
+  line-height:1.2;
+  white-space:nowrap;
 }
 
-.sidebar-nav{
+/* =========================
+   SIDEBAR NAVIGATION
+========================= */
+
+.main-nav{
   flex:1;
   padding:18px 12px;
   overflow-y:auto;
@@ -206,11 +246,16 @@ a{
   box-shadow:0 5px 15px rgba(0,0,0,.10);
 }
 
-.nav-icon{
+.nav-item span:first-child{
   width:22px;
+  min-width:22px;
   text-align:center;
   font-size:16px;
 }
+
+/* =========================
+   SIDEBAR FOOTER
+========================= */
 
 .sidebar-footer{
   padding:15px;
@@ -884,25 +929,52 @@ tbody tr:hover{
     width:72px;
   }
 
-  .sidebar-brand{
-    padding:20px 8px;
-    text-align:center;
+  .brand{
+    padding:18px 8px;
+    justify-content:center;
   }
 
-  .sidebar-brand h1{
-    font-size:15px;
+  .brand-mark{
+    width:42px;
+    height:42px;
+    flex-basis:42px;
   }
 
-  .sidebar-brand span,
-  .nav-item span:not(.nav-icon),
-  .nav-section-title,
-  .user-box{
+  .brand > div:last-child{
     display:none;
+  }
+
+  .main-nav{
+    padding:18px 8px;
   }
 
   .nav-item{
     justify-content:center;
     padding:13px 5px;
+  }
+
+  .nav-item span:first-child{
+    margin:0;
+  }
+
+  .nav-item:not(.active){
+    gap:0;
+  }
+
+  .nav-item{
+    font-size:0;
+  }
+
+  .nav-item span:first-child{
+    font-size:16px;
+  }
+
+  .sidebar-footer{
+    padding:8px;
+  }
+
+  .user-box{
+    display:none;
   }
 
   .main-content{
