@@ -3,6 +3,7 @@ const path = require("path");
 const crypto = require("crypto");
 const cookieParser = require("cookie-parser");
 const PDFDocument = require("pdfkit");
+const QRCode = require("qrcode");
 const { Pool } = require("pg");
 
 const app = express();
