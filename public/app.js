@@ -10,6 +10,7 @@
 ========================================================= */
 
 let currentUser = "";
+
 let products = [];
 let clients = [];
 let suppliers = [];
@@ -18,203 +19,229 @@ let purchases = [];
 let stockMoves = [];
 
 let saleCart = [];
+
 let currentSaleId = null;
 let currentPurchaseId = null;
+
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
-const $ = (id) => document.getElementById(id);
+function $(id) {
+  return document.getElementById(id);
+}
 
 function qs(selector, parent = document) {
   return parent.querySelector(selector);
 }
 
 function qsa(selector, parent = document) {
-  return [...parent.querySelectorAll(selector)];
+  return Array.from(parent.querySelectorAll(selector));
 }
 
 function money(value) {
-  const n = Number(value || 0);
+  const numberValue = Number(value || 0);
 
-  return n.toLocaleString("pt-BR", {
+  return numberValue.toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL"
   });
 }
 
 function number(value) {
-  return Number(value || 0);
+  if (value === null || value === undefined || value === "") {
+    return 0;
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  let text = String(value).trim();
+
+  text = text.replace(/\s/g, "");
+
+  if (text.includes(",")) {
+    text = text.replace(/\./g, "").replace(",", ".");
+  }
+
+  const result = parseFloat(text);
+
+  return Number.isFinite(result) ? result : 0;
 }
 
 function escapeHtml(value) {
   return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function formatDate(value) {
-  if (!value) return "-";
+  if (!value) return "";
 
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return value;
+    return String(value);
   }
 
   return date.toLocaleDateString("pt-BR");
 }
 
 function today() {
-  const d = new Date();
+  const date = new Date();
 
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
 
-  return `${d.getFullYear()}-${month}-${day}`;
+  return `${year}-${month}-${day}`;
 }
 
 function showAlert(message, type = "success") {
-  const container = $("alertContainer");
-
-  if (!container) {
-    alert(message);
+  if (typeof window.showToast === "function") {
+    window.showToast(message, type);
     return;
   }
 
-  const div = document.createElement("div");
-
-  div.className = `alert alert-${type}`;
-  div.textContent = message;
-
-  container.innerHTML = "";
-  container.appendChild(div);
-
-  setTimeout(() => {
-    if (div.parentNode) {
-      div.remove();
-    }
-  }, 4000);
+  alert(message);
 }
 
 function openModal(id) {
   const modal = $(id);
 
-  if (modal) {
-    modal.classList.add("open");
+  if (!modal) {
+    console.warn("Modal não encontrado:", id);
+    return;
   }
+
+  modal.classList.add("open");
+  modal.style.display = "flex";
 }
 
 function closeModal(id) {
   const modal = $(id);
 
-  if (modal) {
-    modal.classList.remove("open");
-  }
+  if (!modal) return;
+
+  modal.classList.remove("open");
+  modal.style.display = "none";
 }
 
 function closeAllModals() {
   qsa(".modal").forEach(modal => {
     modal.classList.remove("open");
+    modal.style.display = "none";
   });
 }
 
+
+/* =========================================================
+   API
+========================================================= */
+
 async function api(url, options = {}) {
+
   const config = {
     credentials: "same-origin",
-    ...options
+    ...options,
+    headers: {
+      ...(options.headers || {})
+    }
   };
 
-  config.headers = {
-    ...(options.body instanceof FormData
-      ? {}
-      : { "Content-Type": "application/json" }),
-    ...(options.headers || {})
-  };
+  if (
+    config.body &&
+    typeof config.body !== "string" &&
+    !(config.body instanceof FormData)
+  ) {
+    config.headers["Content-Type"] = "application/json";
+    config.body = JSON.stringify(config.body);
+  }
 
   const response = await fetch(url, config);
+
+  const text = await response.text();
 
   let data = {};
 
   try {
-    data = await response.json();
+    data = text ? JSON.parse(text) : {};
   } catch {
-    data = {};
+    data = {
+      raw: text
+    };
   }
 
   if (!response.ok) {
-    throw new Error(
-      data.message ||
-      data.error ||
-      `Erro HTTP ${response.status}`
-    );
+
+    const message =
+      data?.error ||
+      data?.message ||
+      data?.raw ||
+      `Erro HTTP ${response.status}`;
+
+    throw new Error(message);
   }
 
   return data;
 }
 
+
 /* =========================================================
    LOGIN
 ========================================================= */
 
-function setLoginError(message = "") {
-  const errorBox = $("loginError");
+function setLoginError(message) {
 
-  if (!errorBox) {
-    if (message) {
-      console.error("LOGIN:", message);
-    }
+  const element =
+    $("loginError") ||
+    $("loginMessage") ||
+    $("loginStatus");
 
-    return;
-  }
+  if (!element) return;
 
-  errorBox.textContent = message;
-  errorBox.style.display = message ? "block" : "none";
+  element.textContent = message || "";
+  element.style.display = message ? "block" : "none";
 }
 
 async function checkLogin() {
+
   try {
 
-    const response = await fetch("/api/me", {
-      method: "GET",
-      credentials: "same-origin",
-      cache: "no-store"
-    });
+    const response = await fetch(
+      "/api/me",
+      {
+        credentials: "same-origin"
+      }
+    );
 
-    const data =
-      await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({}));
 
-    if (
-      response.ok &&
-      data.authenticated
-    ) {
+    if (response.ok && data.authenticated) {
 
-      currentUser =
-        data.username || "";
+      currentUser = data.username || "";
 
-      if ($("loggedUser")) {
-        $("loggedUser").textContent =
+      showApp();
+
+      const loggedUser = $("loggedUser");
+
+      if (loggedUser) {
+        loggedUser.textContent =
           currentUser
             ? `Olá, ${currentUser}`
             : "";
       }
 
-      showApp();
-
       return true;
     }
 
   } catch (error) {
-
-    console.error(
-      "Erro ao verificar sessão:",
-      error
-    );
-
+    console.error("Erro ao verificar login:", error);
   }
 
   showLogin();
@@ -224,25 +251,29 @@ async function checkLogin() {
 
 function showLogin() {
 
-  if ($("loginScreen")) {
-    $("loginScreen").style.display = "flex";
+  const loginScreen = $("loginScreen");
+  const app = $("app");
+
+  if (loginScreen) {
+    loginScreen.style.display = "flex";
   }
 
-  if ($("app")) {
-    $("app").style.display = "none";
+  if (app) {
+    app.style.display = "none";
   }
 }
 
 function showApp() {
 
-  if ($("loginScreen")) {
-    $("loginScreen").style.display = "none";
+  const loginScreen = $("loginScreen");
+  const app = $("app");
+
+  if (loginScreen) {
+    loginScreen.style.display = "none";
   }
 
-  if ($("app")) {
-    $("app").style.display = "block";
-
-    $("app").classList.remove("hidden");
+  if (app) {
+    app.style.display = "block";
   }
 }
 
@@ -252,197 +283,86 @@ async function login(event) {
     event.preventDefault();
   }
 
-  setLoginError("");
-
   const username =
-    $("loginUsername")?.value?.trim() || "";
+    $("username")?.value?.trim() ||
+    $("loginUsername")?.value?.trim() ||
+    "";
 
   const password =
-    $("loginPassword")?.value || "";
+    $("password")?.value ||
+    $("loginPassword")?.value ||
+    "";
 
   if (!username || !password) {
-    setLoginError(
-      "Informe usuário e senha."
-    );
-
-    return false;
-  }
-
-  const button =
-    qs('#loginForm button[type="submit"]');
-
-  const originalText =
-    button?.textContent || "Entrar";
-
-  if (button) {
-    button.disabled = true;
-    button.textContent = "Entrando...";
+    setLoginError("Informe usuário e senha.");
+    return;
   }
 
   try {
 
-    const response = await fetch(
+    setLoginError("");
+
+    const data = await api(
       "/api/login",
       {
         method: "POST",
-
-        credentials: "same-origin",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
+        body: {
           username,
           password
-        })
+        }
       }
     );
-
-    const data =
-      await response
-        .json()
-        .catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-        data.message ||
-        `Erro HTTP ${response.status}`
-      );
-    }
-
-    if (!data.ok) {
-      throw new Error(
-        data.error ||
-        "Não foi possível realizar o login."
-      );
-    }
 
     currentUser =
       data.username ||
       username;
 
-    /*
-     * Confirma que a sessão realmente foi
-     * criada e que o navegador recebeu o cookie.
-     */
-    const sessionResponse =
-      await fetch(
-        "/api/me",
-        {
-          method: "GET",
-          credentials: "same-origin",
-          cache: "no-store"
-        }
-      );
+    showApp();
 
-    const sessionData =
-      await sessionResponse
-        .json()
-        .catch(() => ({}));
+    const loggedUser = $("loggedUser");
 
-    if (
-      !sessionResponse.ok ||
-      !sessionData.authenticated
-    ) {
-      throw new Error(
-        "O servidor aceitou o login, mas a sessão não foi criada."
-      );
-    }
-
-    currentUser =
-      sessionData.username ||
-      currentUser;
-
-    if ($("loggedUser")) {
-      $("loggedUser").textContent =
+    if (loggedUser) {
+      loggedUser.textContent =
         `Olá, ${currentUser}`;
     }
-
-    showApp();
 
     await loadAll();
 
     showPage("dashboard");
 
-    setLoginError("");
-
-    return true;
-
   } catch (error) {
 
-    console.error(
-      "Erro no login:",
-      error
-    );
+    console.error(error);
 
     setLoginError(
       error.message ||
       "Usuário ou senha inválidos."
     );
-
-    showLogin();
-
-    return false;
-
-  } finally {
-
-    if (button) {
-      button.disabled = false;
-      button.textContent = originalText;
-    }
-
   }
 }
 
-async function logout() {
+async function logout(event) {
+
+  if (event) {
+    event.preventDefault();
+  }
 
   try {
-
-    await fetch(
+    await api(
       "/api/logout",
       {
-        method: "POST",
-        credentials: "same-origin"
+        method: "POST"
       }
     );
-
   } catch (error) {
-
-    console.error(
-      "Erro ao sair:",
-      error
-    );
-
+    console.error(error);
   }
 
   currentUser = "";
 
-  products = [];
-  clients = [];
-  suppliers = [];
-  sales = [];
-  purchases = [];
-  stockMoves = [];
-
-  saleCart = [];
-
-  currentSaleId = null;
-  currentPurchaseId = null;
-
-  if ($("loginUsername")) {
-    $("loginUsername").value = "";
-  }
-
-  if ($("loginPassword")) {
-    $("loginPassword").value = "";
-  }
-
-  setLoginError("");
-
   showLogin();
 }
+
 
 /* =========================================================
    NAVEGAÇÃO
@@ -450,26 +370,24 @@ async function logout() {
 
 function showPage(pageName) {
 
+  if (!pageName) return;
+
   qsa(".page").forEach(page => {
     page.classList.remove("active");
   });
 
-  const page =
-    $(`page-${pageName}`);
+  const page = $(`page-${pageName}`);
 
   if (page) {
     page.classList.add("active");
   }
 
-  qsa(".nav-item").forEach(button => {
+  qsa(".nav-item").forEach(item => {
 
-    button.classList.remove("active");
-
-    if (
-      button.dataset.page === pageName
-    ) {
-      button.classList.add("active");
-    }
+    item.classList.toggle(
+      "active",
+      item.dataset.page === pageName
+    );
 
   });
 
@@ -478,21 +396,18 @@ function showPage(pageName) {
     products: "Produtos",
     clients: "Clientes",
     suppliers: "Fornecedores",
-    sale: "Nova Venda",
     sales: "Vendas",
     stock: "Estoque",
-    reports: "Relatórios",
-    purchases: "Compras / Contas a Pagar"
+    purchases: "Compras / Contas a Pagar",
+    reports: "Relatórios"
   };
 
-  if ($("topbarTitle")) {
-    $("topbarTitle").textContent =
-      titles[pageName] ||
-      "Essência & Charme";
-  }
+  const pageTitle = $("pageTitle");
 
-  if (pageName === "dashboard") {
-    loadDashboard();
+  if (pageTitle) {
+    pageTitle.textContent =
+      titles[pageName] ||
+      pageName;
   }
 
   if (pageName === "products") {
@@ -508,6 +423,7 @@ function showPage(pageName) {
   }
 
   if (pageName === "sales") {
+    prepareSalePage();
     renderSales();
   }
 
@@ -515,18 +431,19 @@ function showPage(pageName) {
     renderStock();
   }
 
-  if (pageName === "reports") {
-    loadReports();
-  }
-
   if (pageName === "purchases") {
     renderPurchases();
   }
 
-  if (pageName === "sale") {
-    prepareSalePage();
+  if (pageName === "reports") {
+    loadReports();
+  }
+
+  if (pageName === "dashboard") {
+    loadDashboard();
   }
 }
+
 
 /* =========================================================
    CARREGAMENTO GERAL
@@ -534,7 +451,7 @@ function showPage(pageName) {
 
 async function loadAll() {
 
-  await Promise.allSettled([
+  const results = await Promise.allSettled([
     loadProducts(),
     loadClients(),
     loadSuppliers(),
@@ -543,12 +460,31 @@ async function loadAll() {
     loadStock()
   ]);
 
-  loadDashboard();
+  results.forEach(result => {
+
+    if (result.status === "rejected") {
+      console.error(
+        "Erro no carregamento:",
+        result.reason
+      );
+    }
+
+  });
 
   updateProductSelects();
   updateClientSelect();
   updateSupplierSelect();
+
+  renderProducts();
+  renderClients();
+  renderSuppliers();
+  renderSales();
+  renderPurchases();
+  renderStock();
+
+  await loadDashboard();
 }
+
 
 /* =========================================================
    PRODUTOS
@@ -558,32 +494,37 @@ async function loadProducts() {
 
   try {
 
-    const data =
-      await api("/api/products");
+    const data = await api("/api/products");
 
     products =
       Array.isArray(data)
         ? data
-        : data.products || [];
+        : (
+          data.products ||
+          data.rows ||
+          []
+        );
 
-    renderProducts();
-
-    updateProductSelects();
+    return products;
 
   } catch (error) {
 
     console.error(
-      "Produtos:",
+      "Erro ao carregar produtos:",
       error
     );
 
+    products = [];
+
+    throw error;
   }
 }
 
 function renderProducts() {
 
   const tbody =
-    $("productsTableBody");
+    $("productsTableBody") ||
+    $("productsBody");
 
   if (!tbody) return;
 
@@ -591,12 +532,8 @@ function renderProducts() {
 
     tbody.innerHTML = `
       <tr>
-        <td colspan="8">
-          <div class="empty-state">
-            <div class="empty-state-icon">💎</div>
-            <strong>Nenhum produto cadastrado</strong>
-            <span>Cadastre seu primeiro produto.</span>
-          </div>
+        <td colspan="8" class="empty">
+          Nenhum produto cadastrado.
         </td>
       </tr>
     `;
@@ -604,168 +541,179 @@ function renderProducts() {
     return;
   }
 
-  tbody.innerHTML =
-    products.map(product => {
+  tbody.innerHTML = products.map(product => {
 
-      const stock =
-        number(product.stock);
+    const id =
+      product.id ??
+      product.product_id;
 
-      let stockClass =
-        "badge-success";
+    const stock =
+      number(product.stock);
 
-      if (stock <= 0) {
+    const minimum =
+      number(
+        product.min_stock ??
+        product.minimum_stock ??
+        0
+      );
 
-        stockClass =
-          "badge-danger";
+    return `
+      <tr>
 
-      } else if (
-        product.min_stock != null &&
-        stock <= number(product.min_stock)
-      ) {
+        <td>
+          ${escapeHtml(
+            product.name ||
+            product.product_name ||
+            ""
+          )}
+        </td>
 
-        stockClass =
-          "badge-warning";
+        <td>
+          ${escapeHtml(
+            product.brand ||
+            ""
+          )}
+        </td>
 
-      }
+        <td>
+          ${escapeHtml(
+            product.supplier_name ||
+            product.supplier ||
+            ""
+          )}
+        </td>
 
-      return `
-        <tr>
+        <td>
+          ${money(
+            product.cost ??
+            product.cost_price ??
+            0
+          )}
+        </td>
 
-          <td>
-            <strong>
-              ${escapeHtml(product.name)}
-            </strong>
+        <td>
+          ${money(
+            product.price ??
+            product.sale_price ??
+            0
+          )}
+        </td>
 
-            ${
-              product.code
-                ? `
-                  <div
-                    style="font-size:11px;color:var(--muted)">
-                    Código:
-                    ${escapeHtml(product.code)}
-                  </div>
-                `
-                : ""
-            }
-          </td>
+        <td class="${
+          stock <= minimum
+            ? "stock-low"
+            : ""
+        }">
+          ${stock}
+        </td>
 
-          <td>
-            ${escapeHtml(product.brand || "-")}
-          </td>
+        <td>
+          ${formatDate(
+            product.created_at ||
+            product.createdAt
+          )}
+        </td>
 
-          <td>
-            ${escapeHtml(
-              product.supplier_name || "-"
-            )}
-          </td>
+        <td class="actions">
 
-          <td>
-            ${money(product.cost)}
-          </td>
+          <button
+            type="button"
+            onclick="editProduct(${id})">
+            Editar
+          </button>
 
-          <td>
-            ${money(product.price)}
-          </td>
+          <button
+            type="button"
+            onclick="deleteProduct(${id})">
+            Excluir
+          </button>
 
-          <td>
-            <span class="badge ${stockClass}">
-              ${stock}
-            </span>
-          </td>
+        </td>
 
-          <td>
-            ${formatDate(product.created_at)}
-          </td>
+      </tr>
+    `;
 
-          <td>
-            <div class="actions">
-
-              <button
-                class="btn btn-light btn-sm"
-                onclick="editProduct(${product.id})">
-                Editar
-              </button>
-
-              <button
-                class="btn btn-danger btn-sm"
-                onclick="deleteProduct(${product.id})">
-                Excluir
-              </button>
-
-            </div>
-          </td>
-
-        </tr>
-      `;
-
-    }).join("");
+  }).join("");
 }
 
 function openProductModal(product = null) {
 
-  const form =
-    $("productForm");
+  const form = $("productForm");
 
   if (!form) return;
 
   form.reset();
 
-  if ($("productId")) {
-    $("productId").value =
-      product?.id || "";
-  }
+  const idField =
+    $("productId");
 
-  if ($("productCode")) {
-    $("productCode").value =
-      product?.code || "";
+  if (idField) {
+    idField.value =
+      product?.id ??
+      product?.product_id ??
+      "";
   }
 
   if ($("productName")) {
     $("productName").value =
-      product?.name || "";
+      product?.name ||
+      product?.product_name ||
+      "";
   }
 
   if ($("productBrand")) {
     $("productBrand").value =
-      product?.brand || "";
+      product?.brand ||
+      "";
   }
 
   if ($("productSupplier")) {
     $("productSupplier").value =
-      product?.supplier_id || "";
+      product?.supplier_id ??
+      product?.supplierId ??
+      "";
+  }
+
+  if ($("productCode")) {
+    $("productCode").value =
+      product?.code ||
+      "";
   }
 
   if ($("productSize")) {
     $("productSize").value =
-      product?.size || "";
+      product?.size ||
+      "";
   }
 
   if ($("productCost")) {
     $("productCost").value =
-      product?.cost ?? "";
+      product?.cost ??
+      product?.cost_price ??
+      "";
   }
 
   if ($("productPrice")) {
     $("productPrice").value =
-      product?.price ?? "";
+      product?.price ??
+      product?.sale_price ??
+      "";
   }
 
   if ($("productStock")) {
     $("productStock").value =
-      product?.stock ?? 0;
+      product?.stock ??
+      0;
   }
 
   if ($("productMinStock")) {
     $("productMinStock").value =
-      product?.min_stock ?? 0;
+      product?.min_stock ??
+      product?.minimum_stock ??
+      0;
   }
 
-  if ($("productModalTitle")) {
-    $("productModalTitle").textContent =
-      product
-        ? "Editar Produto"
-        : "Novo Produto";
-  }
+  updateSupplierSelects();
 
   openModal("productModal");
 }
@@ -774,10 +722,15 @@ function editProduct(id) {
 
   const product =
     products.find(
-      p => Number(p.id) === Number(id)
+      item =>
+        Number(item.id ?? item.product_id) ===
+        Number(id)
     );
 
-  if (!product) return;
+  if (!product) {
+    showAlert("Produto não encontrado.", "error");
+    return;
+  }
 
   openProductModal(product);
 }
@@ -787,45 +740,58 @@ async function saveProduct(event) {
   event.preventDefault();
 
   const id =
-    $("productId")?.value;
+    $("productId")?.value ||
+    "";
 
-  const payload = {
+  const body = {
 
     code:
-      $("productCode")?.value?.trim() || "",
+      $("productCode")?.value?.trim() ||
+      "",
 
     name:
-      $("productName")?.value?.trim() || "",
+      $("productName")?.value?.trim() ||
+      "",
 
     brand:
-      $("productBrand")?.value?.trim() || "",
-
-    supplier_id:
-      $("productSupplier")?.value || null,
+      $("productBrand")?.value?.trim() ||
+      "",
 
     size:
-      $("productSize")?.value?.trim() || "",
+      $("productSize")?.value?.trim() ||
+      "",
+
+    supplier_id:
+      $("productSupplier")?.value ||
+      null,
 
     cost:
-      number($("productCost")?.value),
+      number(
+        $("productCost")?.value
+      ),
 
     price:
-      number($("productPrice")?.value),
+      number(
+        $("productPrice")?.value
+      ),
 
     stock:
-      number($("productStock")?.value),
+      number(
+        $("productStock")?.value
+      ),
 
     min_stock:
-      number($("productMinStock")?.value)
+      number(
+        $("productMinStock")?.value
+      )
+
   };
 
-  if (!payload.name) {
-
+  if (!body.name) {
     showAlert(
       "Informe o nome do produto.",
-      "danger"
+      "error"
     );
-
     return;
   }
 
@@ -836,11 +802,8 @@ async function saveProduct(event) {
         ? `/api/products/${id}`
         : "/api/products",
       {
-        method:
-          id ? "PUT" : "POST",
-
-        body:
-          JSON.stringify(payload)
+        method: id ? "PUT" : "POST",
+        body
       }
     );
 
@@ -848,29 +811,33 @@ async function saveProduct(event) {
 
     await loadProducts();
 
+    updateProductSelects();
+
+    renderProducts();
+
     showAlert(
       id
-        ? "Produto atualizado com sucesso."
-        : "Produto cadastrado com sucesso."
+        ? "Produto atualizado."
+        : "Produto cadastrado."
     );
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível salvar o produto.",
+      "error"
+    );
   }
 }
 
 async function deleteProduct(id) {
 
-  if (
-    !confirm(
-      "Deseja realmente excluir este produto?"
-    )
-  ) {
+  if (!confirm(
+    "Deseja realmente excluir este produto?"
+  )) {
     return;
   }
 
@@ -885,19 +852,24 @@ async function deleteProduct(id) {
 
     await loadProducts();
 
-    showAlert(
-      "Produto excluído."
-    );
+    updateProductSelects();
+
+    renderProducts();
+
+    showAlert("Produto excluído.");
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível excluir o produto.",
+      "error"
+    );
   }
 }
+
 
 /* =========================================================
    CLIENTES
@@ -913,25 +885,32 @@ async function loadClients() {
     clients =
       Array.isArray(data)
         ? data
-        : data.clients || [];
+        : (
+          data.clients ||
+          data.rows ||
+          []
+        );
 
-    renderClients();
-    updateClientSelect();
+    return clients;
 
   } catch (error) {
 
     console.error(
-      "Clientes:",
+      "Erro ao carregar clientes:",
       error
     );
 
+    clients = [];
+
+    throw error;
   }
 }
 
 function renderClients() {
 
   const tbody =
-    $("clientsTableBody");
+    $("clientsTableBody") ||
+    $("clientsBody");
 
   if (!tbody) return;
 
@@ -939,11 +918,8 @@ function renderClients() {
 
     tbody.innerHTML = `
       <tr>
-        <td colspan="6">
-          <div class="empty-state">
-            <div class="empty-state-icon">👤</div>
-            <strong>Nenhum cliente cadastrado</strong>
-          </div>
+        <td colspan="6" class="empty">
+          Nenhum cliente cadastrado.
         </td>
       </tr>
     `;
@@ -951,32 +927,40 @@ function renderClients() {
     return;
   }
 
-  tbody.innerHTML =
-    clients.map(client => `
+  tbody.innerHTML = clients.map(client => {
 
+    const id =
+      client.id ??
+      client.client_id;
+
+    return `
       <tr>
 
         <td>
-          <strong>
-            ${escapeHtml(client.name)}
-          </strong>
-        </td>
-
-        <td>
           ${escapeHtml(
-            client.phone || "-"
+            client.name ||
+            ""
           )}
         </td>
 
         <td>
           ${escapeHtml(
-            client.address || "-"
+            client.phone ||
+            ""
           )}
         </td>
 
         <td>
           ${escapeHtml(
-            client.notes || "-"
+            client.address ||
+            ""
+          )}
+        </td>
+
+        <td>
+          ${escapeHtml(
+            client.notes ||
+            ""
           )}
         </td>
 
@@ -986,33 +970,31 @@ function renderClients() {
           )}
         </td>
 
-        <td>
-          <div class="actions">
+        <td class="actions">
 
-            <button
-              class="btn btn-light btn-sm"
-              onclick="editClient(${client.id})">
-              Editar
-            </button>
+          <button
+            type="button"
+            onclick="editClient(${id})">
+            Editar
+          </button>
 
-            <button
-              class="btn btn-danger btn-sm"
-              onclick="deleteClient(${client.id})">
-              Excluir
-            </button>
+          <button
+            type="button"
+            onclick="deleteClient(${id})">
+            Excluir
+          </button>
 
-          </div>
         </td>
 
       </tr>
+    `;
 
-    `).join("");
+  }).join("");
 }
 
 function openClientModal(client = null) {
 
-  const form =
-    $("clientForm");
+  const form = $("clientForm");
 
   if (!form) return;
 
@@ -1020,34 +1002,33 @@ function openClientModal(client = null) {
 
   if ($("clientId")) {
     $("clientId").value =
-      client?.id || "";
+      client?.id ??
+      client?.client_id ??
+      "";
   }
 
   if ($("clientName")) {
     $("clientName").value =
-      client?.name || "";
+      client?.name ||
+      "";
   }
 
   if ($("clientPhone")) {
     $("clientPhone").value =
-      client?.phone || "";
+      client?.phone ||
+      "";
   }
 
   if ($("clientAddress")) {
     $("clientAddress").value =
-      client?.address || "";
+      client?.address ||
+      "";
   }
 
   if ($("clientNotes")) {
     $("clientNotes").value =
-      client?.notes || "";
-  }
-
-  if ($("clientModalTitle")) {
-    $("clientModalTitle").textContent =
-      client
-        ? "Editar Cliente"
-        : "Novo Cliente";
+      client?.notes ||
+      "";
   }
 
   openModal("clientModal");
@@ -1057,10 +1038,15 @@ function editClient(id) {
 
   const client =
     clients.find(
-      c => Number(c.id) === Number(id)
+      item =>
+        Number(item.id ?? item.client_id) ===
+        Number(id)
     );
 
-  if (!client) return;
+  if (!client) {
+    showAlert("Cliente não encontrado.", "error");
+    return;
+  }
 
   openClientModal(client);
 }
@@ -1070,30 +1056,34 @@ async function saveClient(event) {
   event.preventDefault();
 
   const id =
-    $("clientId")?.value;
+    $("clientId")?.value ||
+    "";
 
-  const payload = {
+  const body = {
 
     name:
-      $("clientName")?.value?.trim() || "",
+      $("clientName")?.value?.trim() ||
+      "",
 
     phone:
-      $("clientPhone")?.value?.trim() || "",
+      $("clientPhone")?.value?.trim() ||
+      "",
 
     address:
-      $("clientAddress")?.value?.trim() || "",
+      $("clientAddress")?.value?.trim() ||
+      "",
 
     notes:
-      $("clientNotes")?.value?.trim() || ""
+      $("clientNotes")?.value?.trim() ||
+      ""
+
   };
 
-  if (!payload.name) {
-
+  if (!body.name) {
     showAlert(
       "Informe o nome do cliente.",
-      "danger"
+      "error"
     );
-
     return;
   }
 
@@ -1104,17 +1094,18 @@ async function saveClient(event) {
         ? `/api/clients/${id}`
         : "/api/clients",
       {
-        method:
-          id ? "PUT" : "POST",
-
-        body:
-          JSON.stringify(payload)
+        method: id ? "PUT" : "POST",
+        body
       }
     );
 
     closeModal("clientModal");
 
     await loadClients();
+
+    updateClientSelect();
+
+    renderClients();
 
     showAlert(
       id
@@ -1124,21 +1115,21 @@ async function saveClient(event) {
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível salvar o cliente.",
+      "error"
+    );
   }
 }
 
 async function deleteClient(id) {
 
-  if (
-    !confirm(
-      "Deseja excluir este cliente?"
-    )
-  ) {
+  if (!confirm(
+    "Deseja realmente excluir este cliente?"
+  )) {
     return;
   }
 
@@ -1153,19 +1144,24 @@ async function deleteClient(id) {
 
     await loadClients();
 
-    showAlert(
-      "Cliente excluído."
-    );
+    updateClientSelect();
+
+    renderClients();
+
+    showAlert("Cliente excluído.");
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível excluir o cliente.",
+      "error"
+    );
   }
 }
+
 
 /* =========================================================
    FORNECEDORES
@@ -1181,25 +1177,32 @@ async function loadSuppliers() {
     suppliers =
       Array.isArray(data)
         ? data
-        : data.suppliers || [];
+        : (
+          data.suppliers ||
+          data.rows ||
+          []
+        );
 
-    renderSuppliers();
-    updateSupplierSelect();
+    return suppliers;
 
   } catch (error) {
 
     console.error(
-      "Fornecedores:",
+      "Erro ao carregar fornecedores:",
       error
     );
 
+    suppliers = [];
+
+    throw error;
   }
 }
 
 function renderSuppliers() {
 
   const tbody =
-    $("suppliersTableBody");
+    $("suppliersTableBody") ||
+    $("suppliersBody");
 
   if (!tbody) return;
 
@@ -1207,11 +1210,8 @@ function renderSuppliers() {
 
     tbody.innerHTML = `
       <tr>
-        <td colspan="6">
-          <div class="empty-state">
-            <div class="empty-state-icon">🏢</div>
-            <strong>Nenhum fornecedor cadastrado</strong>
-          </div>
+        <td colspan="6" class="empty">
+          Nenhum fornecedor cadastrado.
         </td>
       </tr>
     `;
@@ -1219,70 +1219,74 @@ function renderSuppliers() {
     return;
   }
 
-  tbody.innerHTML =
-    suppliers.map(supplier => `
+  tbody.innerHTML = suppliers.map(supplier => {
 
+    const id =
+      supplier.id ??
+      supplier.supplier_id;
+
+    return `
       <tr>
 
         <td>
-          <strong>
-            ${escapeHtml(
-              supplier.name
-            )}
-          </strong>
-        </td>
-
-        <td>
           ${escapeHtml(
-            supplier.phone || "-"
+            supplier.name ||
+            ""
           )}
         </td>
 
         <td>
           ${escapeHtml(
-            supplier.whatsapp || "-"
+            supplier.phone ||
+            ""
           )}
         </td>
 
         <td>
           ${escapeHtml(
-            supplier.document || "-"
+            supplier.email ||
+            ""
           )}
         </td>
 
         <td>
           ${escapeHtml(
-            supplier.address || "-"
+            supplier.address ||
+            ""
           )}
         </td>
 
         <td>
-          <div class="actions">
+          ${formatDate(
+            supplier.created_at
+          )}
+        </td>
 
-            <button
-              class="btn btn-light btn-sm"
-              onclick="editSupplier(${supplier.id})">
-              Editar
-            </button>
+        <td class="actions">
 
-            <button
-              class="btn btn-danger btn-sm"
-              onclick="deleteSupplier(${supplier.id})">
-              Excluir
-            </button>
+          <button
+            type="button"
+            onclick="editSupplier(${id})">
+            Editar
+          </button>
 
-          </div>
+          <button
+            type="button"
+            onclick="deleteSupplier(${id})">
+            Excluir
+          </button>
+
         </td>
 
       </tr>
+    `;
 
-    `).join("");
+  }).join("");
 }
 
 function openSupplierModal(supplier = null) {
 
-  const form =
-    $("supplierForm");
+  const form = $("supplierForm");
 
   if (!form) return;
 
@@ -1290,44 +1294,39 @@ function openSupplierModal(supplier = null) {
 
   if ($("supplierId")) {
     $("supplierId").value =
-      supplier?.id || "";
+      supplier?.id ??
+      supplier?.supplier_id ??
+      "";
   }
 
   if ($("supplierName")) {
     $("supplierName").value =
-      supplier?.name || "";
+      supplier?.name ||
+      "";
   }
 
   if ($("supplierPhone")) {
     $("supplierPhone").value =
-      supplier?.phone || "";
+      supplier?.phone ||
+      "";
   }
 
-  if ($("supplierWhatsapp")) {
-    $("supplierWhatsapp").value =
-      supplier?.whatsapp || "";
-  }
-
-  if ($("supplierDocument")) {
-    $("supplierDocument").value =
-      supplier?.document || "";
+  if ($("supplierEmail")) {
+    $("supplierEmail").value =
+      supplier?.email ||
+      "";
   }
 
   if ($("supplierAddress")) {
     $("supplierAddress").value =
-      supplier?.address || "";
+      supplier?.address ||
+      "";
   }
 
   if ($("supplierNotes")) {
     $("supplierNotes").value =
-      supplier?.notes || "";
-  }
-
-  if ($("supplierModalTitle")) {
-    $("supplierModalTitle").textContent =
-      supplier
-        ? "Editar Fornecedor"
-        : "Novo Fornecedor";
+      supplier?.notes ||
+      "";
   }
 
   openModal("supplierModal");
@@ -1337,10 +1336,18 @@ function editSupplier(id) {
 
   const supplier =
     suppliers.find(
-      s => Number(s.id) === Number(id)
+      item =>
+        Number(item.id ?? item.supplier_id) ===
+        Number(id)
     );
 
-  if (!supplier) return;
+  if (!supplier) {
+    showAlert(
+      "Fornecedor não encontrado.",
+      "error"
+    );
+    return;
+  }
 
   openSupplierModal(supplier);
 }
@@ -1350,36 +1357,38 @@ async function saveSupplier(event) {
   event.preventDefault();
 
   const id =
-    $("supplierId")?.value;
+    $("supplierId")?.value ||
+    "";
 
-  const payload = {
+  const body = {
 
     name:
-      $("supplierName")?.value?.trim() || "",
+      $("supplierName")?.value?.trim() ||
+      "",
 
     phone:
-      $("supplierPhone")?.value?.trim() || "",
+      $("supplierPhone")?.value?.trim() ||
+      "",
 
-    whatsapp:
-      $("supplierWhatsapp")?.value?.trim() || "",
-
-    document:
-      $("supplierDocument")?.value?.trim() || "",
+    email:
+      $("supplierEmail")?.value?.trim() ||
+      "",
 
     address:
-      $("supplierAddress")?.value?.trim() || "",
+      $("supplierAddress")?.value?.trim() ||
+      "",
 
     notes:
-      $("supplierNotes")?.value?.trim() || ""
+      $("supplierNotes")?.value?.trim() ||
+      ""
+
   };
 
-  if (!payload.name) {
-
+  if (!body.name) {
     showAlert(
       "Informe o nome do fornecedor.",
-      "danger"
+      "error"
     );
-
     return;
   }
 
@@ -1390,17 +1399,18 @@ async function saveSupplier(event) {
         ? `/api/suppliers/${id}`
         : "/api/suppliers",
       {
-        method:
-          id ? "PUT" : "POST",
-
-        body:
-          JSON.stringify(payload)
+        method: id ? "PUT" : "POST",
+        body
       }
     );
 
     closeModal("supplierModal");
 
     await loadSuppliers();
+
+    updateSupplierSelects();
+
+    renderSuppliers();
 
     showAlert(
       id
@@ -1410,21 +1420,21 @@ async function saveSupplier(event) {
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível salvar o fornecedor.",
+      "error"
+    );
   }
 }
 
 async function deleteSupplier(id) {
 
-  if (
-    !confirm(
-      "Deseja excluir este fornecedor?"
-    )
-  ) {
+  if (!confirm(
+    "Deseja realmente excluir este fornecedor?"
+  )) {
     return;
   }
 
@@ -1439,19 +1449,24 @@ async function deleteSupplier(id) {
 
     await loadSuppliers();
 
-    showAlert(
-      "Fornecedor excluído."
-    );
+    updateSupplierSelects();
+
+    renderSuppliers();
+
+    showAlert("Fornecedor excluído.");
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível excluir o fornecedor.",
+      "error"
+    );
   }
 }
+
 
 /* =========================================================
    SELECTS
@@ -1459,83 +1474,9 @@ async function deleteSupplier(id) {
 
 function updateProductSelects() {
 
-  const selects =
-    qsa(
-      "#saleProduct, #stockProduct, #purchaseProduct"
-    );
-
-  selects.forEach(select => {
-
-    const current =
-      select.value;
-
-    let options = `
-      <option value="">
-        Selecione o produto
-      </option>
-    `;
-
-    options +=
-      products.map(product => `
-
-        <option value="${product.id}">
-          ${escapeHtml(product.name)}
-          ${
-            product.brand
-              ? ` - ${escapeHtml(product.brand)}`
-              : ""
-          }
-        </option>
-
-      `).join("");
-
-    select.innerHTML =
-      options;
-
-    if (current) {
-      select.value =
-        current;
-    }
-
-  });
-}
-
-function updateClientSelect() {
-
-  const select =
-    $("saleClient");
-
-  if (!select) return;
-
-  const current =
-    select.value;
-
-  select.innerHTML = `
-    <option value="">
-      Consumidor / cliente
-    </option>
-
-    ${clients.map(client => `
-
-      <option value="${client.id}">
-        ${escapeHtml(client.name)}
-      </option>
-
-    `).join("")}
-  `;
-
-  if (current) {
-    select.value =
-      current;
-  }
-}
-
-function updateSupplierSelect() {
-
-  const selects =
-    qsa(
-      "#productSupplier, #purchaseSupplier"
-    );
+  const selects = qsa(
+    "#saleProduct, #purchaseProduct"
+  );
 
   selects.forEach(select => {
 
@@ -1543,28 +1484,125 @@ function updateSupplierSelect() {
       select.value;
 
     select.innerHTML = `
-
       <option value="">
-        Selecione o fornecedor
+        Selecione o produto
       </option>
-
-      ${suppliers.map(supplier => `
-
-        <option value="${supplier.id}">
-          ${escapeHtml(supplier.name)}
-        </option>
-
-      `).join("")}
-
     `;
 
+    products.forEach(product => {
+
+      const id =
+        product.id ??
+        product.product_id;
+
+      const name =
+        product.name ||
+        product.product_name ||
+        "";
+
+      const stock =
+        number(product.stock);
+
+      const option =
+        document.createElement("option");
+
+      option.value = id;
+
+      option.textContent =
+        `${name} — Estoque: ${stock}`;
+
+      select.appendChild(option);
+    });
+
     if (current) {
-      select.value =
-        current;
+      select.value = current;
     }
 
   });
 }
+
+function updateClientSelect() {
+
+  const selects =
+    qsa("#saleClient");
+
+  selects.forEach(select => {
+
+    const current =
+      select.value;
+
+    select.innerHTML = `
+      <option value="">
+        Selecione o cliente
+      </option>
+    `;
+
+    clients.forEach(client => {
+
+      const id =
+        client.id ??
+        client.client_id;
+
+      const option =
+        document.createElement("option");
+
+      option.value = id;
+
+      option.textContent =
+        client.name ||
+        "";
+
+      select.appendChild(option);
+    });
+
+    if (current) {
+      select.value = current;
+    }
+
+  });
+}
+
+function updateSupplierSelects() {
+
+  const selects =
+    qsa("#productSupplier, #purchaseSupplier");
+
+  selects.forEach(select => {
+
+    const current =
+      select.value;
+
+    select.innerHTML = `
+      <option value="">
+        Selecione o fornecedor
+      </option>
+    `;
+
+    suppliers.forEach(supplier => {
+
+      const id =
+        supplier.id ??
+        supplier.supplier_id;
+
+      const option =
+        document.createElement("option");
+
+      option.value = id;
+
+      option.textContent =
+        supplier.name ||
+        "";
+
+      select.appendChild(option);
+    });
+
+    if (current) {
+      select.value = current;
+    }
+
+  });
+}
+
 
 /* =========================================================
    VENDAS
@@ -1580,58 +1618,46 @@ async function loadSales() {
     sales =
       Array.isArray(data)
         ? data
-        : data.sales || [];
+        : (
+          data.sales ||
+          data.rows ||
+          []
+        );
 
-    renderSales();
+    return sales;
 
   } catch (error) {
 
     console.error(
-      "Vendas:",
+      "Erro ao carregar vendas:",
       error
     );
 
+    sales = [];
+
+    throw error;
   }
 }
 
 function prepareSalePage() {
 
   updateProductSelects();
-
   updateClientSelect();
 
   renderSaleCart();
-
   calculateSaleTotals();
 }
 
 function addSaleProduct() {
 
   const productId =
-    Number(
-      $("saleProduct")?.value || 0
-    );
-
-  const qty =
-    number(
-      $("saleQuantity")?.value || 1
-    );
+    $("saleProduct")?.value;
 
   if (!productId) {
 
     showAlert(
       "Selecione um produto.",
-      "danger"
-    );
-
-    return;
-  }
-
-  if (qty <= 0) {
-
-    showAlert(
-      "Informe uma quantidade válida.",
-      "danger"
+      "error"
     );
 
     return;
@@ -1639,14 +1665,45 @@ function addSaleProduct() {
 
   const product =
     products.find(
-      p => Number(p.id) === productId
+      item =>
+        Number(item.id ?? item.product_id) ===
+        Number(productId)
     );
 
   if (!product) {
 
     showAlert(
       "Produto não encontrado.",
-      "danger"
+      "error"
+    );
+
+    return;
+  }
+
+  const quantity =
+    number(
+      $("saleQuantity")?.value ||
+      1
+    );
+
+  if (quantity <= 0) {
+
+    showAlert(
+      "Informe uma quantidade válida.",
+      "error"
+    );
+
+    return;
+  }
+
+  const stock =
+    number(product.stock);
+
+  if (quantity > stock) {
+
+    showAlert(
+      `Estoque insuficiente. Disponível: ${stock}.`,
+      "error"
     );
 
     return;
@@ -1656,27 +1713,24 @@ function addSaleProduct() {
     saleCart.find(
       item =>
         Number(item.product_id) ===
-        productId
+        Number(productId)
     );
-
-  const newQuantity =
-    (existing?.quantity || 0) +
-    qty;
-
-  if (
-    product.stock != null &&
-    newQuantity > number(product.stock)
-  ) {
-
-    showAlert(
-      `Estoque insuficiente. Disponível: ${product.stock}.`,
-      "danger"
-    );
-
-    return;
-  }
 
   if (existing) {
+
+    const newQuantity =
+      existing.quantity +
+      quantity;
+
+    if (newQuantity > stock) {
+
+      showAlert(
+        `Estoque insuficiente. Disponível: ${stock}.`,
+        "error"
+      );
+
+      return;
+    }
 
     existing.quantity =
       newQuantity;
@@ -1686,56 +1740,53 @@ function addSaleProduct() {
     saleCart.push({
 
       product_id:
-        product.id,
+        Number(productId),
 
       name:
-        product.name,
+        product.name ||
+        product.product_name ||
+        "",
 
       price:
-        number(product.price),
+        number(
+          product.price ??
+          product.sale_price
+        ),
 
-      cost:
-        number(product.cost),
-
-      quantity:
-        qty
+      quantity
 
     });
 
   }
 
+  renderSaleCart();
+  calculateSaleTotals();
+
   if ($("saleQuantity")) {
     $("saleQuantity").value = 1;
   }
-
-  if ($("saleProduct")) {
-    $("saleProduct").value = "";
-  }
-
-  renderSaleCart();
-
-  calculateSaleTotals();
 }
 
 function removeSaleProduct(index) {
 
   saleCart.splice(
-    index,
+    Number(index),
     1
   );
 
   renderSaleCart();
-
   calculateSaleTotals();
 }
 
-function changeSaleQuantity(
-  index,
-  quantity
-) {
+function changeSaleQuantity(index, value) {
 
-  quantity =
-    number(quantity);
+  const item =
+    saleCart[index];
+
+  if (!item) return;
+
+  const quantity =
+    number(value);
 
   if (quantity <= 0) {
 
@@ -1744,56 +1795,52 @@ function changeSaleQuantity(
     return;
   }
 
-  const item =
-    saleCart[index];
-
   const product =
     products.find(
       p =>
-        Number(p.id) ===
+        Number(p.id ?? p.product_id) ===
         Number(item.product_id)
     );
 
-  if (
-    product &&
-    product.stock != null &&
-    quantity > number(product.stock)
-  ) {
+  if (product) {
 
-    showAlert(
-      `Estoque insuficiente. Disponível: ${product.stock}.`,
-      "danger"
-    );
+    const stock =
+      number(product.stock);
 
-    renderSaleCart();
+    if (quantity > stock) {
 
-    return;
+      showAlert(
+        `Estoque insuficiente. Disponível: ${stock}.`,
+        "error"
+      );
+
+      renderSaleCart();
+
+      return;
+    }
+
   }
 
   item.quantity =
     quantity;
 
   renderSaleCart();
-
   calculateSaleTotals();
 }
 
 function renderSaleCart() {
 
   const container =
-    $("saleCart");
+    $("saleCart") ||
+    $("saleItems");
 
   if (!container) return;
 
   if (!saleCart.length) {
 
     container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">🛍️</div>
-        <strong>Nenhum produto na venda</strong>
-        <span>
-          Selecione produtos para começar.
-        </span>
+      <div class="empty">
+        Nenhum produto adicionado.
       </div>
     `;
 
@@ -1801,150 +1848,176 @@ function renderSaleCart() {
   }
 
   container.innerHTML =
-    saleCart.map(
-      (item, index) => `
+    saleCart.map((item, index) => {
 
+      const subtotal =
+        item.quantity *
+        item.price;
+
+      return `
         <div class="cart-item">
 
-          <div>
-
-            <div class="cart-item-name">
-              ${escapeHtml(item.name)}
-            </div>
-
-            <div class="cart-item-detail">
-              ${money(item.price)} cada
-            </div>
-
+          <div class="cart-product">
+            ${escapeHtml(item.name)}
           </div>
 
-          <div
-            style="
-              display:flex;
-              align-items:center;
-              gap:8px
-            ">
+          <div class="cart-price">
+            ${money(item.price)}
+          </div>
+
+          <div class="cart-quantity">
 
             <input
               type="number"
               min="1"
               value="${item.quantity}"
-              style="width:70px"
-              onchange="
-                changeSaleQuantity(
-                  ${index},
-                  this.value
-                )
-              "
+              onchange="changeSaleQuantity(${index}, this.value)"
             >
-
-            <strong>
-              ${money(
-                item.price *
-                item.quantity
-              )}
-            </strong>
-
-            <button
-              class="btn btn-danger btn-sm"
-              onclick="
-                removeSaleProduct(${index})
-              ">
-              ×
-            </button>
 
           </div>
 
-        </div>
+          <div class="cart-subtotal">
+            ${money(subtotal)}
+          </div>
 
-      `
-    ).join("");
+          <button
+            type="button"
+            onclick="removeSaleProduct(${index})">
+            Remover
+          </button>
+
+        </div>
+      `;
+
+    }).join("");
 }
 
 function calculateSaleTotals() {
 
   const subtotal =
     saleCart.reduce(
-      (total, item) =>
-        total +
-        item.price *
-        item.quantity,
+      (sum, item) =>
+        sum +
+        (
+          item.quantity *
+          item.price
+        ),
       0
     );
 
   const discount =
     number(
-      $("saleDiscount")?.value || 0
+      $("saleDiscount")?.value
+    );
+
+  const entry =
+    number(
+      $("saleEntry")?.value
+    );
+
+  const installments =
+    Math.max(
+      1,
+      parseInt(
+        $("saleInstallments")?.value ||
+        "1",
+        10
+      )
     );
 
   const total =
     Math.max(
       0,
-      subtotal - discount
+      subtotal -
+      discount
     );
 
-  const entry =
-    number(
-      $("saleEntry")?.value || 0
-    );
-
-  const balance =
+  const remaining =
     Math.max(
       0,
-      total - entry
-    );
-
-  if ($("saleSubtotal")) {
-    $("saleSubtotal").textContent =
-      money(subtotal);
-  }
-
-  if ($("saleTotal")) {
-    $("saleTotal").textContent =
-      money(total);
-  }
-
-  if ($("saleEntryValue")) {
-    $("saleEntryValue").textContent =
-      money(entry);
-  }
-
-  if ($("saleBalance")) {
-    $("saleBalance").textContent =
-      money(balance);
-  }
-
-  const installments =
-    number(
-      $("saleInstallments")?.value || 1
+      total -
+      entry
     );
 
   const installmentValue =
     installments > 0
-      ? balance / installments
-      : balance;
+      ? remaining / installments
+      : remaining;
 
-  if ($("saleInstallmentValue")) {
-    $("saleInstallmentValue").textContent =
+  const fields = {
+
+    saleSubtotal:
+      subtotal,
+
+    saleTotal:
+      total,
+
+    saleRemaining:
+      remaining,
+
+    saleReceivable:
+      remaining,
+
+    saleInstallmentValue:
+      installmentValue
+
+  };
+
+  Object.entries(fields)
+    .forEach(
+      ([id, value]) => {
+
+        const element =
+          $(id);
+
+        if (!element) return;
+
+        if (
+          element.tagName === "INPUT" ||
+          element.tagName === "SELECT"
+        ) {
+          element.value =
+            value.toFixed(2);
+        } else {
+          element.textContent =
+            money(value);
+        }
+
+      }
+    );
+
+  const totalElement =
+    $("saleTotalDisplay");
+
+  if (totalElement) {
+    totalElement.textContent =
+      money(total);
+  }
+
+  const remainingElement =
+    $("saleRemainingDisplay");
+
+  if (remainingElement) {
+    remainingElement.textContent =
+      money(remaining);
+  }
+
+  const installmentElement =
+    $("saleInstallmentDisplay");
+
+  if (installmentElement) {
+    installmentElement.textContent =
       money(installmentValue);
   }
 
   return {
-
     subtotal,
-
     discount,
-
     total,
-
     entry,
-
-    balance,
-
+    remaining,
     installments,
-
     installmentValue
-
   };
 }
 
@@ -1956,7 +2029,7 @@ async function saveSale(event) {
 
     showAlert(
       "Adicione pelo menos um produto à venda.",
-      "danger"
+      "error"
     );
 
     return;
@@ -1965,74 +2038,51 @@ async function saveSale(event) {
   const totals =
     calculateSaleTotals();
 
-  if (totals.total <= 0) {
+  const clientId =
+    $("saleClient")?.value ||
+    null;
 
-    showAlert(
-      "O valor total da venda precisa ser maior que zero.",
-      "danger"
-    );
+  const paymentMethod =
+    $("salePaymentMethod")?.value ||
+    $("salePayment")?.value ||
+    "Pendente";
 
-    return;
-  }
-
-  if (totals.entry > totals.total) {
-
-    showAlert(
-      "A entrada não pode ser maior que o total.",
-      "danger"
-    );
-
-    return;
-  }
-
-  const payload = {
+  const body = {
 
     client_id:
-      $("saleClient")?.value ||
-      null,
+      clientId
+        ? Number(clientId)
+        : null,
 
     date:
       $("saleDate")?.value ||
       today(),
 
-    subtotal:
-      totals.subtotal,
-
     discount:
       totals.discount,
-
-    total:
-      totals.total,
-
-    payment:
-      $("salePayment")?.value ||
-      "Fiado",
-
-    installments:
-      totals.installments,
 
     entry:
       totals.entry,
 
-    notes:
-      $("saleNotes")?.value?.trim() ||
-      "",
+    installments:
+      totals.installments,
+
+    payment_method:
+      paymentMethod,
+
+    total:
+      totals.total,
 
     items:
       saleCart.map(item => ({
-
         product_id:
-          item.product_id,
+          Number(item.product_id),
 
         quantity:
-          item.quantity,
+          Number(item.quantity),
 
         price:
-          item.price,
-
-        cost:
-          item.cost
-
+          Number(item.price)
       }))
 
   };
@@ -2043,20 +2093,17 @@ async function saveSale(event) {
       "/api/sales",
       {
         method: "POST",
-
-        body:
-          JSON.stringify(payload)
+        body
       }
-    );
-
-    showAlert(
-      "Venda registrada com sucesso."
     );
 
     saleCart = [];
 
-    if ($("saleForm")) {
-      $("saleForm").reset();
+    const form =
+      $("saleForm");
+
+    if (form) {
+      form.reset();
     }
 
     if ($("saleDate")) {
@@ -2065,31 +2112,43 @@ async function saveSale(event) {
     }
 
     renderSaleCart();
-
     calculateSaleTotals();
 
-    await Promise.all([
-      loadProducts(),
+    await Promise.allSettled([
       loadSales(),
-      loadDashboard()
+      loadProducts(),
+      loadStock()
     ]);
+
+    updateProductSelects();
+
+    renderProducts();
+    renderSales();
+    renderStock();
+
+    showAlert(
+      "Venda registrada com sucesso."
+    );
 
     showPage("sales");
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível registrar a venda.",
+      "error"
+    );
   }
 }
 
 function renderSales() {
 
   const tbody =
-    $("salesTableBody");
+    $("salesTableBody") ||
+    $("salesBody");
 
   if (!tbody) return;
 
@@ -2097,11 +2156,8 @@ function renderSales() {
 
     tbody.innerHTML = `
       <tr>
-        <td colspan="9">
-          <div class="empty-state">
-            <div class="empty-state-icon">🛍️</div>
-            <strong>Nenhuma venda registrada</strong>
-          </div>
+        <td colspan="9" class="empty">
+          Nenhuma venda registrada.
         </td>
       </tr>
     `;
@@ -2112,33 +2168,47 @@ function renderSales() {
   tbody.innerHTML =
     sales.map(sale => {
 
-      const balance =
+      const id =
+        sale.id ??
+        sale.sale_id;
+
+      const total =
+        number(sale.total);
+
+      const entry =
         number(
-          sale.balance ??
-          (
-            number(sale.total) -
-            number(sale.paid_amount)
-          )
+          sale.entry ??
+          sale.paid_amount ??
+          0
         );
 
-      let statusClass =
-        "badge-success";
+      const remaining =
+        Math.max(
+          0,
+          total - entry
+        );
 
-      if (balance > 0) {
-        statusClass =
-          "badge-warning";
-      }
+      const installments =
+        Number(
+          sale.installments ||
+          sale.installment_count ||
+          1
+        );
 
-      if (
-        sale.status ===
-        "cancelada"
-      ) {
-        statusClass =
-          "badge-danger";
-      }
+      const client =
+        sale.client_name ||
+        sale.customer_name ||
+        "Consumidor";
+
+      const status =
+        sale.status ||
+        (
+          remaining <= 0
+            ? "Pago"
+            : "Pendente"
+        );
 
       return `
-
         <tr>
 
           <td>
@@ -2149,90 +2219,60 @@ function renderSales() {
           </td>
 
           <td>
-            ${escapeHtml(
-              sale.client_name ||
-              "Consumidor"
-            )}
+            ${escapeHtml(client)}
           </td>
 
           <td>
-            ${money(sale.total)}
+            ${money(total)}
           </td>
 
           <td>
-            ${money(
-              sale.entry ||
-              sale.paid_amount ||
-              0
-            )}
+            ${money(entry)}
           </td>
 
           <td>
-            ${money(balance)}
+            ${money(remaining)}
           </td>
 
           <td>
-
-            <span
-              class="badge ${statusClass}">
-
-              ${escapeHtml(
-                sale.status ||
-                (
-                  balance > 0
-                    ? "Em aberto"
-                    : "Pago"
-                )
-              )}
-
-            </span>
-
+            ${escapeHtml(status)}
           </td>
 
           <td>
             ${escapeHtml(
-              sale.payment || "-"
+              sale.payment_method ||
+              sale.payment ||
+              ""
             )}
           </td>
 
           <td>
-            ${number(
-              sale.installments || 1
-            )}
+            ${installments}
           </td>
 
-          <td>
+          <td class="actions">
 
-            <div class="actions">
+            <button
+              type="button"
+              onclick="viewSale(${id})">
+              Ver
+            </button>
 
-              <button
-                class="btn btn-light btn-sm"
-                onclick="viewSale(${sale.id})">
-                Ver
-              </button>
-
-              ${
-                balance > 0
-                  ? `
-                    <button
-                      class="btn btn-rose btn-sm"
-                      onclick="
-                        openSalePayment(
-                          ${sale.id}
-                        )
-                      ">
-                      Receber
-                    </button>
-                  `
-                  : ""
-              }
-
-            </div>
+            ${
+              remaining > 0
+                ? `
+                  <button
+                    type="button"
+                    onclick="openSalePayment(${id})">
+                    Pagamento
+                  </button>
+                `
+                : ""
+            }
 
           </td>
 
         </tr>
-
       `;
 
     }).join("");
@@ -2248,189 +2288,152 @@ async function viewSale(id) {
       );
 
     const sale =
-      data.sale || data;
+      data.sale ||
+      data;
 
-    currentSaleId =
-      id;
+    const items =
+      data.items ||
+      sale.items ||
+      [];
+
+    const total =
+      number(sale.total);
+
+    const entry =
+      number(
+        sale.entry ??
+        sale.paid_amount
+      );
+
+    const remaining =
+      Math.max(
+        0,
+        total - entry
+      );
 
     let html = `
 
-      <div class="form-grid">
+      <div class="details">
 
-        <div>
-          <strong>Cliente</strong>
+        <p>
+          <strong>Cliente:</strong>
+          ${escapeHtml(
+            sale.client_name ||
+            "Consumidor"
+          )}
+        </p>
 
-          <div>
-            ${escapeHtml(
-              sale.client_name ||
-              "Consumidor"
-            )}
-          </div>
-        </div>
+        <p>
+          <strong>Data:</strong>
+          ${formatDate(
+            sale.date ||
+            sale.created_at
+          )}
+        </p>
 
-        <div>
-          <strong>Data</strong>
+        <p>
+          <strong>Total:</strong>
+          ${money(total)}
+        </p>
 
-          <div>
-            ${formatDate(
-              sale.date ||
-              sale.created_at
-            )}
-          </div>
-        </div>
+        <p>
+          <strong>Entrada:</strong>
+          ${money(entry)}
+        </p>
 
-        <div>
-          <strong>Total</strong>
-
-          <div>
-            ${money(
-              sale.total
-            )}
-          </div>
-        </div>
-
-        <div>
-          <strong>Entrada</strong>
-
-          <div>
-            ${money(
-              sale.entry ||
-              sale.paid_amount ||
-              0
-            )}
-          </div>
-        </div>
-
-        <div>
-          <strong>Saldo</strong>
-
-          <div>
-            ${money(
-              sale.balance ??
-              number(sale.total) -
-              number(sale.paid_amount)
-            )}
-          </div>
-        </div>
-
-        <div>
-          <strong>Pagamento</strong>
-
-          <div>
-            ${escapeHtml(
-              sale.payment || "-"
-            )}
-          </div>
-        </div>
+        <p>
+          <strong>A receber:</strong>
+          ${money(remaining)}
+        </p>
 
       </div>
 
+      <h4>Produtos</h4>
+
+      <div class="details-items">
+
     `;
 
-    if (
-      Array.isArray(
-        sale.items
-      )
-    ) {
+    if (items.length) {
 
-      html += `
+      html += items.map(item => {
 
-        <div
-          style="margin-top:20px">
+        const quantity =
+          number(item.quantity);
 
-          <h4
-            style="color:var(--purple-dark)">
-            Produtos
-          </h4>
+        const price =
+          number(
+            item.price ??
+            item.unit_price
+          );
 
-          <div class="table-wrapper">
+        return `
+          <div class="detail-row">
 
-            <table>
+            <span>
+              ${escapeHtml(
+                item.product_name ||
+                item.name ||
+                ""
+              )}
+            </span>
 
-              <thead>
-
-                <tr>
-                  <th>Produto</th>
-                  <th>Quantidade</th>
-                  <th>Valor</th>
-                  <th>Total</th>
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                ${
-                  sale.items.map(
-                    item => `
-
-                      <tr>
-
-                        <td>
-                          ${escapeHtml(
-                            item.product_name ||
-                            item.name ||
-                            "-"
-                          )}
-                        </td>
-
-                        <td>
-                          ${item.quantity}
-                        </td>
-
-                        <td>
-                          ${money(
-                            item.price
-                          )}
-                        </td>
-
-                        <td>
-                          ${money(
-                            number(item.price) *
-                            number(item.quantity)
-                          )}
-                        </td>
-
-                      </tr>
-
-                    `
-                  ).join("")
-                }
-
-              </tbody>
-
-            </table>
+            <span>
+              ${quantity} × ${money(price)}
+            </span>
 
           </div>
+        `;
 
-        </div>
+      }).join("");
 
+    } else {
+
+      html += `
+        <p>
+          Nenhum item encontrado.
+        </p>
       `;
+
     }
 
-    if ($("saleDetailsBody")) {
-      $("saleDetailsBody").innerHTML =
+    html += `
+      </div>
+    `;
+
+    const container =
+      $("saleDetails");
+
+    if (container) {
+      container.innerHTML =
         html;
     }
 
-    openModal(
-      "saleDetailsModal"
-    );
+    openModal("saleDetailsModal");
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível carregar a venda.",
+      "error"
+    );
   }
 }
 
 function openSalePayment(id) {
 
   currentSaleId =
-    id;
+    Number(id);
+
+  const sale =
+    sales.find(
+      item =>
+        Number(item.id ?? item.sale_id) ===
+        Number(id)
+    );
 
   if ($("paymentSaleId")) {
     $("paymentSaleId").value =
@@ -2438,88 +2441,103 @@ function openSalePayment(id) {
   }
 
   if ($("paymentAmount")) {
+
+    const total =
+      number(sale?.total);
+
+    const entry =
+      number(
+        sale?.entry ??
+        sale?.paid_amount
+      );
+
     $("paymentAmount").value =
-      "";
+      Math.max(
+        0,
+        total - entry
+      ).toFixed(2);
+
   }
 
-  openModal(
-    "paymentModal"
-  );
+  openModal("paymentModal");
 }
 
 async function saveSalePayment(event) {
 
   event.preventDefault();
 
-  const saleId =
-    currentSaleId;
+  if (!currentSaleId) {
+
+    showAlert(
+      "Venda não selecionada.",
+      "error"
+    );
+
+    return;
+  }
 
   const amount =
     number(
       $("paymentAmount")?.value
     );
 
-  if (
-    !saleId ||
-    amount <= 0
-  ) {
+  if (amount <= 0) {
 
     showAlert(
-      "Informe um valor válido.",
-      "danger"
+      "Informe um valor de pagamento válido.",
+      "error"
     );
 
     return;
   }
 
-  const payload = {
+  const body = {
 
     amount,
 
-    payment:
+    payment_method:
       $("paymentMethod")?.value ||
-      "PIX",
+      $("paymentType")?.value ||
+      "Dinheiro",
 
-    note:
-      $("paymentNote")?.value?.trim() ||
-      ""
+    date:
+      $("paymentDate")?.value ||
+      today()
 
   };
 
   try {
 
     await api(
-      `/api/sales/${saleId}/payments`,
+      `/api/sales/${currentSaleId}/payments`,
       {
         method: "POST",
-
-        body:
-          JSON.stringify(payload)
+        body
       }
     );
 
-    closeModal(
-      "paymentModal"
-    );
+    closeModal("paymentModal");
 
-    await Promise.all([
-      loadSales(),
-      loadDashboard()
-    ]);
+    await loadSales();
+
+    renderSales();
 
     showAlert(
-      "Pagamento registrado com sucesso."
+      "Pagamento registrado."
     );
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível registrar o pagamento.",
+      "error"
+    );
   }
 }
+
 
 /* =========================================================
    ESTOQUE
@@ -2535,145 +2553,158 @@ async function loadStock() {
     stockMoves =
       Array.isArray(data)
         ? data
-        : data.moves || [];
+        : (
+          data.stock ||
+          data.moves ||
+          data.rows ||
+          []
+        );
 
-    renderStock();
+    return stockMoves;
 
   } catch (error) {
 
     console.error(
-      "Estoque:",
+      "Erro ao carregar estoque:",
       error
     );
 
-    renderStockFromProducts();
+    stockMoves = [];
+
+    return [];
   }
 }
 
 function renderStockFromProducts() {
 
   const tbody =
-    $("stockTableBody");
+    $("stockTableBody") ||
+    $("stockBody");
 
   if (!tbody) return;
+
+  if (!products.length) {
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="empty">
+          Nenhum produto cadastrado.
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
 
   tbody.innerHTML =
     products.map(product => {
 
+      const id =
+        product.id ??
+        product.product_id;
+
       const stock =
         number(product.stock);
 
-      let badge =
-        "badge-success";
-
-      if (stock <= 0) {
-
-        badge =
-          "badge-danger";
-
-      } else if (
-        product.min_stock != null &&
-        stock <= number(product.min_stock)
-      ) {
-
-        badge =
-          "badge-warning";
-      }
+      const minimum =
+        number(
+          product.min_stock ??
+          product.minimum_stock
+        );
 
       return `
-
         <tr>
 
           <td>
             ${escapeHtml(
-              product.name
+              product.name ||
+              product.product_name ||
+              ""
             )}
           </td>
 
           <td>
             ${escapeHtml(
-              product.brand || "-"
+              product.brand ||
+              ""
+            )}
+          </td>
+
+          <td class="${
+            stock <= minimum
+              ? "stock-low"
+              : ""
+          }">
+            ${stock}
+          </td>
+
+          <td>
+            ${minimum}
+          </td>
+
+          <td>
+            ${money(
+              product.cost ??
+              product.cost_price
             )}
           </td>
 
           <td>
-
-            <span
-              class="badge ${badge}">
-
-              ${stock}
-
-            </span>
-
+            ${money(
+              product.price ??
+              product.sale_price
+            )}
           </td>
 
-          <td>
-            ${product.min_stock ?? 0}
-          </td>
-
-          <td>
-            ${money(product.cost)}
-          </td>
-
-          <td>
-            ${money(product.price)}
-          </td>
-
-          <td>
+          <td class="actions">
 
             <button
-              class="btn btn-light btn-sm"
-              onclick="
-                openStockModal(
-                  ${product.id}
-                )
-              ">
-              Ajustar
+              type="button"
+              onclick="openStockModal(${id})">
+              Movimentar
             </button>
 
           </td>
 
         </tr>
-
       `;
 
     }).join("");
 }
 
 function renderStock() {
-
-  const tbody =
-    $("stockTableBody");
-
-  if (!tbody) return;
-
-  if (!stockMoves.length) {
-
-    renderStockFromProducts();
-
-    return;
-  }
-
   renderStockFromProducts();
 }
 
-function openStockModal(
-  productId = null
-) {
+function openStockModal(productId = null) {
+
+  const form =
+    $("stockForm");
+
+  if (form) {
+    form.reset();
+  }
 
   if ($("stockProduct")) {
-    $("stockProduct").value =
-      productId || "";
+    updateProductSelects();
+
+    if (productId) {
+      $("stockProduct").value =
+        productId;
+    }
   }
 
-  if ($("stockQuantity")) {
-    $("stockQuantity").value =
-      "";
+  if ($("stockDate")) {
+    $("stockDate").value =
+      today();
   }
 
-  openModal(
-    "stockModal"
-  );
+  if ($("stockType")) {
+    $("stockType").value =
+      "entrada";
+  }
+
+  openModal("stockModal");
 }
 
 async function saveStockMove(event) {
@@ -2681,9 +2712,7 @@ async function saveStockMove(event) {
   event.preventDefault();
 
   const productId =
-    Number(
-      $("stockProduct")?.value || 0
-    );
+    $("stockProduct")?.value;
 
   const quantity =
     number(
@@ -2694,14 +2723,25 @@ async function saveStockMove(event) {
     $("stockType")?.value ||
     "entrada";
 
-  if (
-    !productId ||
-    quantity <= 0
-  ) {
+  const note =
+    $("stockNote")?.value?.trim() ||
+    "";
+
+  if (!productId) {
 
     showAlert(
-      "Informe produto e quantidade.",
-      "danger"
+      "Selecione o produto.",
+      "error"
+    );
+
+    return;
+  }
+
+  if (quantity <= 0) {
+
+    showAlert(
+      "Informe uma quantidade válida.",
+      "error"
     );
 
     return;
@@ -2713,46 +2753,53 @@ async function saveStockMove(event) {
       "/api/stock",
       {
         method: "POST",
+        body: {
 
-        body:
-          JSON.stringify({
-            product_id:
-              productId,
+          product_id:
+            Number(productId),
 
-            quantity,
+          quantity,
 
-            type,
+          type,
 
-            note:
-              $("stockNote")?.value?.trim() ||
-              ""
-          })
+          note,
+
+          date:
+            $("stockDate")?.value ||
+            today()
+
+        }
       }
     );
 
-    closeModal(
-      "stockModal"
-    );
+    closeModal("stockModal");
 
-    await Promise.all([
+    await Promise.allSettled([
       loadProducts(),
-      loadStock(),
-      loadDashboard()
+      loadStock()
     ]);
 
+    updateProductSelects();
+
+    renderProducts();
+    renderStock();
+
     showAlert(
-      "Estoque atualizado."
+      "Movimentação registrada."
     );
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível registrar a movimentação.",
+      "error"
+    );
   }
 }
+
 
 /* =========================================================
    COMPRAS
@@ -2768,24 +2815,32 @@ async function loadPurchases() {
     purchases =
       Array.isArray(data)
         ? data
-        : data.purchases || [];
+        : (
+          data.purchases ||
+          data.rows ||
+          []
+        );
 
-    renderPurchases();
+    return purchases;
 
   } catch (error) {
 
     console.error(
-      "Compras:",
+      "Erro ao carregar compras:",
       error
     );
 
+    purchases = [];
+
+    throw error;
   }
 }
 
 function renderPurchases() {
 
   const tbody =
-    $("purchasesTableBody");
+    $("purchasesTableBody") ||
+    $("purchasesBody");
 
   if (!tbody) return;
 
@@ -2793,164 +2848,127 @@ function renderPurchases() {
 
     tbody.innerHTML = `
       <tr>
-        <td colspan="9">
-
-          <div class="empty-state">
-
-            <div class="empty-state-icon">
-              📦
-            </div>
-
-            <strong>
-              Nenhuma compra cadastrada
-            </strong>
-
-            <span>
-              As compras de fornecedores aparecerão aqui.
-            </span>
-
-          </div>
-
+        <td colspan="9" class="empty">
+          Nenhuma compra cadastrada.
         </td>
       </tr>
     `;
 
-  } else {
+    updatePurchaseSummary();
 
-    tbody.innerHTML =
-      purchases.map(
-        purchase => {
-
-          const total =
-            number(
-              purchase.total
-            );
-
-          const paid =
-            number(
-              purchase.paid_amount ??
-              purchase.entry
-            );
-
-          const balance =
-            number(
-              purchase.balance ??
-              total - paid
-            );
-
-          let statusClass =
-            "badge-success";
-
-          if (balance > 0) {
-            statusClass =
-              "badge-warning";
-          }
-
-          return `
-
-            <tr>
-
-              <td>
-                ${formatDate(
-                  purchase.date ||
-                  purchase.created_at
-                )}
-              </td>
-
-              <td>
-                ${escapeHtml(
-                  purchase.supplier_name ||
-                  "-"
-                )}
-              </td>
-
-              <td>
-                ${money(total)}
-              </td>
-
-              <td>
-                ${money(
-                  purchase.entry || 0
-                )}
-              </td>
-
-              <td>
-                ${money(balance)}
-              </td>
-
-              <td>
-                ${number(
-                  purchase.installments ||
-                  1
-                )}
-              </td>
-
-              <td>
-
-                <span
-                  class="badge ${statusClass}">
-
-                  ${escapeHtml(
-                    purchase.status ||
-                    (
-                      balance > 0
-                        ? "Em aberto"
-                        : "Pago"
-                    )
-                  )}
-
-                </span>
-
-              </td>
-
-              <td>
-                ${escapeHtml(
-                  purchase.payment ||
-                  "-"
-                )}
-              </td>
-
-              <td>
-
-                <div class="actions">
-
-                  <button
-                    class="btn btn-light btn-sm"
-                    onclick="
-                      viewPurchase(
-                        ${purchase.id}
-                      )
-                    ">
-                    Ver
-                  </button>
-
-                  ${
-                    balance > 0
-                      ? `
-                        <button
-                          class="btn btn-rose btn-sm"
-                          onclick="
-                            openPurchasePayment(
-                              ${purchase.id}
-                            )
-                          ">
-                          Pagar
-                        </button>
-                      `
-                      : ""
-                  }
-
-                </div>
-
-              </td>
-
-            </tr>
-
-          `;
-
-        }
-      ).join("");
+    return;
   }
+
+  tbody.innerHTML =
+    purchases.map(purchase => {
+
+      const id =
+        purchase.id ??
+        purchase.purchase_id;
+
+      const total =
+        number(purchase.total);
+
+      const entry =
+        number(
+          purchase.entry ??
+          purchase.paid_amount ??
+          0
+        );
+
+      const remaining =
+        Math.max(
+          0,
+          total - entry
+        );
+
+      const installments =
+        Number(
+          purchase.installments ||
+          purchase.installment_count ||
+          1
+        );
+
+      const status =
+        purchase.status ||
+        (
+          remaining <= 0
+            ? "Pago"
+            : "Pendente"
+        );
+
+      return `
+        <tr>
+
+          <td>
+            ${formatDate(
+              purchase.date ||
+              purchase.created_at
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              purchase.supplier_name ||
+              purchase.supplier ||
+              ""
+            )}
+          </td>
+
+          <td>
+            ${money(total)}
+          </td>
+
+          <td>
+            ${money(entry)}
+          </td>
+
+          <td>
+            ${money(remaining)}
+          </td>
+
+          <td>
+            ${installments}
+          </td>
+
+          <td>
+            ${escapeHtml(status)}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              purchase.payment_method ||
+              purchase.payment ||
+              ""
+            )}
+          </td>
+
+          <td class="actions">
+
+            <button
+              type="button"
+              onclick="viewPurchase(${id})">
+              Ver
+            </button>
+
+            ${
+              remaining > 0
+                ? `
+                  <button
+                    type="button"
+                    onclick="openPurchasePayment(${id})">
+                    Pagamento
+                  </button>
+                `
+                : ""
+            }
+
+          </td>
+
+        </tr>
+      `;
+
+    }).join("");
 
   updatePurchaseSummary();
 }
@@ -2961,9 +2979,7 @@ function updatePurchaseSummary() {
     purchases.reduce(
       (sum, purchase) =>
         sum +
-        number(
-          purchase.total
-        ),
+        number(purchase.total),
       0
     );
 
@@ -2972,44 +2988,68 @@ function updatePurchaseSummary() {
       (sum, purchase) =>
         sum +
         number(
-          purchase.paid_amount ??
-          purchase.entry
+          purchase.entry ??
+          purchase.paid_amount
         ),
       0
     );
 
-  const balance =
-    purchases.reduce(
-      (sum, purchase) =>
-        sum +
-        number(
-          purchase.balance ??
-          number(purchase.total) -
-          number(
-            purchase.paid_amount ??
-            purchase.entry
-          )
-        ),
-      0
+  const payable =
+    Math.max(
+      0,
+      total - paid
     );
 
-  if ($("purchasesTotal")) {
-    $("purchasesTotal").textContent =
+  const totalElement =
+    $("purchasesTotal");
+
+  const paidElement =
+    $("purchasesPaid");
+
+  const payableElement =
+    $("purchasesPayable");
+
+  if (totalElement) {
+    totalElement.textContent =
       money(total);
   }
 
-  if ($("purchasesPaid")) {
-    $("purchasesPaid").textContent =
+  if (paidElement) {
+    paidElement.textContent =
       money(paid);
   }
 
-  if ($("purchasesBalance")) {
-    $("purchasesBalance").textContent =
-      money(balance);
+  if (payableElement) {
+    payableElement.textContent =
+      money(payable);
+  }
+
+  const total2 =
+    $("purchaseTotalValue");
+
+  const paid2 =
+    $("purchasePaidValue");
+
+  const payable2 =
+    $("purchasePayableValue");
+
+  if (total2) {
+    total2.textContent =
+      money(total);
+  }
+
+  if (paid2) {
+    paid2.textContent =
+      money(paid);
+  }
+
+  if (payable2) {
+    payable2.textContent =
+      money(payable);
   }
 }
 
-function openPurchaseModal() {
+function openPurchaseModal(purchase = null) {
 
   const form =
     $("purchaseForm");
@@ -3018,48 +3058,63 @@ function openPurchaseModal() {
     form.reset();
   }
 
+  currentPurchaseId =
+    purchase?.id ??
+    purchase?.purchase_id ??
+    null;
+
+  if ($("purchaseId")) {
+    $("purchaseId").value =
+      currentPurchaseId ||
+      "";
+  }
+
   if ($("purchaseDate")) {
     $("purchaseDate").value =
+      purchase?.date ||
       today();
   }
 
-  updateSupplierSelect();
+  if ($("purchaseSupplier")) {
 
-  updateProductSelects();
+    updateSupplierSelects();
 
-  openModal(
-    "purchaseModal"
-  );
+    $("purchaseSupplier").value =
+      purchase?.supplier_id ||
+      "";
+  }
+
+  if ($("purchaseEntry")) {
+    $("purchaseEntry").value =
+      purchase?.entry ??
+      0;
+  }
+
+  if ($("purchaseInstallments")) {
+    $("purchaseInstallments").value =
+      purchase?.installments ||
+      1;
+  }
+
+  if ($("purchaseItems")) {
+    $("purchaseItems").innerHTML = "";
+  }
+
+  calculatePurchaseTotal();
+
+  openModal("purchaseModal");
 }
 
 function addPurchaseItem() {
 
   const productId =
-    Number(
-      $("purchaseProduct")?.value || 0
-    );
+    $("purchaseProduct")?.value;
 
-  const quantity =
-    number(
-      $("purchaseQuantity")?.value ||
-      1
-    );
-
-  const cost =
-    number(
-      $("purchaseCost")?.value ||
-      0
-    );
-
-  if (
-    !productId ||
-    quantity <= 0 ||
-    cost <= 0
-  ) {
+  if (!productId) {
 
     showAlert(
-      "Informe produto, quantidade e custo.",
-      "danger"
+      "Selecione o produto.",
+      "error"
     );
 
     return;
@@ -3067,98 +3122,144 @@ function addPurchaseItem() {
 
   const product =
     products.find(
-      p =>
-        Number(p.id) ===
-        productId
+      item =>
+        Number(item.id ?? item.product_id) ===
+        Number(productId)
     );
 
-  if (!product) return;
+  if (!product) {
+
+    showAlert(
+      "Produto não encontrado.",
+      "error"
+    );
+
+    return;
+  }
+
+  const quantity =
+    number(
+      $("purchaseQuantity")?.value ||
+      1
+    );
+
+  const price =
+    number(
+      $("purchaseUnitPrice")?.value ||
+      product.cost ||
+      product.cost_price ||
+      0
+    );
+
+  if (quantity <= 0) {
+
+    showAlert(
+      "Informe uma quantidade válida.",
+      "error"
+    );
+
+    return;
+  }
 
   const container =
     $("purchaseItems");
 
   if (!container) return;
 
-  const item =
-    document.createElement("div");
+  const existing =
+    container.querySelector(
+      `[data-product-id="${productId}"]`
+    );
 
-  item.className =
-    "cart-item";
+  if (existing) {
 
-  item.dataset.productId =
-    productId;
+    const quantityInput =
+      existing.querySelector(
+        ".purchase-item-quantity"
+      );
 
-  item.dataset.quantity =
-    quantity;
+    if (quantityInput) {
 
-  item.dataset.cost =
-    cost;
+      quantityInput.value =
+        number(
+          quantityInput.value
+        ) + quantity;
 
-  item.innerHTML = `
+    }
 
-    <div>
+  } else {
 
-      <div class="cart-item-name">
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "purchase-item";
+
+    row.dataset.productId =
+      productId;
+
+    row.setAttribute(
+      "data-product-id",
+      productId
+    );
+
+    row.innerHTML = `
+
+      <div class="purchase-item-name">
         ${escapeHtml(
-          product.name
+          product.name ||
+          product.product_name ||
+          ""
         )}
       </div>
 
-      <div class="cart-item-detail">
-        ${quantity}
-        unidade(s) ×
-        ${money(cost)}
+      <div>
+        <input
+          type="number"
+          class="purchase-item-quantity"
+          min="1"
+          value="${quantity}"
+          oninput="calculatePurchaseTotal()"
+        >
       </div>
 
-    </div>
+      <div>
+        <input
+          type="number"
+          class="purchase-item-price"
+          min="0"
+          step="0.01"
+          value="${price.toFixed(2)}"
+          oninput="calculatePurchaseTotal()"
+        >
+      </div>
 
-    <div
-      style="
-        display:flex;
-        align-items:center;
-        gap:10px
-      ">
-
-      <strong>
+      <div class="purchase-item-subtotal">
         ${money(
-          quantity * cost
+          quantity * price
         )}
-      </strong>
+      </div>
 
       <button
         type="button"
-        class="btn btn-danger btn-sm"
-        onclick="
-          this.closest('.cart-item').remove();
-          calculatePurchaseTotal()
-        ">
-        ×
+        onclick="this.closest('.purchase-item').remove(); calculatePurchaseTotal();">
+        Remover
       </button>
 
-    </div>
+    `;
 
-  `;
-
-  container.appendChild(
-    item
-  );
-
-  if ($("purchaseProduct")) {
-    $("purchaseProduct").value =
-      "";
-  }
-
-  if ($("purchaseQuantity")) {
-    $("purchaseQuantity").value =
-      1;
-  }
-
-  if ($("purchaseCost")) {
-    $("purchaseCost").value =
-      "";
+    container.appendChild(row);
   }
 
   calculatePurchaseTotal();
+
+  if ($("purchaseQuantity")) {
+    $("purchaseQuantity").value = 1;
+  }
+
+  if ($("purchaseUnitPrice")) {
+    $("purchaseUnitPrice").value = "";
+  }
 }
 
 function getPurchaseItems() {
@@ -3166,31 +3267,48 @@ function getPurchaseItems() {
   const container =
     $("purchaseItems");
 
-  if (!container) {
-    return [];
-  }
+  if (!container) return [];
 
   return qsa(
-    ".cart-item",
+    ".purchase-item",
     container
-  ).map(item => ({
+  ).map(row => {
 
-    product_id:
-      Number(
-        item.dataset.productId
-      ),
+    const productId =
+      row.dataset.productId;
 
-    quantity:
+    const quantity =
       number(
-        item.dataset.quantity
-      ),
+        qs(
+          ".purchase-item-quantity",
+          row
+        )?.value
+      );
 
-    cost:
+    const price =
       number(
-        item.dataset.cost
-      )
+        qs(
+          ".purchase-item-price",
+          row
+        )?.value
+      );
 
-  }));
+    return {
+
+      product_id:
+        Number(productId),
+
+      quantity,
+
+      price
+
+    };
+
+  }).filter(
+    item =>
+      item.product_id &&
+      item.quantity > 0
+  );
 }
 
 function calculatePurchaseTotal() {
@@ -3198,44 +3316,126 @@ function calculatePurchaseTotal() {
   const items =
     getPurchaseItems();
 
-  const total =
-    items.reduce(
-      (sum, item) =>
-        sum +
-        item.quantity *
-        item.cost,
-      0
-    );
+  let total = 0;
+
+  items.forEach(item => {
+
+    total +=
+      item.quantity *
+      item.price;
+
+  });
+
+  qsa(
+    ".purchase-item",
+    $("purchaseItems")
+  ).forEach(row => {
+
+    const quantity =
+      number(
+        qs(
+          ".purchase-item-quantity",
+          row
+        )?.value
+      );
+
+    const price =
+      number(
+        qs(
+          ".purchase-item-price",
+          row
+        )?.value
+      );
+
+    const subtotal =
+      qs(
+        ".purchase-item-subtotal",
+        row
+      );
+
+    if (subtotal) {
+
+      subtotal.textContent =
+        money(
+          quantity * price
+        );
+
+    }
+
+  });
 
   const entry =
     number(
-      $("purchaseEntry")?.value ||
-      0
+      $("purchaseEntry")?.value
     );
 
-  const balance =
+  const payable =
     Math.max(
       0,
       total - entry
     );
 
-  if ($("purchaseTotalValue")) {
-    $("purchaseTotalValue").textContent =
+  const installments =
+    Math.max(
+      1,
+      parseInt(
+        $("purchaseInstallments")?.value ||
+        "1",
+        10
+      )
+    );
+
+  const installmentValue =
+    payable / installments;
+
+  const totalElement =
+    $("purchaseTotal");
+
+  if (totalElement) {
+
+    if (
+      totalElement.tagName === "INPUT"
+    ) {
+      totalElement.value =
+        total.toFixed(2);
+    } else {
+      totalElement.textContent =
+        money(total);
+    }
+
+  }
+
+  const totalDisplay =
+    $("purchaseTotalDisplay");
+
+  if (totalDisplay) {
+    totalDisplay.textContent =
       money(total);
   }
 
-  if ($("purchaseBalanceValue")) {
-    $("purchaseBalanceValue").textContent =
-      money(balance);
+  const payableDisplay =
+    $("purchasePayableDisplay");
+
+  if (payableDisplay) {
+    payableDisplay.textContent =
+      money(payable);
+  }
+
+  const installmentDisplay =
+    $("purchaseInstallmentDisplay");
+
+  if (installmentDisplay) {
+    installmentDisplay.textContent =
+      money(installmentValue);
   }
 
   return {
 
     total,
-
     entry,
-
-    balance
+    payable,
+    installments,
+    installmentValue
 
   };
 }
@@ -3251,7 +3451,7 @@ async function savePurchase(event) {
 
     showAlert(
       "Adicione pelo menos um produto à compra.",
-      "danger"
+      "error"
     );
 
     return;
@@ -3264,44 +3464,30 @@ async function savePurchase(event) {
     $("purchaseSupplier")?.value ||
     null;
 
-  if (!supplierId) {
-
-    showAlert(
-      "Selecione o fornecedor.",
-      "danger"
-    );
-
-    return;
-  }
-
-  const payload = {
+  const body = {
 
     supplier_id:
-      supplierId,
+      supplierId
+        ? Number(supplierId)
+        : null,
 
     date:
       $("purchaseDate")?.value ||
       today(),
 
-    total:
-      totals.total,
-
     entry:
       totals.entry,
 
-    payment:
-      $("purchasePayment")?.value ||
-      "Fiado",
-
     installments:
-      number(
-        $("purchaseInstallments")?.value ||
-        1
-      ),
+      totals.installments,
 
-    notes:
-      $("purchaseNotes")?.value?.trim() ||
-      "",
+    payment_method:
+      $("purchasePaymentMethod")?.value ||
+      $("purchasePayment")?.value ||
+      "Pendente",
+
+    total:
+      totals.total,
 
     items
 
@@ -3310,37 +3496,48 @@ async function savePurchase(event) {
   try {
 
     await api(
-      "/api/purchases",
+      currentPurchaseId
+        ? `/api/purchases/${currentPurchaseId}`
+        : "/api/purchases",
       {
-        method: "POST",
-
-        body:
-          JSON.stringify(payload)
+        method:
+          currentPurchaseId
+            ? "PUT"
+            : "POST",
+        body
       }
     );
 
-    closeModal(
-      "purchaseModal"
-    );
+    closeModal("purchaseModal");
 
-    await Promise.all([
+    currentPurchaseId =
+      null;
+
+    await Promise.allSettled([
       loadPurchases(),
       loadProducts(),
-      loadStock(),
-      loadDashboard()
+      loadStock()
     ]);
 
+    updateProductSelects();
+
+    renderPurchases();
+    renderProducts();
+    renderStock();
+
     showAlert(
-      "Compra registrada e estoque atualizado."
+      "Compra registrada com sucesso."
     );
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível salvar a compra.",
+      "error"
+    );
   }
 }
 
@@ -3357,191 +3554,121 @@ async function viewPurchase(id) {
       data.purchase ||
       data;
 
-    currentPurchaseId =
-      id;
+    const items =
+      data.items ||
+      purchase.items ||
+      [];
+
+    const total =
+      number(purchase.total);
+
+    const entry =
+      number(
+        purchase.entry ??
+        purchase.paid_amount
+      );
+
+    const remaining =
+      Math.max(
+        0,
+        total - entry
+      );
 
     let html = `
 
-      <div class="form-grid">
+      <div class="details">
 
-        <div>
+        <p>
+          <strong>Fornecedor:</strong>
+          ${escapeHtml(
+            purchase.supplier_name ||
+            ""
+          )}
+        </p>
 
-          <strong>
-            Fornecedor
-          </strong>
+        <p>
+          <strong>Data:</strong>
+          ${formatDate(
+            purchase.date ||
+            purchase.created_at
+          )}
+        </p>
 
-          <div>
-            ${escapeHtml(
-              purchase.supplier_name ||
-              "-"
-            )}
-          </div>
+        <p>
+          <strong>Total:</strong>
+          ${money(total)}
+        </p>
 
-        </div>
+        <p>
+          <strong>Entrada:</strong>
+          ${money(entry)}
+        </p>
 
-        <div>
-
-          <strong>
-            Data
-          </strong>
-
-          <div>
-            ${formatDate(
-              purchase.date ||
-              purchase.created_at
-            )}
-          </div>
-
-        </div>
-
-        <div>
-
-          <strong>
-            Total
-          </strong>
-
-          <div>
-            ${money(
-              purchase.total
-            )}
-          </div>
-
-        </div>
-
-        <div>
-
-          <strong>
-            Entrada
-          </strong>
-
-          <div>
-            ${money(
-              purchase.entry || 0
-            )}
-          </div>
-
-        </div>
-
-        <div>
-
-          <strong>
-            A pagar
-          </strong>
-
-          <div>
-            ${money(
-              purchase.balance ??
-              number(purchase.total) -
-              number(
-                purchase.paid_amount
-              )
-            )}
-          </div>
-
-        </div>
-
-        <div>
-
-          <strong>
-            Parcelas
-          </strong>
-
-          <div>
-            ${purchase.installments || 1}
-          </div>
-
-        </div>
+        <p>
+          <strong>A pagar:</strong>
+          ${money(remaining)}
+        </p>
 
       </div>
 
+      <h4>Produtos</h4>
+
+      <div class="details-items">
+
     `;
 
-    if (
-      Array.isArray(
-        purchase.items
-      )
-    ) {
+    if (items.length) {
 
-      html += `
+      html += items.map(item => {
 
-        <div
-          style="margin-top:20px">
+        const quantity =
+          number(item.quantity);
 
-          <h4
-            style="color:var(--purple-dark)">
-            Produtos
-          </h4>
+        const price =
+          number(
+            item.price ??
+            item.unit_price
+          );
 
-          <div class="table-wrapper">
+        return `
+          <div class="detail-row">
 
-            <table>
+            <span>
+              ${escapeHtml(
+                item.product_name ||
+                item.name ||
+                ""
+              )}
+            </span>
 
-              <thead>
-
-                <tr>
-                  <th>Produto</th>
-                  <th>Quantidade</th>
-                  <th>Custo</th>
-                  <th>Total</th>
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                ${
-                  purchase.items.map(
-                    item => `
-
-                      <tr>
-
-                        <td>
-                          ${escapeHtml(
-                            item.product_name ||
-                            item.name ||
-                            "-"
-                          )}
-                        </td>
-
-                        <td>
-                          ${item.quantity}
-                        </td>
-
-                        <td>
-                          ${money(
-                            item.cost
-                          )}
-                        </td>
-
-                        <td>
-                          ${money(
-                            number(item.cost) *
-                            number(item.quantity)
-                          )}
-                        </td>
-
-                      </tr>
-
-                    `
-                  ).join("")
-                }
-
-              </tbody>
-
-            </table>
+            <span>
+              ${quantity} × ${money(price)}
+            </span>
 
           </div>
+        `;
 
-        </div>
+      }).join("");
 
+    } else {
+
+      html += `
+        <p>
+          Nenhum item encontrado.
+        </p>
       `;
+
     }
 
-    if (
-      $("purchaseDetailsBody")
-    ) {
+    html += `
+      </div>
+    `;
 
-      $("purchaseDetailsBody").innerHTML =
+    const container =
+      $("purchaseDetails");
+
+    if (container) {
+      container.innerHTML =
         html;
     }
 
@@ -3551,25 +3678,54 @@ async function viewPurchase(id) {
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível carregar a compra.",
+      "error"
+    );
   }
 }
 
 function openPurchasePayment(id) {
 
   currentPurchaseId =
-    id;
+    Number(id);
 
-  if (
-    $("purchasePaymentAmount")
-  ) {
+  const purchase =
+    purchases.find(
+      item =>
+        Number(
+          item.id ??
+          item.purchase_id
+        ) ===
+        Number(id)
+    );
+
+  if ($("purchasePaymentId")) {
+    $("purchasePaymentId").value =
+      id;
+  }
+
+  if ($("purchasePaymentAmount")) {
+
+    const total =
+      number(
+        purchase?.total
+      );
+
+    const entry =
+      number(
+        purchase?.entry ??
+        purchase?.paid_amount
+      );
 
     $("purchasePaymentAmount").value =
-      "";
+      Math.max(
+        0,
+        total - entry
+      ).toFixed(2);
 
   }
 
@@ -3578,29 +3734,49 @@ function openPurchasePayment(id) {
   );
 }
 
-async function savePurchasePayment(
-  event
-) {
+async function savePurchasePayment(event) {
 
   event.preventDefault();
+
+  if (!currentPurchaseId) {
+
+    showAlert(
+      "Compra não selecionada.",
+      "error"
+    );
+
+    return;
+  }
 
   const amount =
     number(
       $("purchasePaymentAmount")?.value
     );
 
-  if (
-    !currentPurchaseId ||
-    amount <= 0
-  ) {
+  if (amount <= 0) {
 
     showAlert(
-      "Informe um valor válido.",
-      "danger"
+      "Informe um valor de pagamento válido.",
+      "error"
     );
 
     return;
   }
+
+  const body = {
+
+    amount,
+
+    payment_method:
+      $("purchasePaymentMethod")?.value ||
+      $("purchasePaymentType")?.value ||
+      "Dinheiro",
+
+    date:
+      $("purchasePaymentDate")?.value ||
+      today()
+
+  };
 
   try {
 
@@ -3608,21 +3784,7 @@ async function savePurchasePayment(
       `/api/purchases/${currentPurchaseId}/payments`,
       {
         method: "POST",
-
-        body:
-          JSON.stringify({
-
-            amount,
-
-            payment:
-              $("purchasePaymentMethod")?.value ||
-              "PIX",
-
-            note:
-              $("purchasePaymentNote")?.value?.trim() ||
-              ""
-
-          })
+        body
       }
     );
 
@@ -3630,53 +3792,58 @@ async function savePurchasePayment(
       "purchasePaymentModal"
     );
 
-    await Promise.all([
-      loadPurchases(),
-      loadDashboard()
-    ]);
+    currentPurchaseId =
+      null;
+
+    await loadPurchases();
+
+    renderPurchases();
 
     showAlert(
-      "Pagamento da compra registrado."
+      "Pagamento registrado."
     );
 
   } catch (error) {
 
-    showAlert(
-      error.message,
-      "danger"
-    );
+    console.error(error);
 
+    showAlert(
+      error.message ||
+      "Não foi possível registrar o pagamento.",
+      "error"
+    );
   }
 }
+
 
 /* =========================================================
    DASHBOARD
 ========================================================= */
 
+function setText(id, value) {
+
+  const element =
+    $(id);
+
+  if (!element) return;
+
+  element.textContent =
+    value;
+}
+
 async function loadDashboard() {
+
+  const totalProducts =
+    products.length;
+
+  const totalClients =
+    clients.length;
 
   const totalSales =
     sales.reduce(
       (sum, sale) =>
         sum +
-        number(
-          sale.total
-        ),
-      0
-    );
-
-  const receivable =
-    sales.reduce(
-      (sum, sale) =>
-        sum +
-        number(
-          sale.balance ??
-          number(sale.total) -
-          number(
-            sale.paid_amount ??
-            sale.entry
-          )
-        ),
+        number(sale.total),
       0
     );
 
@@ -3684,55 +3851,69 @@ async function loadDashboard() {
     purchases.reduce(
       (sum, purchase) =>
         sum +
-        number(
-          purchase.total
-        ),
+        number(purchase.total),
+      0
+    );
+
+  const receivable =
+    sales.reduce(
+      (sum, sale) => {
+
+        const total =
+          number(sale.total);
+
+        const paid =
+          number(
+            sale.entry ??
+            sale.paid_amount
+          );
+
+        return sum +
+          Math.max(
+            0,
+            total - paid
+          );
+
+      },
       0
     );
 
   const payable =
     purchases.reduce(
-      (sum, purchase) =>
-        sum +
-        number(
-          purchase.balance ??
-          number(purchase.total) -
+      (sum, purchase) => {
+
+        const total =
+          number(purchase.total);
+
+        const paid =
           number(
-            purchase.paid_amount ??
-            purchase.entry
-          )
-        ),
+            purchase.entry ??
+            purchase.paid_amount
+          );
+
+        return sum +
+          Math.max(
+            0,
+            total - paid
+          );
+
+      },
       0
     );
 
-  const lowStock =
-    products.filter(
-      product => {
+  setText(
+    "dashboardProducts",
+    totalProducts
+  );
 
-        const stock =
-          number(product.stock);
-
-        if (stock <= 0) {
-          return true;
-        }
-
-        return (
-          product.min_stock != null &&
-          stock <=
-          number(product.min_stock)
-        );
-
-      }
-    ).length;
+  setText(
+    "dashboardClients",
+    totalClients
+  );
 
   setText(
     "dashboardSales",
     money(totalSales)
-  );
-
-  setText(
-    "dashboardReceivable",
-    money(receivable)
   );
 
   setText(
@@ -3741,39 +3922,46 @@ async function loadDashboard() {
   );
 
   setText(
+    "dashboardReceivable",
+    money(receivable)
+  );
+
+  setText(
     "dashboardPayable",
     money(payable)
   );
 
   setText(
-    "dashboardProducts",
-    products.length
+    "totalProducts",
+    totalProducts
   );
 
   setText(
-    "dashboardClients",
-    clients.length
+    "totalClients",
+    totalClients
   );
 
   setText(
-    "dashboardLowStock",
-    lowStock
+    "totalSales",
+    money(totalSales)
+  );
+
+  setText(
+    "totalPurchases",
+    money(totalPurchases)
+  );
+
+  setText(
+    "totalReceivable",
+    money(receivable)
+  );
+
+  setText(
+    "totalPayable",
+    money(payable)
   );
 }
 
-function setText(
-  id,
-  value
-) {
-
-  const element =
-    $(id);
-
-  if (element) {
-    element.textContent =
-      value;
-  }
-}
 
 /* =========================================================
    RELATÓRIOS
@@ -3784,116 +3972,154 @@ async function loadReports() {
   try {
 
     const data =
-      await api(
-        "/api/reports"
-      );
+      await api("/api/reports");
 
     renderReports(data);
 
   } catch (error) {
 
     console.error(
-      "Relatórios:",
+      "Erro ao carregar relatórios:",
       error
     );
 
-    renderReports({
-
-      sales:
-        sales,
-
-      purchases:
-        purchases,
-
-      products
-    });
   }
 }
 
-function renderReports(data) {
+function renderReports(data = {}) {
 
-  const reportSales =
-    data.sales ||
-    sales;
+  const reports =
+    data.reports ||
+    data;
 
-  const reportPurchases =
-    data.purchases ||
-    purchases;
+  const receivables =
+    reports.receivables ||
+    {};
 
-  const totalSales =
-    Array.isArray(reportSales)
-      ? reportSales.reduce(
-          (sum, item) =>
-            sum +
-            number(item.total),
-          0
-        )
-      : number(
-          data.total_sales
-        );
+  const months =
+    receivables.months ||
+    [];
 
-  const totalPurchases =
-    Array.isArray(reportPurchases)
-      ? reportPurchases.reduce(
-          (sum, item) =>
-            sum +
-            number(item.total),
-          0
-        )
-      : number(
-          data.total_purchases
-        );
+  const container =
+    $("receivablesMonths");
 
-  setText(
-    "reportTotalSales",
-    money(totalSales)
-  );
+  if (container) {
 
-  setText(
-    "reportTotalPurchases",
-    money(totalPurchases)
-  );
+    if (!months.length) {
 
-  setText(
-    "reportReceivable",
+      container.innerHTML = `
+        <div class="empty">
+          Nenhum valor previsto.
+        </div>
+      `;
 
-    money(
-      sales.reduce(
-        (sum, sale) =>
-          sum +
-          number(
-            sale.balance ??
-            number(sale.total) -
-            number(
-              sale.paid_amount ??
-              sale.entry
-            )
-          ),
-        0
-      )
-    )
-  );
+    } else {
 
-  setText(
-    "reportPayable",
+      container.innerHTML =
+        months.slice(0, 3)
+          .map(month => `
+            <div class="report-month">
 
-    money(
-      purchases.reduce(
-        (sum, purchase) =>
-          sum +
-          number(
-            purchase.balance ??
-            number(purchase.total) -
-            number(
-              purchase.paid_amount ??
-              purchase.entry
-            )
-          ),
-        0
-      )
-    )
-  );
+              <div>
+                ${escapeHtml(
+                  month.label ||
+                  ""
+                )}
+              </div>
+
+              <strong>
+                ${money(
+                  month.total
+                )}
+              </strong>
+
+              <small>
+                ${number(
+                  month.quantity
+                )} parcela(s)
+              </small>
+
+            </div>
+          `)
+          .join("");
+
+    }
+
+  }
 }
+
+
+/* =========================================================
+   NOVOS REGISTROS
+========================================================= */
+
+function newProduct() {
+
+  openProductModal();
+
+}
+
+function newClient() {
+
+  openClientModal();
+
+}
+
+function newSupplier() {
+
+  openSupplierModal();
+
+}
+
+function newSale() {
+
+  saleCart = [];
+
+  const form =
+    $("saleForm");
+
+  if (form) {
+    form.reset();
+  }
+
+  if ($("saleDate")) {
+    $("saleDate").value =
+      today();
+  }
+
+  if ($("saleInstallments")) {
+    $("saleInstallments").value =
+      1;
+  }
+
+  if ($("saleEntry")) {
+    $("saleEntry").value =
+      "0";
+  }
+
+  if ($("saleDiscount")) {
+    $("saleDiscount").value =
+      "0";
+  }
+
+  updateProductSelects();
+  updateClientSelect();
+
+  renderSaleCart();
+  calculateSaleTotals();
+
+  showPage("sales");
+}
+
+function newPurchase() {
+
+  currentPurchaseId =
+    null;
+
+  openPurchaseModal();
+
+}
+
 
 /* =========================================================
    EVENTOS
@@ -3910,30 +4136,119 @@ function setupEvents() {
 
   $("logoutButton")?.addEventListener(
     "click",
-    logout
-  );
+    function(event) {
 
-  /* NAVEGAÇÃO */
+      event.preventDefault();
 
-  qsa(".nav-item").forEach(
-    button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          const page =
-            button.dataset.page;
-
-          if (page) {
-            showPage(page);
-          }
-
-        }
-      );
+      logout();
 
     }
   );
+
+
+  /* NAVEGAÇÃO */
+
+  qsa(".nav-item").forEach(button => {
+
+    button.addEventListener(
+      "click",
+      function(event) {
+
+        event.preventDefault();
+
+        const page =
+          button.dataset.page;
+
+        if (page) {
+          showPage(page);
+        }
+
+      }
+    );
+
+  });
+
+
+  /* AÇÕES RÁPIDAS DO DASHBOARD */
+
+  qsa(".quick-action").forEach(button => {
+
+    button.addEventListener(
+      "click",
+      function(event) {
+
+        event.preventDefault();
+
+        const page =
+          button.dataset.page;
+
+        if (page) {
+          showPage(page);
+        }
+
+      }
+    );
+
+  });
+
+
+  /* BOTÕES PRINCIPAIS */
+
+  $("newProductButton")?.addEventListener(
+    "click",
+    function(event) {
+
+      event.preventDefault();
+
+      newProduct();
+
+    }
+  );
+
+  $("newClientButton")?.addEventListener(
+    "click",
+    function(event) {
+
+      event.preventDefault();
+
+      newClient();
+
+    }
+  );
+
+  $("newSupplierButton")?.addEventListener(
+    "click",
+    function(event) {
+
+      event.preventDefault();
+
+      newSupplier();
+
+    }
+  );
+
+  $("newStockButton")?.addEventListener(
+    "click",
+    function(event) {
+
+      event.preventDefault();
+
+      openStockModal();
+
+    }
+  );
+
+  $("newPurchaseButton")?.addEventListener(
+    "click",
+    function(event) {
+
+      event.preventDefault();
+
+      newPurchase();
+
+    }
+  );
+
 
   /* PRODUTO */
 
@@ -3942,6 +4257,7 @@ function setupEvents() {
     saveProduct
   );
 
+
   /* CLIENTE */
 
   $("clientForm")?.addEventListener(
@@ -3949,12 +4265,14 @@ function setupEvents() {
     saveClient
   );
 
+
   /* FORNECEDOR */
 
   $("supplierForm")?.addEventListener(
     "submit",
     saveSupplier
   );
+
 
   /* VENDA */
 
@@ -3965,7 +4283,13 @@ function setupEvents() {
 
   $("saleAddProduct")?.addEventListener(
     "click",
-    addSaleProduct
+    function(event) {
+
+      event.preventDefault();
+
+      addSaleProduct();
+
+    }
   );
 
   $("saleDiscount")?.addEventListener(
@@ -3983,6 +4307,7 @@ function setupEvents() {
     calculateSaleTotals
   );
 
+
   /* PAGAMENTO VENDA */
 
   $("paymentForm")?.addEventListener(
@@ -3990,12 +4315,14 @@ function setupEvents() {
     saveSalePayment
   );
 
+
   /* ESTOQUE */
 
   $("stockForm")?.addEventListener(
     "submit",
     saveStockMove
   );
+
 
   /* COMPRA */
 
@@ -4006,13 +4333,25 @@ function setupEvents() {
 
   $("purchaseAddProduct")?.addEventListener(
     "click",
-    addPurchaseItem
+    function(event) {
+
+      event.preventDefault();
+
+      addPurchaseItem();
+
+    }
   );
 
   $("purchaseEntry")?.addEventListener(
     "input",
     calculatePurchaseTotal
   );
+
+  $("purchaseInstallments")?.addEventListener(
+    "input",
+    calculatePurchaseTotal
+  );
+
 
   /* PAGAMENTO COMPRA */
 
@@ -4021,53 +4360,63 @@ function setupEvents() {
     savePurchasePayment
   );
 
+
   /* FECHAR MODAIS */
 
-  qsa("[data-close-modal]").forEach(
-    button => {
+  qsa(
+    "[data-close-modal], [data-close]"
+  ).forEach(button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+    button.addEventListener(
+      "click",
+      function(event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const modalId =
+          button.dataset.closeModal ||
+          button.dataset.close;
+
+        if (modalId) {
+          closeModal(modalId);
+        }
+
+      }
+    );
+
+  });
+
+
+  /* CLIQUE FORA DO MODAL */
+
+  qsa(".modal").forEach(modal => {
+
+    modal.addEventListener(
+      "click",
+      function(event) {
+
+        if (
+          event.target === modal
+        ) {
 
           closeModal(
-            button.dataset.closeModal
+            modal.id
           );
 
         }
-      );
 
-    }
-  );
+      }
+    );
 
-  qsa(".modal").forEach(
-    modal => {
+  });
 
-      modal.addEventListener(
-        "click",
-        event => {
-
-          if (
-            event.target === modal
-          ) {
-
-            modal.classList.remove(
-              "open"
-            );
-
-          }
-
-        }
-      );
-
-    }
-  );
 
   /* ESC */
 
   document.addEventListener(
     "keydown",
-    event => {
+    function(event) {
 
       if (
         event.key === "Escape"
@@ -4079,102 +4428,97 @@ function setupEvents() {
 
     }
   );
+
 }
+
 
 /* =========================================================
-   BOTÕES GLOBAIS
+   EXPORTAÇÕES GLOBAIS
 ========================================================= */
 
-function newProduct() {
-  openProductModal();
-}
+window.login =
+  login;
 
-function newClient() {
-  openClientModal();
-}
+window.logout =
+  logout;
 
-function newSupplier() {
-  openSupplierModal();
-}
+window.showPage =
+  showPage;
 
-function newSale() {
+window.openModal =
+  openModal;
 
-  saleCart = [];
+window.closeModal =
+  closeModal;
 
-  if ($("saleForm")) {
-    $("saleForm").reset();
-  }
+window.closeAllModals =
+  closeAllModals;
 
-  if ($("saleDate")) {
-    $("saleDate").value =
-      today();
-  }
+window.newProduct =
+  newProduct;
 
-  showPage("sale");
-}
+window.newClient =
+  newClient;
 
-function newPurchase() {
-  openPurchaseModal();
-}
+window.newSupplier =
+  newSupplier;
 
-/* =========================================================
-   FUNÇÕES GLOBAIS PARA HTML INLINE
-========================================================= */
+window.newSale =
+  newSale;
 
-window.login = login;
-window.logout = logout;
+window.newPurchase =
+  newPurchase;
 
-window.showPage = showPage;
+window.editProduct =
+  editProduct;
 
-window.openModal = openModal;
-window.closeModal = closeModal;
-window.closeAllModals = closeAllModals;
+window.deleteProduct =
+  deleteProduct;
 
-/* PRODUTOS */
-window.newProduct = newProduct;
-window.openProductModal = openProductModal;
-window.editProduct = editProduct;
-window.deleteProduct = deleteProduct;
-window.saveProduct = saveProduct;
+window.editClient =
+  editClient;
 
-/* CLIENTES */
-window.newClient = newClient;
-window.openClientModal = openClientModal;
-window.editClient = editClient;
-window.deleteClient = deleteClient;
-window.saveClient = saveClient;
+window.deleteClient =
+  deleteClient;
 
-/* FORNECEDORES */
-window.newSupplier = newSupplier;
-window.openSupplierModal = openSupplierModal;
-window.editSupplier = editSupplier;
-window.deleteSupplier = deleteSupplier;
-window.saveSupplier = saveSupplier;
+window.editSupplier =
+  editSupplier;
 
-/* VENDAS */
-window.newSale = newSale;
-window.addSaleProduct = addSaleProduct;
-window.removeSaleProduct = removeSaleProduct;
-window.changeSaleQuantity = changeSaleQuantity;
-window.calculateSaleTotals = calculateSaleTotals;
-window.saveSale = saveSale;
-window.viewSale = viewSale;
-window.openSalePayment = openSalePayment;
-window.saveSalePayment = saveSalePayment;
+window.deleteSupplier =
+  deleteSupplier;
 
-/* ESTOQUE */
-window.openStockModal = openStockModal;
-window.saveStockMove = saveStockMove;
+window.addSaleProduct =
+  addSaleProduct;
 
-/* COMPRAS */
-window.newPurchase = newPurchase;
-window.openPurchaseModal = openPurchaseModal;
-window.addPurchaseItem = addPurchaseItem;
-window.calculatePurchaseTotal = calculatePurchaseTotal;
-window.savePurchase = savePurchase;
-window.viewPurchase = viewPurchase;
-window.openPurchasePayment = openPurchasePayment;
-window.savePurchasePayment = savePurchasePayment;
+window.removeSaleProduct =
+  removeSaleProduct;
+
+window.changeSaleQuantity =
+  changeSaleQuantity;
+
+window.viewSale =
+  viewSale;
+
+window.openSalePayment =
+  openSalePayment;
+
+window.openStockModal =
+  openStockModal;
+
+window.openPurchaseModal =
+  openPurchaseModal;
+
+window.addPurchaseItem =
+  addPurchaseItem;
+
+window.calculatePurchaseTotal =
+  calculatePurchaseTotal;
+
+window.viewPurchase =
+  viewPurchase;
+
+window.openPurchasePayment =
+  openPurchasePayment;
 
 
 /* =========================================================
@@ -4183,83 +4527,54 @@ window.savePurchasePayment = savePurchasePayment;
 
 document.addEventListener(
   "DOMContentLoaded",
-  async () => {
-
-    console.log(
-      "ESSÊNCIA & CHARME: iniciando app..."
-    );
+  async function() {
 
     try {
 
-      /*
-       * Eventos precisam ser registrados primeiro.
-       */
       setupEvents();
 
-      /*
-       * Datas padrão.
-       */
       if ($("saleDate")) {
-        $("saleDate").value = today();
+        $("saleDate").value =
+          today();
       }
 
       if ($("purchaseDate")) {
-        $("purchaseDate").value = today();
+        $("purchaseDate").value =
+          today();
       }
 
-      /*
-       * Verifica sessão.
-       */
-      const logged = await checkLogin();
-
-      if (!logged) {
-        console.log(
-          "ESSÊNCIA & CHARME: usuário não autenticado."
-        );
-        return;
+      if ($("stockDate")) {
+        $("stockDate").value =
+          today();
       }
 
-      /*
-       * Carrega dados.
-       *
-       * loadAll() já usa Promise.allSettled(),
-       * portanto uma API que falhar não deve
-       * impedir as demais de carregar.
-       */
-      await loadAll();
+      if ($("paymentDate")) {
+        $("paymentDate").value =
+          today();
+      }
 
-      /*
-       * Abre o dashboard.
-       */
-      showPage("dashboard");
+      if ($("purchasePaymentDate")) {
+        $("purchasePaymentDate").value =
+          today();
+      }
 
-      console.log(
-        "ESSÊNCIA & CHARME: app carregado."
-      );
+      const authenticated =
+        await checkLogin();
+
+      if (authenticated) {
+
+        await loadAll();
+
+        showPage("dashboard");
+
+      }
 
     } catch (error) {
 
-      /*
-       * Um erro de inicialização não pode
-       * simplesmente deixar todos os botões mortos.
-       */
       console.error(
-        "ERRO CRÍTICO NA INICIALIZAÇÃO DO APP:",
+        "Erro na inicialização:",
         error
       );
-
-      /*
-       * Tenta pelo menos manter a interface utilizável.
-       */
-      try {
-        showApp();
-        showPage("dashboard");
-      } catch (fallbackError) {
-        console.error(
-          "Erro no fallback:",
-          fallbackError
-        );
-      }
 
     }
 
