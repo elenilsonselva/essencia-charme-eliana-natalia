@@ -3,411 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Essência & Charme</title>
-
-  <meta name="theme-color" content="#b86f7d">
-  <meta name="description" content="Sistema de vendas de perfumes e cosméticos">
-
   <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
 
-  <!-- =====================================================
+  <!-- =========================
        LOGIN
-  ====================================================== -->
+  ========================== -->
 
   <section id="loginScreen" class="login-screen">
 
     <div class="login-card">
 
       <div class="login-logo">
-        <div class="logo-symbol">E</div>
 
-        <div>
-          <h1>Essência & Charme</h1>
-          <p>Perfumes, moda & vendas</p>
+        <div class="logo-symbol">
+          E
         </div>
+
+        <h1>
+          Essência & Charme
+        </h1>
+
+        <p>
+          Perfumes, cosméticos & estilo
+        </p>
+
+        <small>
+          by Eliana Natália
+        </small>
+
       </div>
 
-      <div class="login-form">
+      <h2>
+        Acesso ao sistema
+      </h2>
 
-        <label for="loginUsername">
-          Usuário
-        </label>
+      <form id="loginForm">
 
-        <input
-          id="loginUsername"
-          type="text"
-          value="admin"
-          autocomplete="username"
-        >
+        <div class="form-group">
+          <label for="loginUsername">
+            Usuário
+          </label>
 
-        <label for="loginPassword">
-          Senha
-        </label>
+          <input
+            type="text"
+            id="loginUsername"
+            autocomplete="username"
+            required
+          >
+        </div>
 
-        <input
-          id="loginPassword"
-          type="password"
-          autocomplete="current-password"
-        >
+        <div class="form-group">
+          <label for="loginPassword">
+            Senha
+          </label>
+
+          <input
+            type="password"
+            id="loginPassword"
+            autocomplete="current-password"
+            required
+          >
+        </div>
+
+        <div
+          id="loginError"
+          class="alert alert-danger"
+          style="display:none;"
+        ></div>
 
         <button
-          id="loginButton"
-          class="btn btn-primary btn-full"
-          type="button"
+          type="submit"
+          class="btn btn-primary btn-block"
         >
           Entrar
         </button>
 
-        <div
-          id="loginError"
-          class="form-error"
-        ></div>
-
-      </div>
+      </form>
 
     </div>
 
   </section>
 
 
-  <!-- =====================================================
+  <!-- =========================
        APLICAÇÃO
-  ====================================================== -->
+  ========================== -->
 
-  <div id="appShell" class="app-shell hidden">
+  <div id="app" class="hidden">
 
-    <!-- SIDEBAR -->
+    <div id="appShell" class="app-shell">
 
-    <aside class="sidebar">
+      <!-- =========================
+           SIDEBAR
+      ========================== -->
 
-      <div class="brand">
+      <aside class="sidebar">
 
-        <div class="brand-mark">
-          E
-        </div>
+        <div class="brand">
 
-        <div>
-          <div class="brand-name">
-            Essência & Charme
+          <div class="brand-mark">
+            E
           </div>
-
-          <div class="brand-subtitle">
-            Perfumes, moda & vendas
-          </div>
-        </div>
-
-      </div>
-
-
-      <nav class="main-nav">
-
-        <button
-          class="nav-item active"
-          data-page="dashboard"
-        >
-          <span>⌂</span>
-          Dashboard
-        </button>
-
-        <button
-          class="nav-item"
-          data-page="products"
-        >
-          <span>🧴</span>
-          Produtos
-        </button>
-
-        <button
-          class="nav-item"
-          data-page="clients"
-        >
-          <span>👥</span>
-          Clientes
-        </button>
-
-        <button
-          class="nav-item"
-          data-page="suppliers"
-        >
-          <span>🚚</span>
-          Fornecedores
-        </button>
-
-        <button
-          class="nav-item nav-sale"
-          data-page="new-sale"
-        >
-          <span>🛒</span>
-          Nova Venda
-        </button>
-
-        <button
-          class="nav-item"
-          data-page="sales"
-        >
-          <span>💰</span>
-          Vendas
-        </button>
-
-        <button
-          class="nav-item"
-          data-page="stock"
-        >
-          <span>📦</span>
-          Estoque
-        </button>
-
-        <button
-          class="nav-item"
-          data-page="reports"
-        >
-          <span>📊</span>
-          Relatórios
-        </button>
-
-        <button
-          class="nav-item"
-          data-page="purchases"
-        >
-          <span>🧾</span>
-          Compras / Contas a Pagar
-        </button>
-
-      </nav>
-
-
-      <div class="sidebar-footer">
-
-        <div
-          id="loggedUser"
-          class="logged-user"
-        ></div>
-
-        <button
-          id="logoutButton"
-          class="logout-button"
-          type="button"
-        >
-          Sair
-        </button>
-
-      </div>
-
-    </aside>
-
-
-    <!-- CONTEÚDO -->
-
-    <main class="main-content">
-
-      <!-- HEADER -->
-
-      <header class="topbar">
-
-        <button
-          id="mobileMenuButton"
-          class="mobile-menu-button"
-          type="button"
-        >
-          ☰
-        </button>
-
-        <div>
-
-          <div
-            id="pageTitle"
-            class="page-title"
-          >
-            Dashboard
-          </div>
-
-          <div
-            id="pageSubtitle"
-            class="page-subtitle"
-          >
-            Visão geral do seu negócio
-          </div>
-
-        </div>
-
-        <div class="topbar-actions">
-
-          <button
-            class="btn btn-primary"
-            data-page-button="new-sale"
-            type="button"
-          >
-            + Nova Venda
-          </button>
-
-        </div>
-
-      </header>
-
-
-      <!-- =================================================
-           DASHBOARD
-      ================================================== -->
-
-      <section
-        id="page-dashboard"
-        class="page active"
-      >
-
-        <div class="page-heading">
 
           <div>
-            <h2>Dashboard</h2>
-            <p>
-              Acompanhe as principais informações do negócio.
-            </p>
-          </div>
 
-        </div>
-
-
-        <div class="quick-actions">
-
-          <button
-            class="quick-action"
-            data-page-button="new-sale"
-            type="button"
-          >
-            <span>🛒</span>
-            <strong>Nova Venda</strong>
-            <small>Registrar venda para cliente</small>
-          </button>
-
-          <button
-            class="quick-action"
-            data-page-button="products"
-            type="button"
-          >
-            <span>🧴</span>
-            <strong>Novo Produto</strong>
-            <small>Cadastrar produto</small>
-          </button>
-
-          <button
-            class="quick-action"
-            data-page-button="clients"
-            type="button"
-          >
-            <span>👥</span>
-            <strong>Novo Cliente</strong>
-            <small>Cadastrar cliente</small>
-          </button>
-
-          <button
-            class="quick-action"
-            data-page-button="purchases"
-            type="button"
-          >
-            <span>🧾</span>
-            <strong>Nova Compra</strong>
-            <small>Entrada de produtos</small>
-          </button>
-
-        </div>
-
-
-        <div class="stats-grid">
-
-          <div class="stat-card">
-
-            <div class="stat-icon">
-              💰
+            <div class="brand-name">
+              Essência & Charme
             </div>
 
-            <div>
-              <span>Vendas hoje</span>
-              <strong id="dashSalesToday">
-                R$ 0,00
-              </strong>
+            <div class="brand-subtitle">
+              Perfumes, cosméticos & estilo
             </div>
 
-          </div>
-
-
-          <div class="stat-card">
-
-            <div class="stat-icon">
-              📈
-            </div>
-
-            <div>
-              <span>Vendas no mês</span>
-              <strong id="dashSalesMonth">
-                R$ 0,00
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div class="stat-icon">
-              📥
-            </div>
-
-            <div>
-              <span>A receber</span>
-              <strong id="dashReceivables">
-                R$ 0,00
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div class="stat-icon">
-              📤
-            </div>
-
-            <div>
-              <span>A pagar</span>
-              <strong id="dashPayables">
-                R$ 0,00
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div class="stat-icon">
-              📦
-            </div>
-
-            <div>
-              <span>Estoque baixo</span>
-              <strong id="dashLowStock">
-                0
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div class="stat-icon">
-              💵
-            </div>
-
-            <div>
-              <span>Recebido no mês</span>
-              <strong id="dashReceivedMonth">
-                R$ 0,00
-              </strong>
+            <div class="brand-author">
+              by Eliana Natália
             </div>
 
           </div>
@@ -415,1004 +128,1303 @@
         </div>
 
 
-        <div class="dashboard-columns">
+        <!-- =========================
+             NAVEGAÇÃO
+        ========================== -->
 
-          <div class="panel">
+        <nav class="main-nav">
 
-            <div class="panel-header">
-
-              <div>
-                <h3>Próximos recebimentos</h3>
-                <p>Parcelas dos clientes</p>
-              </div>
-
-            </div>
-
-            <div
-              id="dashboardReceivables"
-              class="dashboard-list"
-            >
-              <div class="empty-state">
-                Nenhuma parcela pendente.
-              </div>
-            </div>
-
-          </div>
-
-
-          <div class="panel">
-
-            <div class="panel-header">
-
-              <div>
-                <h3>Próximos pagamentos</h3>
-                <p>Parcelas dos fornecedores</p>
-              </div>
-
-            </div>
-
-            <div
-              id="dashboardPayables"
-              class="dashboard-list"
-            >
-              <div class="empty-state">
-                Nenhuma parcela pendente.
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- =================================================
-           PRODUTOS
-      ================================================== -->
-
-      <section
-        id="page-products"
-        class="page"
-      >
-
-        <div class="page-heading">
-
-          <div>
-            <h2>Produtos</h2>
-            <p>
-              Cadastre e controle seus perfumes e cosméticos.
-            </p>
+          <div class="nav-section-title">
+            Principal
           </div>
 
           <button
-            id="newProductButton"
-            class="btn btn-primary"
-            type="button"
+            class="nav-item active"
+            data-page="dashboard"
           >
-            + Novo Produto
+            <span>⌂</span>
+            <span>Dashboard</span>
           </button>
 
-        </div>
 
-
-        <div class="toolbar">
-
-          <input
-            id="productSearch"
-            class="search-input"
-            type="search"
-            placeholder="Pesquisar produto..."
-          >
-
-        </div>
-
-
-        <div class="panel table-panel">
-
-          <div class="table-wrapper">
-
-            <table>
-
-              <thead>
-
-                <tr>
-                  <th>Produto</th>
-                  <th>Marca</th>
-                  <th>Fornecedor</th>
-                  <th>Custo</th>
-                  <th>Venda</th>
-                  <th>Estoque</th>
-                  <th>Ações</th>
-                </tr>
-
-              </thead>
-
-              <tbody id="productsTableBody"></tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- =================================================
-           CLIENTES
-      ================================================== -->
-
-      <section
-        id="page-clients"
-        class="page"
-      >
-
-        <div class="page-heading">
-
-          <div>
-            <h2>Clientes</h2>
-            <p>
-              Cadastre seus clientes e acompanhe as vendas.
-            </p>
+          <div class="nav-section-title">
+            Cadastros
           </div>
 
           <button
-            id="newClientButton"
-            class="btn btn-primary"
-            type="button"
+            class="nav-item"
+            data-page="products"
           >
-            + Novo Cliente
+            <span>▣</span>
+            <span>Produtos</span>
           </button>
 
-        </div>
-
-
-        <div class="toolbar">
-
-          <input
-            id="clientSearch"
-            class="search-input"
-            type="search"
-            placeholder="Pesquisar cliente..."
+          <button
+            class="nav-item"
+            data-page="clients"
           >
+            <span>♙</span>
+            <span>Clientes</span>
+          </button>
 
-        </div>
-
-
-        <div class="panel table-panel">
-
-          <div class="table-wrapper">
-
-            <table>
-
-              <thead>
-
-                <tr>
-                  <th>Nome</th>
-                  <th>Telefone</th>
-                  <th>Endereço</th>
-                  <th>Observações</th>
-                  <th>Ações</th>
-                </tr>
-
-              </thead>
-
-              <tbody id="clientsTableBody"></tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      </section>
+          <button
+            class="nav-item"
+            data-page="suppliers"
+          >
+            <span>▤</span>
+            <span>Fornecedores</span>
+          </button>
 
 
-      <!-- =================================================
-           FORNECEDORES
-      ================================================== -->
-
-      <section
-        id="page-suppliers"
-        class="page"
-      >
-
-        <div class="page-heading">
-
-          <div>
-            <h2>Fornecedores</h2>
-            <p>
-              Cadastre quem fornece seus produtos.
-            </p>
+          <div class="nav-section-title">
+            Operações
           </div>
 
           <button
-            id="newSupplierButton"
-            class="btn btn-primary"
-            type="button"
+            class="nav-item"
+            data-page="sale"
           >
-            + Novo Fornecedor
+            <span>＋</span>
+            <span>Nova Venda</span>
           </button>
 
-        </div>
-
-
-        <div class="toolbar">
-
-          <input
-            id="supplierSearch"
-            class="search-input"
-            type="search"
-            placeholder="Pesquisar fornecedor..."
+          <button
+            class="nav-item"
+            data-page="sales"
           >
+            <span>▤</span>
+            <span>Vendas</span>
+          </button>
 
-        </div>
+          <button
+            class="nav-item"
+            data-page="purchases"
+          >
+            <span>▥</span>
+            <span>Compras</span>
+          </button>
+
+          <button
+            class="nav-item"
+            data-page="stock"
+          >
+            <span>▦</span>
+            <span>Estoque</span>
+          </button>
 
 
-        <div class="panel table-panel">
-
-          <div class="table-wrapper">
-
-            <table>
-
-              <thead>
-
-                <tr>
-                  <th>Fornecedor</th>
-                  <th>Telefone</th>
-                  <th>WhatsApp</th>
-                  <th>Documento</th>
-                  <th>Endereço</th>
-                  <th>Ações</th>
-                </tr>
-
-              </thead>
-
-              <tbody id="suppliersTableBody"></tbody>
-
-            </table>
-
+          <div class="nav-section-title">
+            Gestão
           </div>
 
-        </div>
+          <button
+            class="nav-item"
+            data-page="reports"
+          >
+            <span>▥</span>
+            <span>Relatórios</span>
+          </button>
 
-      </section>
-
-
-      <!-- =================================================
-           NOVA VENDA
-      ================================================== -->
-
-      <section
-        id="page-new-sale"
-        class="page"
-      >
-
-        <div class="page-heading">
-
-          <div>
-            <h2>Nova Venda</h2>
-            <p>
-              Registre uma venda para seu cliente.
-            </p>
-          </div>
-
-        </div>
+        </nav>
 
 
-        <div class="sale-layout">
+        <!-- =========================
+             RODAPÉ
+        ========================== -->
 
-          <div class="panel">
+        <div class="sidebar-footer">
 
-            <div class="panel-header">
-              <h3>Adicionar produtos</h3>
+          <div class="user-box">
+
+            <div id="loggedUser">
+              Olá
             </div>
-
-
-            <div class="form-grid">
-
-              <div class="field field-large">
-
-                <label for="saleProduct">
-                  Produto
-                </label>
-
-                <select id="saleProduct">
-                  <option value="">
-                    Selecione um produto
-                  </option>
-                </select>
-
-              </div>
-
-
-              <div class="field">
-
-                <label for="saleQuantity">
-                  Quantidade
-                </label>
-
-                <input
-                  id="saleQuantity"
-                  type="number"
-                  min="1"
-                  value="1"
-                >
-
-              </div>
-
-
-              <div class="field field-button">
-
-                <button
-                  id="addSaleProductButton"
-                  class="btn btn-primary"
-                  type="button"
-                >
-                  Adicionar
-                </button>
-
-              </div>
-
-            </div>
-
-
-            <div class="cart-wrapper">
-
-              <table class="cart-table">
-
-                <thead>
-
-                  <tr>
-                    <th>Produto</th>
-                    <th>Qtd.</th>
-                    <th>Preço</th>
-                    <th>Total</th>
-                    <th></th>
-                  </tr>
-
-                </thead>
-
-                <tbody id="saleCartBody"></tbody>
-
-              </table>
-
-              <div
-                id="saleCartEmpty"
-                class="empty-state"
-              >
-                Nenhum produto adicionado.
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <div class="panel sale-summary">
-
-            <div class="panel-header">
-              <h3>Dados da venda</h3>
-            </div>
-
-
-            <div class="field">
-
-              <label for="saleClient">
-                Cliente
-              </label>
-
-              <select id="saleClient">
-
-                <option value="">
-                  Cliente não informado
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="summary-line">
-              <span>Subtotal</span>
-              <strong id="saleSubtotal">
-                R$ 0,00
-              </strong>
-            </div>
-
-
-            <div class="field">
-
-              <label for="saleDiscount">
-                Desconto
-              </label>
-
-              <input
-                id="saleDiscount"
-                type="number"
-                min="0"
-                step="0.01"
-                value="0"
-              >
-
-            </div>
-
-
-            <div class="summary-line total-line">
-              <span>Total</span>
-              <strong id="saleTotal">
-                R$ 0,00
-              </strong>
-            </div>
-
-
-            <div class="field">
-
-              <label for="salePayment">
-                Forma de pagamento
-              </label>
-
-              <select id="salePayment">
-
-                <option value="Dinheiro">
-                  Dinheiro
-                </option>
-
-                <option value="PIX">
-                  PIX
-                </option>
-
-                <option value="Débito">
-                  Débito
-                </option>
-
-                <option value="Crédito">
-                  Crédito
-                </option>
-
-                <option value="Fiado">
-                  Fiado
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="form-grid">
-
-              <div class="field">
-
-                <label for="saleEntry">
-                  Entrada
-                </label>
-
-                <input
-                  id="saleEntry"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value="0"
-                >
-
-              </div>
-
-
-              <div class="field">
-
-                <label for="saleInstallments">
-                  Parcelas
-                </label>
-
-                <input
-                  id="saleInstallments"
-                  type="number"
-                  min="1"
-                  value="1"
-                >
-
-              </div>
-
-            </div>
-
-
-            <div class="field">
-
-              <label for="saleFirstDueDate">
-                Primeiro vencimento
-              </label>
-
-              <input
-                id="saleFirstDueDate"
-                type="date"
-              >
-
-            </div>
-
-
-            <div class="summary-line">
-              <span>Saldo a receber</span>
-              <strong id="saleBalance">
-                R$ 0,00
-              </strong>
-            </div>
-
-
-            <div class="field">
-
-              <label for="saleNotes">
-                Observação
-              </label>
-
-              <textarea
-                id="saleNotes"
-                rows="3"
-                placeholder="Observações da venda..."
-              ></textarea>
-
-            </div>
-
 
             <button
-              id="finalizeSaleButton"
-              class="btn btn-primary btn-full btn-large"
-              type="button"
+              id="logoutButton"
+              class="btn btn-light btn-sm btn-block"
+              style="margin-top:8px;"
             >
-              Finalizar Venda
+              Sair
             </button>
 
           </div>
 
         </div>
 
-      </section>
+      </aside>
 
 
-      <!-- =================================================
-           VENDAS
-      ================================================== -->
+      <!-- =========================
+           CONTEÚDO PRINCIPAL
+      ========================== -->
 
-      <section
-        id="page-sales"
-        class="page"
-      >
+      <main class="main-content">
 
-        <div class="page-heading">
-
-          <div>
-            <h2>Vendas</h2>
-            <p>
-              Histórico de vendas e recebimentos.
-            </p>
-          </div>
-
-          <button
-            class="btn btn-primary"
-            data-page-button="new-sale"
-            type="button"
-          >
-            + Nova Venda
-          </button>
-
-        </div>
-
-
-        <div class="toolbar">
-
-          <input
-            id="salesSearch"
-            class="search-input"
-            type="search"
-            placeholder="Pesquisar venda ou cliente..."
-          >
-
-        </div>
-
-
-        <div class="panel table-panel">
-
-          <div class="table-wrapper">
-
-            <table>
-
-              <thead>
-
-                <tr>
-                  <th>Venda</th>
-                  <th>Data</th>
-                  <th>Cliente</th>
-                  <th>Total</th>
-                  <th>Pago</th>
-                  <th>Saldo</th>
-                  <th>Status</th>
-                  <th>Ações</th>
-                </tr>
-
-              </thead>
-
-              <tbody id="salesTableBody"></tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- =================================================
-           ESTOQUE
-      ================================================== -->
-
-      <section
-        id="page-stock"
-        class="page"
-      >
-
-        <div class="page-heading">
-
-          <div>
-            <h2>Estoque</h2>
-            <p>
-              Acompanhe entradas, saídas e ajustes.
-            </p>
-          </div>
-
-          <button
-            id="stockMovementButton"
-            class="btn btn-primary"
-            type="button"
-          >
-            + Movimentar Estoque
-          </button>
-
-        </div>
-
-
-        <div class="panel table-panel">
-
-          <div class="table-wrapper">
-
-            <table>
-
-              <thead>
-
-                <tr>
-                  <th>Data</th>
-                  <th>Produto</th>
-                  <th>Tipo</th>
-                  <th>Quantidade</th>
-                  <th>Observação</th>
-                </tr>
-
-              </thead>
-
-              <tbody id="stockTableBody"></tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- =================================================
-           RELATÓRIOS
-      ================================================== -->
-
-      <section
-        id="page-reports"
-        class="page"
-      >
-
-        <div class="page-heading">
-
-          <div>
-            <h2>Relatórios</h2>
-            <p>
-              Consulte os resultados do período.
-            </p>
-          </div>
-
-        </div>
-
-
-        <div class="report-filters">
-
-          <div class="field">
-
-            <label for="reportFrom">
-              De
-            </label>
-
-            <input
-              id="reportFrom"
-              type="date"
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="reportTo">
-              Até
-            </label>
-
-            <input
-              id="reportTo"
-              type="date"
-            >
-
-          </div>
-
-
-          <button
-            id="loadReportButton"
-            class="btn btn-primary"
-            type="button"
-          >
-            Gerar Relatório
-          </button>
-
-        </div>
-
-
-        <div class="stats-grid report-stats">
-
-          <div class="stat-card">
-
-            <div>
-              <span>Vendas</span>
-              <strong id="reportSales">
-                R$ 0,00
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div>
-              <span>Recebido</span>
-              <strong id="reportReceived">
-                R$ 0,00
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div>
-              <span>Compras</span>
-              <strong id="reportPurchases">
-                R$ 0,00
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div>
-              <span>A receber</span>
-              <strong id="reportReceivable">
-                R$ 0,00
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div>
-              <span>A pagar</span>
-              <strong id="reportPayable">
-                R$ 0,00
-              </strong>
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="dashboard-columns">
-
-          <div class="panel">
-
-            <div class="panel-header">
-              <h3>Produtos mais vendidos</h3>
-            </div>
-
-            <div
-              id="topProductsReport"
-              class="report-list"
-            ></div>
-
-          </div>
-
-
-          <div class="panel">
-
-            <div class="panel-header">
-              <h3>Clientes devedores</h3>
-            </div>
-
-            <div
-              id="debtorsReport"
-              class="report-list"
-            ></div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- =================================================
-           COMPRAS / CONTAS A PAGAR
-      ================================================== -->
-
-      <section
-        id="page-purchases"
-        class="page"
-      >
-
-        <div class="page-heading">
-
-          <div>
-            <h2>Compras / Contas a Pagar</h2>
-            <p>
-              Registre compras dos fornecedores e acompanhe as parcelas.
-            </p>
-          </div>
-
-          <button
-            id="newPurchaseButton"
-            class="btn btn-primary"
-            type="button"
-          >
-            + Nova Compra
-          </button>
-
-        </div>
-
-
-        <div class="stats-grid">
-
-          <div class="stat-card">
-
-            <div>
-              <span>Total em compras</span>
-              <strong id="purchaseTotal">
-                R$ 0,00
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div>
-              <span>Total pago</span>
-              <strong id="purchasePaid">
-                R$ 0,00
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div class="stat-card">
-
-            <div>
-              <span>A pagar</span>
-              <strong id="purchaseBalance">
-                R$ 0,00
-              </strong>
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="panel table-panel">
-
-          <div class="table-wrapper">
-
-            <table>
-
-              <thead>
-
-                <tr>
-                  <th>Data</th>
-                  <th>Fornecedor</th>
-                  <th>Total</th>
-                  <th>Entrada</th>
-                  <th>A pagar</th>
-                  <th>Parcelas</th>
-                  <th>Status</th>
-                  <th>Ações</th>
-                </tr>
-
-              </thead>
-
-              <tbody id="purchasesTableBody"></tbody>
-
-            </table>
-
-          </div>
-
-        </div>
-
-
-        <div class="panel">
-
-          <div class="panel-header">
-
-            <div>
-              <h3>Parcelas a pagar</h3>
-              <p>
-                Controle dos próximos pagamentos aos fornecedores.
-              </p>
-            </div>
-
-          </div>
+        <header class="topbar">
 
           <div
-            id="purchaseInstallmentsList"
-            class="dashboard-list"
+            id="topbarTitle"
+            class="topbar-title"
           >
-            <div class="empty-state">
-              Nenhuma parcela pendente.
-            </div>
+            Dashboard
           </div>
+
+          <div class="topbar-right">
+
+            <span id="topbarDate"></span>
+
+          </div>
+
+        </header>
+
+
+        <div class="page-content">
+
+
+          <!-- =========================
+               DASHBOARD
+          ========================== -->
+
+          <section
+            id="page-dashboard"
+            class="page active"
+          >
+
+            <div class="page-header">
+
+              <div>
+
+                <h2>
+                  Dashboard
+                </h2>
+
+                <p>
+                  Visão geral da Essência & Charme
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="dashboard-grid">
+
+              <div class="stat-card">
+
+                <div class="stat-label">
+                  Vendas
+                </div>
+
+                <div
+                  id="dashboardSales"
+                  class="stat-value"
+                >
+                  R$ 0,00
+                </div>
+
+                <div class="stat-detail">
+                  Total de vendas
+                </div>
+
+              </div>
+
+
+              <div class="stat-card">
+
+                <div class="stat-label">
+                  A receber
+                </div>
+
+                <div
+                  id="dashboardReceivable"
+                  class="stat-value"
+                >
+                  R$ 0,00
+                </div>
+
+                <div class="stat-detail">
+                  Valores pendentes
+                </div>
+
+              </div>
+
+
+              <div class="stat-card">
+
+                <div class="stat-label">
+                  Compras
+                </div>
+
+                <div
+                  id="dashboardPurchases"
+                  class="stat-value"
+                >
+                  R$ 0,00
+                </div>
+
+                <div class="stat-detail">
+                  Total de compras
+                </div>
+
+              </div>
+
+
+              <div class="stat-card">
+
+                <div class="stat-label">
+                  A pagar
+                </div>
+
+                <div
+                  id="dashboardPayable"
+                  class="stat-value"
+                >
+                  R$ 0,00
+                </div>
+
+                <div class="stat-detail">
+                  Contas pendentes
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div class="quick-actions">
+
+              <button
+                class="quick-action"
+                data-page="sale"
+              >
+                <strong>
+                  Nova venda
+                </strong>
+
+                <span>
+                  Registrar uma nova venda
+                </span>
+              </button>
+
+
+              <button
+                class="quick-action"
+                data-page="products"
+              >
+                <strong>
+                  Produtos
+                </strong>
+
+                <span>
+                  Gerenciar produtos e estoque
+                </span>
+              </button>
+
+
+              <button
+                class="quick-action"
+                data-page="clients"
+              >
+                <strong>
+                  Clientes
+                </strong>
+
+                <span>
+                  Gerenciar cadastro de clientes
+                </span>
+              </button>
+
+
+              <button
+                class="quick-action"
+                data-page="purchases"
+              >
+                <strong>
+                  Nova compra
+                </strong>
+
+                <span>
+                  Registrar compras de fornecedores
+                </span>
+              </button>
+
+            </div>
+
+
+            <div class="card">
+
+              <div class="card-header">
+
+                <h3>
+                  Resumo do estoque
+                </h3>
+
+              </div>
+
+              <div class="card-body">
+
+                <div class="dashboard-grid">
+
+                  <div class="stat-card">
+
+                    <div class="stat-label">
+                      Produtos cadastrados
+                    </div>
+
+                    <div
+                      id="dashboardProducts"
+                      class="stat-value"
+                    >
+                      0
+                    </div>
+
+                  </div>
+
+
+                  <div class="stat-card">
+
+                    <div class="stat-label">
+                      Clientes
+                    </div>
+
+                    <div
+                      id="dashboardClients"
+                      class="stat-value"
+                    >
+                      0
+                    </div>
+
+                  </div>
+
+
+                  <div class="stat-card">
+
+                    <div class="stat-label">
+                      Estoque baixo
+                    </div>
+
+                    <div
+                      id="dashboardLowStock"
+                      class="stat-value"
+                    >
+                      0
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- =========================
+               PRODUTOS
+          ========================== -->
+
+          <section
+            id="page-products"
+            class="page"
+          >
+
+            <div class="page-header">
+
+              <div>
+
+                <h2>
+                  Produtos
+                </h2>
+
+                <p>
+                  Cadastro e controle dos produtos
+                </p>
+
+              </div>
+
+              <button
+                class="btn btn-primary"
+                id="newProductButton"
+              >
+                + Novo produto
+              </button>
+
+            </div>
+
+
+            <div class="card">
+
+              <div class="card-body">
+
+                <div class="table-wrapper">
+
+                  <table>
+
+                    <thead>
+
+                      <tr>
+                        <th>Código</th>
+                        <th>Produto</th>
+                        <th>Marca</th>
+                        <th>Tamanho</th>
+                        <th>Custo</th>
+                        <th>Preço</th>
+                        <th>Estoque</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                      </tr>
+
+                    </thead>
+
+                    <tbody id="productsTableBody"></tbody>
+
+                  </table>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- =========================
+               CLIENTES
+          ========================== -->
+
+          <section
+            id="page-clients"
+            class="page"
+          >
+
+            <div class="page-header">
+
+              <div>
+
+                <h2>
+                  Clientes
+                </h2>
+
+                <p>
+                  Cadastro de clientes
+                </p>
+
+              </div>
+
+              <button
+                class="btn btn-primary"
+                id="newClientButton"
+              >
+                + Novo cliente
+              </button>
+
+            </div>
+
+
+            <div class="card">
+
+              <div class="card-body">
+
+                <div class="table-wrapper">
+
+                  <table>
+
+                    <thead>
+
+                      <tr>
+                        <th>Nome</th>
+                        <th>Telefone</th>
+                        <th>Endereço</th>
+                        <th>Ações</th>
+                      </tr>
+
+                    </thead>
+
+                    <tbody id="clientsTableBody"></tbody>
+
+                  </table>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- =========================
+               FORNECEDORES
+          ========================== -->
+
+          <section
+            id="page-suppliers"
+            class="page"
+          >
+
+            <div class="page-header">
+
+              <div>
+
+                <h2>
+                  Fornecedores
+                </h2>
+
+                <p>
+                  Cadastro de fornecedores
+                </p>
+
+              </div>
+
+              <button
+                class="btn btn-primary"
+                id="newSupplierButton"
+              >
+                + Novo fornecedor
+              </button>
+
+            </div>
+
+
+            <div class="card">
+
+              <div class="card-body">
+
+                <div class="table-wrapper">
+
+                  <table>
+
+                    <thead>
+
+                      <tr>
+                        <th>Fornecedor</th>
+                        <th>Telefone</th>
+                        <th>WhatsApp</th>
+                        <th>Documento</th>
+                        <th>Endereço</th>
+                        <th>Ações</th>
+                      </tr>
+
+                    </thead>
+
+                    <tbody id="suppliersTableBody"></tbody>
+
+                  </table>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- =========================
+               NOVA VENDA
+          ========================== -->
+
+          <section
+            id="page-sale"
+            class="page"
+          >
+
+            <div class="page-header">
+
+              <div>
+
+                <h2>
+                  Nova Venda
+                </h2>
+
+                <p>
+                  Registre uma nova venda
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <form id="saleForm">
+
+              <div class="sale-layout">
+
+                <div>
+
+                  <div class="card">
+
+                    <div class="card-header">
+
+                      <h3>
+                        Dados da venda
+                      </h3>
+
+                    </div>
+
+                    <div class="card-body">
+
+                      <div class="form-grid">
+
+                        <div class="form-group">
+
+                          <label for="saleClient">
+                            Cliente
+                          </label>
+
+                          <select id="saleClient">
+                            <option value="">
+                              Consumidor final
+                            </option>
+                          </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                          <label for="saleDate">
+                            Data
+                          </label>
+
+                          <input
+                            type="date"
+                            id="saleDate"
+                            required
+                          >
+
+                        </div>
+
+                      </div>
+
+
+                      <div class="form-grid-3">
+
+                        <div class="form-group">
+
+                          <label for="saleProduct">
+                            Produto
+                          </label>
+
+                          <select id="saleProduct">
+                            <option value="">
+                              Selecione
+                            </option>
+                          </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                          <label for="saleQuantity">
+                            Quantidade
+                          </label>
+
+                          <input
+                            type="number"
+                            id="saleQuantity"
+                            min="1"
+                            value="1"
+                          >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                          <label>
+                            &nbsp;
+                          </label>
+
+                          <button
+                            type="button"
+                            class="btn btn-rose btn-block"
+                            id="saleAddProduct"
+                          >
+                            + Adicionar
+                          </button>
+
+                        </div>
+
+                      </div>
+
+
+                      <div id="saleCart"></div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+
+                <div>
+
+                  <div class="card">
+
+                    <div class="card-header">
+
+                      <h3>
+                        Resumo
+                      </h3>
+
+                    </div>
+
+                    <div class="card-body">
+
+                      <div class="cart-summary">
+
+                        <div class="summary-line">
+
+                          <span>
+                            Subtotal
+                          </span>
+
+                          <strong id="saleSubtotal">
+                            R$ 0,00
+                          </strong>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                          <label for="saleDiscount">
+                            Desconto
+                          </label>
+
+                          <input
+                            type="number"
+                            id="saleDiscount"
+                            min="0"
+                            step="0.01"
+                            value="0"
+                          >
+
+                        </div>
+
+
+                        <div class="summary-line total">
+
+                          <span>
+                            Total
+                          </span>
+
+                          <strong id="saleTotal">
+                            R$ 0,00
+                          </strong>
+
+                        </div>
+
+                      </div>
+
+
+                      <div class="entry-highlight">
+
+                        <strong>
+                          Entrada
+                        </strong>
+
+                        <div class="form-group">
+
+                          <label for="saleEntry">
+                            Valor da entrada
+                          </label>
+
+                          <input
+                            type="number"
+                            id="saleEntry"
+                            min="0"
+                            step="0.01"
+                            value="0"
+                          >
+
+                        </div>
+
+                        <div>
+
+                          Saldo:
+                          <strong id="saleBalance">
+                            R$ 0,00
+                          </strong>
+
+                        </div>
+
+                      </div>
+
+
+                      <div class="form-group">
+
+                        <label for="salePayment">
+                          Forma de pagamento
+                        </label>
+
+                        <select id="salePayment">
+
+                          <option value="pix">
+                            PIX
+                          </option>
+
+                          <option value="dinheiro">
+                            Dinheiro
+                          </option>
+
+                          <option value="cartao">
+                            Cartão
+                          </option>
+
+                          <option value="transferencia">
+                            Transferência
+                          </option>
+
+                        </select>
+
+                      </div>
+
+
+                      <div class="form-group">
+
+                        <label for="saleInstallments">
+                          Parcelas
+                        </label>
+
+                        <input
+                          type="number"
+                          id="saleInstallments"
+                          min="1"
+                          value="1"
+                        >
+
+                      </div>
+
+
+                      <div class="form-group">
+
+                        <label>
+                          Valor por parcela
+                        </label>
+
+                        <div
+                          id="saleInstallmentValue"
+                          class="entry-highlight"
+                        >
+                          R$ 0,00
+                        </div>
+
+                      </div>
+
+
+                      <div class="form-group">
+
+                        <label for="saleNotes">
+                          Observações
+                        </label>
+
+                        <textarea
+                          id="saleNotes"
+                          placeholder="Observações da venda"
+                        ></textarea>
+
+                      </div>
+
+
+                      <button
+                        type="submit"
+                        class="btn btn-primary btn-block"
+                      >
+                        Registrar venda
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </form>
+
+          </section>
+
+
+          <!-- =========================
+               VENDAS
+          ========================== -->
+
+          <section
+            id="page-sales"
+            class="page"
+          >
+
+            <div class="page-header">
+
+              <div>
+
+                <h2>
+                  Vendas
+                </h2>
+
+                <p>
+                  Histórico de vendas e recebimentos
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="card">
+
+              <div class="card-body">
+
+                <div class="table-wrapper">
+
+                  <table>
+
+                    <thead>
+
+                      <tr>
+                        <th>Data</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                        <th>Entrada</th>
+                        <th>A receber</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                      </tr>
+
+                    </thead>
+
+                    <tbody id="salesTableBody"></tbody>
+
+                  </table>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- =========================
+               ESTOQUE
+          ========================== -->
+
+          <section
+            id="page-stock"
+            class="page"
+          >
+
+            <div class="page-header">
+
+              <div>
+
+                <h2>
+                  Estoque
+                </h2>
+
+                <p>
+                  Movimentações e controle de estoque
+                </p>
+
+              </div>
+
+              <button
+                class="btn btn-primary"
+                id="newStockButton"
+              >
+                + Movimentar estoque
+              </button>
+
+            </div>
+
+
+            <div class="card">
+
+              <div class="card-body">
+
+                <div class="table-wrapper">
+
+                  <table>
+
+                    <thead>
+
+                      <tr>
+                        <th>Data</th>
+                        <th>Produto</th>
+                        <th>Tipo</th>
+                        <th>Quantidade</th>
+                        <th>Observação</th>
+                      </tr>
+
+                    </thead>
+
+                    <tbody id="stockTableBody"></tbody>
+
+                  </table>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- =========================
+               RELATÓRIOS
+          ========================== -->
+
+          <section
+            id="page-reports"
+            class="page"
+          >
+
+            <div class="page-header">
+
+              <div>
+
+                <h2>
+                  Relatórios
+                </h2>
+
+                <p>
+                  Indicadores financeiros e operacionais
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div class="dashboard-grid">
+
+              <div class="stat-card">
+
+                <div class="stat-label">
+                  Total de vendas
+                </div>
+
+                <div
+                  id="reportTotalSales"
+                  class="stat-value"
+                >
+                  R$ 0,00
+                </div>
+
+              </div>
+
+
+              <div class="stat-card">
+
+                <div class="stat-label">
+                  Total de compras
+                </div>
+
+                <div
+                  id="reportTotalPurchases"
+                  class="stat-value"
+                >
+                  R$ 0,00
+                </div>
+
+              </div>
+
+
+              <div class="stat-card">
+
+                <div class="stat-label">
+                  A receber
+                </div>
+
+                <div
+                  id="reportReceivable"
+                  class="stat-value"
+                >
+                  R$ 0,00
+                </div>
+
+              </div>
+
+
+              <div class="stat-card">
+
+                <div class="stat-label">
+                  A pagar
+                </div>
+
+                <div
+                  id="reportPayable"
+                  class="stat-value"
+                >
+                  R$ 0,00
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- =========================
+               COMPRAS
+          ========================== -->
+
+          <section
+            id="page-purchases"
+            class="page"
+          >
+
+            <div class="page-header">
+
+              <div>
+
+                <h2>
+                  Compras
+                </h2>
+
+                <p>
+                  Compras de fornecedores e contas a pagar
+                </p>
+
+              </div>
+
+              <button
+                class="btn btn-primary"
+                id="newPurchaseButton"
+              >
+                + Nova compra
+              </button>
+
+            </div>
+
+
+            <div class="purchase-summary">
+
+              <div class="purchase-card">
+
+                <span>
+                  Total em compras
+                </span>
+
+                <strong id="purchasesTotal">
+                  R$ 0,00
+                </strong>
+
+              </div>
+
+
+              <div class="purchase-card">
+
+                <span>
+                  Total pago
+                </span>
+
+                <strong id="purchasesPaid">
+                  R$ 0,00
+                </strong>
+
+              </div>
+
+
+              <div class="purchase-card">
+
+                <span>
+                  A pagar
+                </span>
+
+                <strong id="purchasesBalance">
+                  R$ 0,00
+                </strong>
+
+              </div>
+
+            </div>
+
+
+            <div class="card">
+
+              <div class="card-header">
+
+                <h3>
+                  Compras cadastradas
+                </h3>
+
+              </div>
+
+              <div class="card-body">
+
+                <div class="table-wrapper">
+
+                  <table>
+
+                    <thead>
+
+                      <tr>
+                        <th>Data</th>
+                        <th>Fornecedor</th>
+                        <th>Total</th>
+                        <th>Entrada</th>
+                        <th>A pagar</th>
+                        <th>Parcelas</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                      </tr>
+
+                    </thead>
+
+                    <tbody id="purchasesTableBody"></tbody>
+
+                  </table>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
 
         </div>
 
-      </section>
+      </main>
 
-    </main>
+    </div>
 
   </div>
 
 
-  <!-- =====================================================
+  <!-- =========================
        MODAL PRODUTO
-  ====================================================== -->
+  ========================== -->
 
   <div
     id="productModal"
-    class="modal hidden"
+    class="modal"
   >
 
-    <div class="modal-card">
+    <div class="modal-content">
 
       <div class="modal-header">
 
-        <div>
-          <h3 id="productModalTitle">
-            Novo Produto
-          </h3>
-        </div>
+        <h3 id="productModalTitle">
+          Novo produto
+        </h3>
 
         <button
-          class="modal-close"
-          data-close-modal="productModal"
           type="button"
+          class="modal-close"
+          data-close="productModal"
         >
           ×
         </button>
@@ -1422,171 +1434,163 @@
 
       <form id="productForm">
 
-        <input
-          id="productId"
-          type="hidden"
-        >
+        <div class="modal-body">
 
-        <div class="form-grid">
+          <input
+            type="hidden"
+            id="productId"
+          >
 
-          <div class="field">
+          <div class="form-grid">
 
-            <label for="productCode">
-              Código
-            </label>
+            <div class="form-group">
 
-            <input
-              id="productCode"
-              type="text"
-            >
+              <label for="productCode">
+                Código
+              </label>
 
-          </div>
+              <input id="productCode">
 
-
-          <div class="field field-large">
-
-            <label for="productName">
-              Produto *
-            </label>
-
-            <input
-              id="productName"
-              type="text"
-              required
-            >
-
-          </div>
+            </div>
 
 
-          <div class="field">
+            <div class="form-group">
 
-            <label for="productBrand">
-              Marca
-            </label>
+              <label for="productName">
+                Produto
+              </label>
 
-            <input
-              id="productBrand"
-              type="text"
-            >
+              <input
+                id="productName"
+                required
+              >
 
-          </div>
-
-
-          <div class="field">
-
-            <label for="productSize">
-              Tamanho
-            </label>
-
-            <input
-              id="productSize"
-              type="text"
-              placeholder="Ex.: 100 ml"
-            >
-
-          </div>
+            </div>
 
 
-          <div class="field">
+            <div class="form-group">
 
-            <label for="productSupplier">
-              Fornecedor
-            </label>
+              <label for="productBrand">
+                Marca
+              </label>
 
-            <select id="productSupplier">
+              <input id="productBrand">
 
-              <option value="">
-                Não informado
-              </option>
-
-            </select>
-
-          </div>
+            </div>
 
 
-          <div class="field">
+            <div class="form-group">
 
-            <label for="productCost">
-              Custo
-            </label>
+              <label for="productSupplier">
+                Fornecedor
+              </label>
 
-            <input
-              id="productCost"
-              type="number"
-              min="0"
-              step="0.01"
-              value="0"
-            >
+              <select id="productSupplier">
 
-          </div>
+                <option value="">
+                  Selecione
+                </option>
 
+              </select>
 
-          <div class="field">
-
-            <label for="productPrice">
-              Preço de venda
-            </label>
-
-            <input
-              id="productPrice"
-              type="number"
-              min="0"
-              step="0.01"
-              value="0"
-            >
-
-          </div>
+            </div>
 
 
-          <div class="field">
+            <div class="form-group">
 
-            <label for="productStock">
-              Estoque
-            </label>
+              <label for="productSize">
+                Tamanho
+              </label>
 
-            <input
-              id="productStock"
-              type="number"
-              min="0"
-              value="0"
-            >
+              <input id="productSize">
 
-          </div>
+            </div>
 
 
-          <div class="field">
+            <div class="form-group">
 
-            <label for="productMinStock">
-              Estoque mínimo
-            </label>
+              <label for="productCost">
+                Custo
+              </label>
 
-            <input
-              id="productMinStock"
-              type="number"
-              min="0"
-              value="0"
-            >
+              <input
+                type="number"
+                id="productCost"
+                min="0"
+                step="0.01"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="productPrice">
+                Preço de venda
+              </label>
+
+              <input
+                type="number"
+                id="productPrice"
+                min="0"
+                step="0.01"
+                required
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="productStock">
+                Estoque
+              </label>
+
+              <input
+                type="number"
+                id="productStock"
+                min="0"
+                step="1"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="productMinStock">
+                Estoque mínimo
+              </label>
+
+              <input
+                type="number"
+                id="productMinStock"
+                min="0"
+                step="1"
+              >
+
+            </div>
 
           </div>
 
         </div>
 
 
-        <div class="modal-actions">
+        <div class="modal-footer">
 
           <button
-            class="btn btn-secondary"
-            data-close-modal="productModal"
             type="button"
+            class="btn btn-light"
+            data-close="productModal"
           >
             Cancelar
           </button>
 
           <button
-            class="btn btn-primary"
             type="submit"
+            class="btn btn-primary"
           >
-            Salvar Produto
+            Salvar
           </button>
 
         </div>
@@ -1598,27 +1602,27 @@
   </div>
 
 
-  <!-- =====================================================
+  <!-- =========================
        MODAL CLIENTE
-  ====================================================== -->
+  ========================== -->
 
   <div
     id="clientModal"
-    class="modal hidden"
+    class="modal"
   >
 
-    <div class="modal-card">
+    <div class="modal-content">
 
       <div class="modal-header">
 
         <h3 id="clientModalTitle">
-          Novo Cliente
+          Novo cliente
         </h3>
 
         <button
-          class="modal-close"
-          data-close-modal="clientModal"
           type="button"
+          class="modal-close"
+          data-close="clientModal"
         >
           ×
         </button>
@@ -1628,87 +1632,81 @@
 
       <form id="clientForm">
 
-        <input
-          id="clientId"
-          type="hidden"
-        >
+        <div class="modal-body">
 
-        <div class="form-grid">
+          <input
+            type="hidden"
+            id="clientId"
+          >
 
-          <div class="field field-large">
+          <div class="form-group">
 
             <label for="clientName">
-              Nome *
+              Nome
             </label>
 
             <input
               id="clientName"
-              type="text"
               required
             >
 
           </div>
 
 
-          <div class="field">
+          <div class="form-grid">
 
-            <label for="clientPhone">
-              Telefone
-            </label>
+            <div class="form-group">
 
-            <input
-              id="clientPhone"
-              type="text"
-            >
+              <label for="clientPhone">
+                Telefone
+              </label>
 
-          </div>
+              <input id="clientPhone">
+
+            </div>
 
 
-          <div class="field field-large">
+            <div class="form-group">
 
-            <label for="clientAddress">
-              Endereço
-            </label>
+              <label for="clientAddress">
+                Endereço
+              </label>
 
-            <input
-              id="clientAddress"
-              type="text"
-            >
+              <input id="clientAddress">
+
+            </div>
 
           </div>
 
 
-          <div class="field field-full">
+          <div class="form-group">
 
             <label for="clientNotes">
               Observações
             </label>
 
-            <textarea
-              id="clientNotes"
-              rows="3"
-            ></textarea>
+            <textarea id="clientNotes"></textarea>
 
           </div>
 
         </div>
 
 
-        <div class="modal-actions">
+        <div class="modal-footer">
 
           <button
-            class="btn btn-secondary"
-            data-close-modal="clientModal"
             type="button"
+            class="btn btn-light"
+            data-close="clientModal"
           >
             Cancelar
           </button>
 
           <button
-            class="btn btn-primary"
             type="submit"
+            class="btn btn-primary"
           >
-            Salvar Cliente
+            Salvar
           </button>
 
         </div>
@@ -1720,27 +1718,27 @@
   </div>
 
 
-  <!-- =====================================================
+  <!-- =========================
        MODAL FORNECEDOR
-  ====================================================== -->
+  ========================== -->
 
   <div
     id="supplierModal"
-    class="modal hidden"
+    class="modal"
   >
 
-    <div class="modal-card">
+    <div class="modal-content">
 
       <div class="modal-header">
 
         <h3 id="supplierModalTitle">
-          Novo Fornecedor
+          Novo fornecedor
         </h3>
 
         <button
-          class="modal-close"
-          data-close-modal="supplierModal"
           type="button"
+          class="modal-close"
+          data-close="supplierModal"
         >
           ×
         </button>
@@ -1750,115 +1748,103 @@
 
       <form id="supplierForm">
 
-        <input
-          id="supplierId"
-          type="hidden"
-        >
+        <div class="modal-body">
 
-        <div class="form-grid">
+          <input
+            type="hidden"
+            id="supplierId"
+          >
 
-          <div class="field field-large">
+          <div class="form-group">
 
             <label for="supplierName">
-              Nome *
+              Nome
             </label>
 
             <input
               id="supplierName"
-              type="text"
               required
             >
 
           </div>
 
 
-          <div class="field">
+          <div class="form-grid">
 
-            <label for="supplierPhone">
-              Telefone
-            </label>
+            <div class="form-group">
 
-            <input
-              id="supplierPhone"
-              type="text"
-            >
+              <label for="supplierPhone">
+                Telefone
+              </label>
 
-          </div>
+              <input id="supplierPhone">
 
-
-          <div class="field">
-
-            <label for="supplierWhatsapp">
-              WhatsApp
-            </label>
-
-            <input
-              id="supplierWhatsapp"
-              type="text"
-            >
-
-          </div>
+            </div>
 
 
-          <div class="field">
+            <div class="form-group">
 
-            <label for="supplierDocument">
-              CPF / CNPJ
-            </label>
+              <label for="supplierWhatsapp">
+                WhatsApp
+              </label>
 
-            <input
-              id="supplierDocument"
-              type="text"
-            >
+              <input id="supplierWhatsapp">
 
-          </div>
+            </div>
 
 
-          <div class="field field-full">
+            <div class="form-group">
 
-            <label for="supplierAddress">
-              Endereço
-            </label>
+              <label for="supplierDocument">
+                CPF/CNPJ
+              </label>
 
-            <input
-              id="supplierAddress"
-              type="text"
-            >
+              <input id="supplierDocument">
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="supplierAddress">
+                Endereço
+              </label>
+
+              <input id="supplierAddress">
+
+            </div>
 
           </div>
 
 
-          <div class="field field-full">
+          <div class="form-group">
 
             <label for="supplierNotes">
               Observações
             </label>
 
-            <textarea
-              id="supplierNotes"
-              rows="3"
-            ></textarea>
+            <textarea id="supplierNotes"></textarea>
 
           </div>
 
         </div>
 
 
-        <div class="modal-actions">
+        <div class="modal-footer">
 
           <button
-            class="btn btn-secondary"
-            data-close-modal="supplierModal"
             type="button"
+            class="btn btn-light"
+            data-close="supplierModal"
           >
             Cancelar
           </button>
 
           <button
-            class="btn btn-primary"
             type="submit"
+            class="btn btn-primary"
           >
-            Salvar Fornecedor
+            Salvar
           </button>
 
         </div>
@@ -1870,27 +1856,27 @@
   </div>
 
 
-  <!-- =====================================================
-       MODAL COMPRA
-  ====================================================== -->
+  <!-- =========================
+       MODAL ESTOQUE
+  ========================== -->
 
   <div
-    id="purchaseModal"
-    class="modal hidden"
+    id="stockModal"
+    class="modal"
   >
 
-    <div class="modal-card modal-large">
+    <div class="modal-content">
 
       <div class="modal-header">
 
         <h3>
-          Nova Compra
+          Movimentar estoque
         </h3>
 
         <button
-          class="modal-close"
-          data-close-modal="purchaseModal"
           type="button"
+          class="modal-close"
+          data-close="stockModal"
         >
           ×
         </button>
@@ -1898,17 +1884,20 @@
       </div>
 
 
-      <form id="purchaseForm">
+      <form id="stockForm">
 
-        <div class="form-grid">
+        <div class="modal-body">
 
-          <div class="field">
+          <div class="form-group">
 
-            <label for="purchaseSupplier">
-              Fornecedor *
+            <label for="stockProduct">
+              Produto
             </label>
 
-            <select id="purchaseSupplier" required>
+            <select
+              id="stockProduct"
+              required
+            >
 
               <option value="">
                 Selecione
@@ -1919,262 +1908,79 @@
           </div>
 
 
-          <div class="field">
-
-            <label for="purchaseDate">
-              Data
-            </label>
-
-            <input
-              id="purchaseDate"
-              type="date"
-            >
-
-          </div>
-
-        </div>
-
-
-        <div class="panel inner-panel">
-
-          <div class="panel-header">
-
-            <h4>Produtos da compra</h4>
-
-          </div>
-
-
           <div class="form-grid">
 
-            <div class="field field-large">
+            <div class="form-group">
 
-              <label for="purchaseProduct">
-                Produto
+              <label for="stockQuantity">
+                Quantidade
               </label>
 
-              <select id="purchaseProduct">
+              <input
+                type="number"
+                id="stockQuantity"
+                min="1"
+                required
+              >
 
-                <option value="">
-                  Selecione um produto
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="stockType">
+                Tipo
+              </label>
+
+              <select id="stockType">
+
+                <option value="entrada">
+                  Entrada
+                </option>
+
+                <option value="saida">
+                  Saída
+                </option>
+
+                <option value="ajuste">
+                  Ajuste
                 </option>
 
               </select>
 
             </div>
 
-
-            <div class="field">
-
-              <label for="purchaseQuantity">
-                Quantidade
-              </label>
-
-              <input
-                id="purchaseQuantity"
-                type="number"
-                min="1"
-                value="1"
-              >
-
-            </div>
-
-
-            <div class="field">
-
-              <label for="purchaseCost">
-                Custo unitário
-              </label>
-
-              <input
-                id="purchaseCost"
-                type="number"
-                min="0"
-                step="0.01"
-                value="0"
-              >
-
-            </div>
-
-
-            <div class="field field-button">
-
-              <button
-                id="addPurchaseProductButton"
-                class="btn btn-primary"
-                type="button"
-              >
-                Adicionar
-              </button>
-
-            </div>
-
           </div>
 
 
-          <div class="table-wrapper">
+          <div class="form-group">
 
-            <table>
+            <label for="stockNote">
+              Observação
+            </label>
 
-              <thead>
-
-                <tr>
-                  <th>Produto</th>
-                  <th>Qtd.</th>
-                  <th>Custo</th>
-                  <th>Total</th>
-                  <th></th>
-                </tr>
-
-              </thead>
-
-              <tbody id="purchaseCartBody"></tbody>
-
-            </table>
+            <textarea id="stockNote"></textarea>
 
           </div>
 
         </div>
 
 
-        <div class="purchase-summary-grid">
-
-          <div class="field">
-
-            <label for="purchaseEntry">
-              Entrada / Pago
-            </label>
-
-            <input
-              id="purchaseEntry"
-              type="number"
-              min="0"
-              step="0.01"
-              value="0"
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="purchaseInstallments">
-              Parcelas
-            </label>
-
-            <input
-              id="purchaseInstallments"
-              type="number"
-              min="1"
-              value="1"
-            >
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="purchasePayment">
-              Forma de pagamento
-            </label>
-
-            <select id="purchasePayment">
-
-              <option value="Dinheiro">
-                Dinheiro
-              </option>
-
-              <option value="PIX">
-                PIX
-              </option>
-
-              <option value="Débito">
-                Débito
-              </option>
-
-              <option value="Crédito">
-                Crédito
-              </option>
-
-              <option value="Fiado">
-                A prazo
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <div class="field">
-
-            <label for="purchaseFirstDueDate">
-              Primeiro vencimento
-            </label>
-
-            <input
-              id="purchaseFirstDueDate"
-              type="date"
-            >
-
-          </div>
-
-        </div>
-
-
-        <div class="purchase-totals">
-
-          <div>
-            <span>Total</span>
-            <strong id="purchaseModalTotal">
-              R$ 0,00
-            </strong>
-          </div>
-
-          <div>
-            <span>Pago</span>
-            <strong id="purchaseModalPaid">
-              R$ 0,00
-            </strong>
-          </div>
-
-          <div>
-            <span>A pagar</span>
-            <strong id="purchaseModalBalance">
-              R$ 0,00
-            </strong>
-          </div>
-
-        </div>
-
-
-        <div class="field">
-
-          <label for="purchaseNotes">
-            Observações
-          </label>
-
-          <textarea
-            id="purchaseNotes"
-            rows="3"
-          ></textarea>
-
-        </div>
-
-
-        <div class="modal-actions">
+        <div class="modal-footer">
 
           <button
-            class="btn btn-secondary"
-            data-close-modal="purchaseModal"
             type="button"
+            class="btn btn-light"
+            data-close="stockModal"
           >
             Cancelar
           </button>
 
           <button
-            class="btn btn-primary"
             type="submit"
+            class="btn btn-primary"
           >
-            Salvar Compra
+            Salvar
           </button>
 
         </div>
@@ -2186,27 +1992,27 @@
   </div>
 
 
-  <!-- =====================================================
-       MODAL PAGAMENTO
-  ====================================================== -->
+  <!-- =========================
+       MODAL PAGAMENTO VENDA
+  ========================== -->
 
   <div
     id="paymentModal"
-    class="modal hidden"
+    class="modal"
   >
 
-    <div class="modal-card">
+    <div class="modal-content">
 
       <div class="modal-header">
 
-        <h3 id="paymentModalTitle">
+        <h3>
           Registrar pagamento
         </h3>
 
         <button
-          class="modal-close"
-          data-close-modal="paymentModal"
           type="button"
+          class="modal-close"
+          data-close="paymentModal"
         >
           ×
         </button>
@@ -2216,187 +2022,52 @@
 
       <form id="paymentForm">
 
-        <input
-          id="paymentType"
-          type="hidden"
-        >
-
-        <input
-          id="paymentReferenceId"
-          type="hidden"
-        >
-
-        <input
-          id="paymentInstallmentId"
-          type="hidden"
-        >
-
-
-        <div class="payment-info">
-
-          <div>
-            <span>Valor pendente</span>
-            <strong id="paymentPendingValue">
-              R$ 0,00
-            </strong>
-          </div>
-
-        </div>
-
-
-        <div class="field">
-
-          <label for="paymentAmount">
-            Valor do pagamento *
-          </label>
+        <div class="modal-body">
 
           <input
-            id="paymentAmount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            required
+            type="hidden"
+            id="paymentSaleId"
           >
 
-        </div>
+          <div class="form-group">
 
-
-        <div class="field">
-
-          <label for="paymentMethod">
-            Forma de pagamento
-          </label>
-
-          <select id="paymentMethod">
-
-            <option value="Dinheiro">
-              Dinheiro
-            </option>
-
-            <option value="PIX">
-              PIX
-            </option>
-
-            <option value="Débito">
-              Débito
-            </option>
-
-            <option value="Crédito">
-              Crédito
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <div class="field">
-
-          <label for="paymentNote">
-            Observação
-          </label>
-
-          <textarea
-            id="paymentNote"
-            rows="3"
-          ></textarea>
-
-        </div>
-
-
-        <div class="modal-actions">
-
-          <button
-            class="btn btn-secondary"
-            data-close-modal="paymentModal"
-            type="button"
-          >
-            Cancelar
-          </button>
-
-          <button
-            class="btn btn-primary"
-            type="submit"
-          >
-            Registrar Pagamento
-          </button>
-
-        </div>
-
-      </form>
-
-    </div>
-
-  </div>
-
-
-  <!-- =====================================================
-       MODAL MOVIMENTAÇÃO DE ESTOQUE
-  ====================================================== -->
-
-  <div
-    id="stockModal"
-    class="modal hidden"
-  >
-
-    <div class="modal-card">
-
-      <div class="modal-header">
-
-        <h3>
-          Movimentar Estoque
-        </h3>
-
-        <button
-          class="modal-close"
-          data-close-modal="stockModal"
-          type="button"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <form id="stockForm">
-
-        <div class="field">
-
-          <label for="stockProduct">
-            Produto
-          </label>
-
-          <select id="stockProduct" required>
-
-            <option value="">
-              Selecione um produto
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <div class="form-grid">
-
-          <div class="field">
-
-            <label for="stockType">
-              Tipo
+            <label for="paymentAmount">
+              Valor
             </label>
 
-            <select id="stockType">
+            <input
+              type="number"
+              id="paymentAmount"
+              min="0.01"
+              step="0.01"
+              required
+            >
 
-              <option value="Entrada">
-                Entrada
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="paymentMethod">
+              Forma de pagamento
+            </label>
+
+            <select id="paymentMethod">
+
+              <option value="pix">
+                PIX
               </option>
 
-              <option value="Saída">
-                Saída
+              <option value="dinheiro">
+                Dinheiro
               </option>
 
-              <option value="Ajuste">
-                Ajuste
+              <option value="cartao">
+                Cartão
+              </option>
+
+              <option value="transferencia">
+                Transferência
               </option>
 
             </select>
@@ -2404,54 +2075,34 @@
           </div>
 
 
-          <div class="field">
+          <div class="form-group">
 
-            <label for="stockQuantity">
-              Quantidade
+            <label for="paymentNote">
+              Observação
             </label>
 
-            <input
-              id="stockQuantity"
-              type="number"
-              min="1"
-              value="1"
-              required
-            >
+            <textarea id="paymentNote"></textarea>
 
           </div>
 
         </div>
 
 
-        <div class="field">
-
-          <label for="stockNote">
-            Observação
-          </label>
-
-          <textarea
-            id="stockNote"
-            rows="3"
-          ></textarea>
-
-        </div>
-
-
-        <div class="modal-actions">
+        <div class="modal-footer">
 
           <button
-            class="btn btn-secondary"
-            data-close-modal="stockModal"
             type="button"
+            class="btn btn-light"
+            data-close="paymentModal"
           >
             Cancelar
           </button>
 
           <button
-            class="btn btn-primary"
             type="submit"
+            class="btn btn-success"
           >
-            Salvar Movimentação
+            Registrar pagamento
           </button>
 
         </div>
@@ -2463,27 +2114,64 @@
   </div>
 
 
-  <!-- =====================================================
-       MODAL DETALHES
-  ====================================================== -->
+  <!-- =========================
+       DETALHES DA VENDA
+  ========================== -->
 
   <div
-    id="detailsModal"
-    class="modal hidden"
+    id="saleDetailsModal"
+    class="modal"
   >
 
-    <div class="modal-card modal-large">
+    <div class="modal-content modal-large">
 
       <div class="modal-header">
 
-        <h3 id="detailsModalTitle">
-          Detalhes
+        <h3>
+          Detalhes da venda
         </h3>
 
         <button
-          class="modal-close"
-          data-close-modal="detailsModal"
           type="button"
+          class="modal-close"
+          data-close="saleDetailsModal"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div
+        id="saleDetailsBody"
+        class="modal-body"
+      ></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       MODAL COMPRA
+  ========================== -->
+
+  <div
+    id="purchaseModal"
+    class="modal"
+  >
+
+    <div class="modal-content modal-large">
+
+      <div class="modal-header">
+
+        <h3>
+          Nova compra
+        </h3>
+
+        <button
+          type="button"
+          class="modal-close"
+          data-close="purchaseModal"
         >
           ×
         </button>
@@ -2491,17 +2179,406 @@
       </div>
 
 
-      <div id="detailsModalBody"></div>
+      <form id="purchaseForm">
+
+        <div class="modal-body">
+
+          <div class="form-grid">
+
+            <div class="form-group">
+
+              <label for="purchaseSupplier">
+                Fornecedor
+              </label>
+
+              <select
+                id="purchaseSupplier"
+                required
+              >
+
+                <option value="">
+                  Selecione
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="purchaseDate">
+                Data
+              </label>
+
+              <input
+                type="date"
+                id="purchaseDate"
+                required
+              >
+
+            </div>
+
+          </div>
+
+
+          <div class="form-grid-3">
+
+            <div class="form-group">
+
+              <label for="purchaseProduct">
+                Produto
+              </label>
+
+              <select id="purchaseProduct">
+
+                <option value="">
+                  Selecione
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="purchaseQuantity">
+                Quantidade
+              </label>
+
+              <input
+                type="number"
+                id="purchaseQuantity"
+                min="1"
+                value="1"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="purchaseCost">
+                Custo unitário
+              </label>
+
+              <input
+                type="number"
+                id="purchaseCost"
+                min="0"
+                step="0.01"
+              >
+
+            </div>
+
+          </div>
+
+
+          <button
+            type="button"
+            id="purchaseAddProduct"
+            class="btn btn-rose"
+          >
+            + Adicionar produto
+          </button>
+
+
+          <div
+            id="purchaseItems"
+            style="margin-top:20px;"
+          ></div>
+
+
+          <div class="entry-highlight">
+
+            <strong>
+              Total da compra
+            </strong>
+
+            <div
+              id="purchaseTotalValue"
+              style="font-size:22px;margin-top:5px;"
+            >
+              R$ 0,00
+            </div>
+
+          </div>
+
+
+          <div class="form-grid">
+
+            <div class="form-group">
+
+              <label for="purchaseEntry">
+                Entrada
+              </label>
+
+              <input
+                type="number"
+                id="purchaseEntry"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="purchasePayment">
+                Forma de pagamento
+              </label>
+
+              <select id="purchasePayment">
+
+                <option value="pix">
+                  PIX
+                </option>
+
+                <option value="dinheiro">
+                  Dinheiro
+                </option>
+
+                <option value="cartao">
+                  Cartão
+                </option>
+
+                <option value="transferencia">
+                  Transferência
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="purchaseInstallments">
+                Parcelas
+              </label>
+
+              <input
+                type="number"
+                id="purchaseInstallments"
+                min="1"
+                value="1"
+              >
+
+            </div>
+
+          </div>
+
+
+          <div class="entry-highlight">
+
+            <strong>
+              A pagar
+            </strong>
+
+            <div
+              id="purchaseBalanceValue"
+              style="font-size:20px;margin-top:5px;"
+            >
+              R$ 0,00
+            </div>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="purchaseNotes">
+              Observações
+            </label>
+
+            <textarea id="purchaseNotes"></textarea>
+
+          </div>
+
+        </div>
+
+
+        <div class="modal-footer">
+
+          <button
+            type="button"
+            class="btn btn-light"
+            data-close="purchaseModal"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-primary"
+          >
+            Registrar compra
+          </button>
+
+        </div>
+
+      </form>
 
     </div>
 
   </div>
 
 
+  <!-- =========================
+       DETALHES DA COMPRA
+  ========================== -->
+
   <div
-    id="toast"
-    class="toast"
-  ></div>
+    id="purchaseDetailsModal"
+    class="modal"
+  >
+
+    <div class="modal-content modal-large">
+
+      <div class="modal-header">
+
+        <h3>
+          Detalhes da compra
+        </h3>
+
+        <button
+          type="button"
+          class="modal-close"
+          data-close="purchaseDetailsModal"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div
+        id="purchaseDetailsBody"
+        class="modal-body"
+      ></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================
+       PAGAMENTO DE COMPRA
+  ========================== -->
+
+  <div
+    id="purchasePaymentModal"
+    class="modal"
+  >
+
+    <div class="modal-content">
+
+      <div class="modal-header">
+
+        <h3>
+          Registrar pagamento
+        </h3>
+
+        <button
+          type="button"
+          class="modal-close"
+          data-close="purchasePaymentModal"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <form id="purchasePaymentForm">
+
+        <div class="modal-body">
+
+          <div class="form-group">
+
+            <label for="purchasePaymentAmount">
+              Valor
+            </label>
+
+            <input
+              type="number"
+              id="purchasePaymentAmount"
+              min="0.01"
+              step="0.01"
+              required
+            >
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="purchasePaymentMethod">
+              Forma de pagamento
+            </label>
+
+            <select id="purchasePaymentMethod">
+
+              <option value="pix">
+                PIX
+              </option>
+
+              <option value="dinheiro">
+                Dinheiro
+              </option>
+
+              <option value="cartao">
+                Cartão
+              </option>
+
+              <option value="transferencia">
+                Transferência
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="form-group">
+
+            <label for="purchasePaymentNote">
+              Observação
+            </label>
+
+            <textarea id="purchasePaymentNote"></textarea>
+
+          </div>
+
+        </div>
+
+
+        <div class="modal-footer">
+
+          <button
+            type="button"
+            class="btn btn-light"
+            data-close="purchasePaymentModal"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-success"
+          >
+            Registrar pagamento
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
 
 
   <script src="/app.js"></script>
