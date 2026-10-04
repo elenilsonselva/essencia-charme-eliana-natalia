@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -9,1101 +10,706 @@
 
 <body>
 
-  <!-- =========================
-       LOGIN
-  ========================== -->
-
   <section id="loginScreen" class="login-screen">
 
-    <div class="login-card">
+```
+<div class="login-card">
 
-      <div class="login-logo">
+  <div class="login-logo">
+    <div class="logo-symbol">E</div>
 
-        <div class="logo-symbol">
-          E
-        </div>
+    <h1>Essência & Charme</h1>
 
-        <h1>
-          Essência & Charme
-        </h1>
+    <p>Perfumes, cosméticos & estilo</p>
 
-        <p>
-          Perfumes, cosméticos & estilo
-        </p>
+    <small>by Eliana Natália</small>
+  </div>
 
-        <small>
-          by Eliana Natália
-        </small>
+  <h2>Acesso ao sistema</h2>
 
-      </div>
+  <form id="loginForm">
 
-      <h2>
-        Acesso ao sistema
-      </h2>
-
-      <form id="loginForm">
-
-        <div class="form-group">
-          <label for="loginUsername">
-            Usuário
-          </label>
-
-          <input
-            type="text"
-            id="loginUsername"
-            autocomplete="username"
-            required
-          >
-        </div>
-
-        <div class="form-group">
-          <label for="loginPassword">
-            Senha
-          </label>
-
-          <input
-            type="password"
-            id="loginPassword"
-            autocomplete="current-password"
-            required
-          >
-        </div>
-
-        <div
-          id="loginError"
-          class="alert alert-danger"
-          style="display:none;"
-        ></div>
-
-        <button
-          type="submit"
-          class="btn btn-primary btn-block"
-        >
-          Entrar
-        </button>
-
-      </form>
-
+    <div class="form-group">
+      <label for="loginUsername">Usuário</label>
+      <input
+        type="text"
+        id="loginUsername"
+        autocomplete="username"
+        required
+      >
     </div>
+
+    <div class="form-group">
+      <label for="loginPassword">Senha</label>
+      <input
+        type="password"
+        id="loginPassword"
+        autocomplete="current-password"
+        required
+      >
+    </div>
+
+    <div
+      id="loginError"
+      class="alert alert-danger"
+      style="display:none;"
+    ></div>
+
+    <button
+      type="submit"
+      class="btn btn-primary btn-block"
+    >
+      Entrar
+    </button>
+
+  </form>
+
+</div>
+```
 
   </section>
 
-
-  <!-- =========================
-       APLICAÇÃO
-  ========================== -->
-
   <div id="app" class="hidden">
 
-    <div id="appShell" class="app-shell">
+```
+<div id="appShell" class="app-shell">
 
-      <!-- =========================
-           SIDEBAR
-      ========================== -->
+  <aside class="sidebar">
 
-      <aside class="sidebar">
+    <div class="brand">
 
-        <div class="brand">
+      <div class="brand-mark">E</div>
 
-          <div class="brand-mark">
-            E
-          </div>
+      <div>
+        <div class="brand-name">Essência & Charme</div>
+        <div class="brand-subtitle">
+          Perfumes, cosméticos & estilo
+        </div>
+        <div class="brand-author">
+          by Eliana Natália
+        </div>
+      </div>
+
+    </div>
+
+
+    <nav class="main-nav">
+
+      <div class="nav-section-title">Principal</div>
+
+      <button
+        type="button"
+        class="nav-item active"
+        data-page="dashboard"
+      >
+        <span>⌂</span>
+        <span>Dashboard</span>
+      </button>
+
+
+      <div class="nav-section-title">Cadastros</div>
+
+      <button
+        type="button"
+        class="nav-item"
+        data-page="products"
+      >
+        <span>▣</span>
+        <span>Produtos</span>
+      </button>
+
+      <button
+        type="button"
+        class="nav-item"
+        data-page="clients"
+      >
+        <span>♙</span>
+        <span>Clientes</span>
+      </button>
+
+      <button
+        type="button"
+        class="nav-item"
+        data-page="suppliers"
+      >
+        <span>▤</span>
+        <span>Fornecedores</span>
+      </button>
+
+
+      <div class="nav-section-title">Operações</div>
+
+      <button
+        type="button"
+        class="nav-item"
+        data-page="sale"
+      >
+        <span>＋</span>
+        <span>Nova Venda</span>
+      </button>
+
+      <button
+        type="button"
+        class="nav-item"
+        data-page="sales"
+      >
+        <span>▤</span>
+        <span>Vendas</span>
+      </button>
+
+      <button
+        type="button"
+        class="nav-item"
+        data-page="purchases"
+      >
+        <span>▥</span>
+        <span>Compras</span>
+      </button>
+
+      <button
+        type="button"
+        class="nav-item"
+        data-page="stock"
+      >
+        <span>▦</span>
+        <span>Estoque</span>
+      </button>
+
+
+      <div class="nav-section-title">Gestão</div>
+
+      <button
+        type="button"
+        class="nav-item"
+        data-page="reports"
+      >
+        <span>▥</span>
+        <span>Relatórios</span>
+      </button>
+
+    </nav>
+
+
+    <div class="sidebar-footer">
+
+      <div class="user-box">
+
+        <div id="loggedUser">Olá</div>
+
+        <button
+          type="button"
+          id="logoutButton"
+          class="btn btn-light btn-sm btn-block"
+          style="margin-top:8px;"
+        >
+          Sair
+        </button>
+
+      </div>
+
+    </div>
+
+  </aside>
+
+
+  <main class="main-content">
+
+    <header class="topbar">
+
+      <div
+        id="topbarTitle"
+        class="topbar-title"
+      >
+        Dashboard
+      </div>
+
+      <div class="topbar-right">
+        <span id="topbarDate"></span>
+      </div>
+
+    </header>
+
+
+    <div class="page-content">
+
+
+      <section
+        id="page-dashboard"
+        class="page active"
+      >
+
+        <div class="page-header">
 
           <div>
+            <h2>Dashboard</h2>
 
-            <div class="brand-name">
-              Essência & Charme
-            </div>
-
-            <div class="brand-subtitle">
-              Perfumes, cosméticos & estilo
-            </div>
-
-            <div class="brand-author">
-              by Eliana Natália
-            </div>
-
+            <p>
+              Visão geral da Essência & Charme
+            </p>
           </div>
 
         </div>
 
 
-        <!-- =========================
-             NAVEGAÇÃO
-        ========================== -->
+        <div class="dashboard-grid">
 
-        <nav class="main-nav">
+          <div class="stat-card">
+            <div class="stat-label">Vendas</div>
 
-          <div class="nav-section-title">
-            Principal
+            <div
+              id="dashboardSales"
+              class="stat-value"
+            >
+              R$ 0,00
+            </div>
+
+            <div class="stat-detail">
+              Total de vendas
+            </div>
           </div>
 
-          <button
-            class="nav-item active"
-            data-page="dashboard"
-          >
-            <span>⌂</span>
-            <span>Dashboard</span>
-          </button>
 
+          <div class="stat-card">
+            <div class="stat-label">A receber</div>
 
-          <div class="nav-section-title">
-            Cadastros
+            <div
+              id="dashboardReceivable"
+              class="stat-value"
+            >
+              R$ 0,00
+            </div>
+
+            <div class="stat-detail">
+              Valores pendentes
+            </div>
           </div>
 
-          <button
-            class="nav-item"
-            data-page="products"
-          >
-            <span>▣</span>
-            <span>Produtos</span>
-          </button>
 
-          <button
-            class="nav-item"
-            data-page="clients"
-          >
-            <span>♙</span>
-            <span>Clientes</span>
-          </button>
+          <div class="stat-card">
+            <div class="stat-label">Compras</div>
 
-          <button
-            class="nav-item"
-            data-page="suppliers"
-          >
-            <span>▤</span>
-            <span>Fornecedores</span>
-          </button>
+            <div
+              id="dashboardPurchases"
+              class="stat-value"
+            >
+              R$ 0,00
+            </div>
 
-
-          <div class="nav-section-title">
-            Operações
+            <div class="stat-detail">
+              Total de compras
+            </div>
           </div>
 
+
+          <div class="stat-card">
+            <div class="stat-label">A pagar</div>
+
+            <div
+              id="dashboardPayable"
+              class="stat-value"
+            >
+              R$ 0,00
+            </div>
+
+            <div class="stat-detail">
+              Contas pendentes
+            </div>
+          </div>
+
+        </div>
+
+
+        <div class="quick-actions">
+
           <button
-            class="nav-item"
+            type="button"
+            class="quick-action"
             data-page="sale"
           >
-            <span>＋</span>
-            <span>Nova Venda</span>
+            <strong>Nova venda</strong>
+            <span>Registrar uma nova venda</span>
           </button>
 
+
           <button
-            class="nav-item"
-            data-page="sales"
+            type="button"
+            class="quick-action"
+            data-page="products"
           >
-            <span>▤</span>
-            <span>Vendas</span>
+            <strong>Produtos</strong>
+            <span>Gerenciar produtos e estoque</span>
           </button>
 
+
           <button
-            class="nav-item"
+            type="button"
+            class="quick-action"
+            data-page="clients"
+          >
+            <strong>Clientes</strong>
+            <span>Gerenciar cadastro de clientes</span>
+          </button>
+
+
+          <button
+            type="button"
+            class="quick-action"
             data-page="purchases"
           >
-            <span>▥</span>
-            <span>Compras</span>
+            <strong>Nova compra</strong>
+            <span>Registrar compras de fornecedores</span>
           </button>
-
-          <button
-            class="nav-item"
-            data-page="stock"
-          >
-            <span>▦</span>
-            <span>Estoque</span>
-          </button>
-
-
-          <div class="nav-section-title">
-            Gestão
-          </div>
-
-          <button
-            class="nav-item"
-            data-page="reports"
-          >
-            <span>▥</span>
-            <span>Relatórios</span>
-          </button>
-
-        </nav>
-
-
-        <!-- =========================
-             RODAPÉ
-        ========================== -->
-
-        <div class="sidebar-footer">
-
-          <div class="user-box">
-
-            <div id="loggedUser">
-              Olá
-            </div>
-
-            <button
-              id="logoutButton"
-              class="btn btn-light btn-sm btn-block"
-              style="margin-top:8px;"
-            >
-              Sair
-            </button>
-
-          </div>
 
         </div>
 
-      </aside>
 
+        <div class="card">
 
-      <!-- =========================
-           CONTEÚDO PRINCIPAL
-      ========================== -->
-
-      <main class="main-content">
-
-        <header class="topbar">
-
-          <div
-            id="topbarTitle"
-            class="topbar-title"
-          >
-            Dashboard
+          <div class="card-header">
+            <h3>Resumo do estoque</h3>
           </div>
 
-          <div class="topbar-right">
-
-            <span id="topbarDate"></span>
-
-          </div>
-
-        </header>
-
-
-        <div class="page-content">
-
-
-          <!-- =========================
-               DASHBOARD
-          ========================== -->
-
-          <section
-            id="page-dashboard"
-            class="page active"
-          >
-
-            <div class="page-header">
-
-              <div>
-
-                <h2>
-                  Dashboard
-                </h2>
-
-                <p>
-                  Visão geral da Essência & Charme
-                </p>
-
-              </div>
-
-            </div>
-
+          <div class="card-body">
 
             <div class="dashboard-grid">
 
               <div class="stat-card">
-
                 <div class="stat-label">
-                  Vendas
+                  Produtos cadastrados
                 </div>
 
                 <div
-                  id="dashboardSales"
+                  id="dashboardProducts"
                   class="stat-value"
                 >
-                  R$ 0,00
+                  0
                 </div>
-
-                <div class="stat-detail">
-                  Total de vendas
-                </div>
-
               </div>
 
 
               <div class="stat-card">
-
                 <div class="stat-label">
-                  A receber
-                </div>
-
-                <div
-                  id="dashboardReceivable"
-                  class="stat-value"
-                >
-                  R$ 0,00
-                </div>
-
-                <div class="stat-detail">
-                  Valores pendentes
-                </div>
-
-              </div>
-
-
-              <div class="stat-card">
-
-                <div class="stat-label">
-                  Compras
-                </div>
-
-                <div
-                  id="dashboardPurchases"
-                  class="stat-value"
-                >
-                  R$ 0,00
-                </div>
-
-                <div class="stat-detail">
-                  Total de compras
-                </div>
-
-              </div>
-
-
-              <div class="stat-card">
-
-                <div class="stat-label">
-                  A pagar
-                </div>
-
-                <div
-                  id="dashboardPayable"
-                  class="stat-value"
-                >
-                  R$ 0,00
-                </div>
-
-                <div class="stat-detail">
-                  Contas pendentes
-                </div>
-
-              </div>
-
-            </div>
-
-
-            <div class="quick-actions">
-
-              <button
-                class="quick-action"
-                data-page="sale"
-              >
-                <strong>
-                  Nova venda
-                </strong>
-
-                <span>
-                  Registrar uma nova venda
-                </span>
-              </button>
-
-
-              <button
-                class="quick-action"
-                data-page="products"
-              >
-                <strong>
-                  Produtos
-                </strong>
-
-                <span>
-                  Gerenciar produtos e estoque
-                </span>
-              </button>
-
-
-              <button
-                class="quick-action"
-                data-page="clients"
-              >
-                <strong>
                   Clientes
-                </strong>
+                </div>
 
-                <span>
-                  Gerenciar cadastro de clientes
-                </span>
-              </button>
+                <div
+                  id="dashboardClients"
+                  class="stat-value"
+                >
+                  0
+                </div>
+              </div>
 
 
-              <button
-                class="quick-action"
-                data-page="purchases"
-              >
-                <strong>
-                  Nova compra
-                </strong>
+              <div class="stat-card">
+                <div class="stat-label">
+                  Estoque baixo
+                </div>
 
-                <span>
-                  Registrar compras de fornecedores
-                </span>
-              </button>
+                <div
+                  id="dashboardLowStock"
+                  class="stat-value"
+                >
+                  0
+                </div>
+              </div>
 
             </div>
 
+          </div>
 
-            <div class="card">
+        </div>
 
-              <div class="card-header">
+      </section>
 
-                <h3>
-                  Resumo do estoque
-                </h3>
 
-              </div>
+      <section
+        id="page-products"
+        class="page"
+      >
 
-              <div class="card-body">
+        <div class="page-header">
 
-                <div class="dashboard-grid">
+          <div>
+            <h2>Produtos</h2>
 
-                  <div class="stat-card">
+            <p>
+              Cadastro e controle dos produtos
+            </p>
+          </div>
 
-                    <div class="stat-label">
-                      Produtos cadastrados
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="newProductButton"
+          >
+            + Novo produto
+          </button>
+
+        </div>
+
+
+        <div class="card">
+
+          <div class="card-body">
+
+            <div class="table-wrapper">
+
+              <table>
+
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Marca</th>
+                    <th>Fornecedor</th>
+                    <th>Custo</th>
+                    <th>Preço</th>
+                    <th>Estoque</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+
+                <tbody id="productsTableBody"></tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section
+        id="page-clients"
+        class="page"
+      >
+
+        <div class="page-header">
+
+          <div>
+            <h2>Clientes</h2>
+
+            <p>Cadastro de clientes</p>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="newClientButton"
+          >
+            + Novo cliente
+          </button>
+
+        </div>
+
+
+        <div class="card">
+
+          <div class="card-body">
+
+            <div class="table-wrapper">
+
+              <table>
+
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Telefone</th>
+                    <th>Endereço</th>
+                    <th>Observações</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+
+                <tbody id="clientsTableBody"></tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section
+        id="page-suppliers"
+        class="page"
+      >
+
+        <div class="page-header">
+
+          <div>
+            <h2>Fornecedores</h2>
+
+            <p>Cadastro de fornecedores</p>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="newSupplierButton"
+          >
+            + Novo fornecedor
+          </button>
+
+        </div>
+
+
+        <div class="card">
+
+          <div class="card-body">
+
+            <div class="table-wrapper">
+
+              <table>
+
+                <thead>
+                  <tr>
+                    <th>Fornecedor</th>
+                    <th>Telefone</th>
+                    <th>WhatsApp</th>
+                    <th>Documento</th>
+                    <th>Endereço</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+
+                <tbody id="suppliersTableBody"></tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section
+        id="page-sale"
+        class="page"
+      >
+
+        <div class="page-header">
+
+          <div>
+            <h2>Nova Venda</h2>
+
+            <p>Registre uma nova venda</p>
+          </div>
+
+        </div>
+
+
+        <form id="saleForm">
+
+          <div class="sale-layout">
+
+            <div>
+
+              <div class="card">
+
+                <div class="card-header">
+                  <h3>Dados da venda</h3>
+                </div>
+
+                <div class="card-body">
+
+                  <div class="form-grid">
+
+                    <div class="form-group">
+
+                      <label for="saleClient">
+                        Cliente
+                      </label>
+
+                      <select id="saleClient">
+                        <option value="">
+                          Consumidor final
+                        </option>
+                      </select>
+
                     </div>
 
-                    <div
-                      id="dashboardProducts"
-                      class="stat-value"
-                    >
-                      0
+
+                    <div class="form-group">
+
+                      <label for="saleDate">
+                        Data
+                      </label>
+
+                      <input
+                        type="date"
+                        id="saleDate"
+                        required
+                      >
+
                     </div>
 
                   </div>
 
 
-                  <div class="stat-card">
-
-                    <div class="stat-label">
-                      Clientes
-                    </div>
-
-                    <div
-                      id="dashboardClients"
-                      class="stat-value"
-                    >
-                      0
-                    </div>
-
-                  </div>
-
-
-                  <div class="stat-card">
-
-                    <div class="stat-label">
-                      Estoque baixo
-                    </div>
-
-                    <div
-                      id="dashboardLowStock"
-                      class="stat-value"
-                    >
-                      0
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          <!-- =========================
-               PRODUTOS
-          ========================== -->
-
-          <section
-            id="page-products"
-            class="page"
-          >
-
-            <div class="page-header">
-
-              <div>
-
-                <h2>
-                  Produtos
-                </h2>
-
-                <p>
-                  Cadastro e controle dos produtos
-                </p>
-
-              </div>
-
-              <button
-                class="btn btn-primary"
-                id="newProductButton"
-              >
-                + Novo produto
-              </button>
-
-            </div>
-
-
-            <div class="card">
-
-              <div class="card-body">
-
-                <div class="table-wrapper">
-
-                  <table>
-
-                    <thead>
-
-                      <tr>
-                        <th>Código</th>
-                        <th>Produto</th>
-                        <th>Marca</th>
-                        <th>Tamanho</th>
-                        <th>Custo</th>
-                        <th>Preço</th>
-                        <th>Estoque</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                      </tr>
-
-                    </thead>
-
-                    <tbody id="productsTableBody"></tbody>
-
-                  </table>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          <!-- =========================
-               CLIENTES
-          ========================== -->
-
-          <section
-            id="page-clients"
-            class="page"
-          >
-
-            <div class="page-header">
-
-              <div>
-
-                <h2>
-                  Clientes
-                </h2>
-
-                <p>
-                  Cadastro de clientes
-                </p>
-
-              </div>
-
-              <button
-                class="btn btn-primary"
-                id="newClientButton"
-              >
-                + Novo cliente
-              </button>
-
-            </div>
-
-
-            <div class="card">
-
-              <div class="card-body">
-
-                <div class="table-wrapper">
-
-                  <table>
-
-                    <thead>
-
-                      <tr>
-                        <th>Nome</th>
-                        <th>Telefone</th>
-                        <th>Endereço</th>
-                        <th>Ações</th>
-                      </tr>
-
-                    </thead>
-
-                    <tbody id="clientsTableBody"></tbody>
-
-                  </table>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          <!-- =========================
-               FORNECEDORES
-          ========================== -->
-
-          <section
-            id="page-suppliers"
-            class="page"
-          >
-
-            <div class="page-header">
-
-              <div>
-
-                <h2>
-                  Fornecedores
-                </h2>
-
-                <p>
-                  Cadastro de fornecedores
-                </p>
-
-              </div>
-
-              <button
-                class="btn btn-primary"
-                id="newSupplierButton"
-              >
-                + Novo fornecedor
-              </button>
-
-            </div>
-
-
-            <div class="card">
-
-              <div class="card-body">
-
-                <div class="table-wrapper">
-
-                  <table>
-
-                    <thead>
-
-                      <tr>
-                        <th>Fornecedor</th>
-                        <th>Telefone</th>
-                        <th>WhatsApp</th>
-                        <th>Documento</th>
-                        <th>Endereço</th>
-                        <th>Ações</th>
-                      </tr>
-
-                    </thead>
-
-                    <tbody id="suppliersTableBody"></tbody>
-
-                  </table>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          <!-- =========================
-               NOVA VENDA
-          ========================== -->
-
-          <section
-            id="page-sale"
-            class="page"
-          >
-
-            <div class="page-header">
-
-              <div>
-
-                <h2>
-                  Nova Venda
-                </h2>
-
-                <p>
-                  Registre uma nova venda
-                </p>
-
-              </div>
-
-            </div>
-
-
-            <form id="saleForm">
-
-              <div class="sale-layout">
-
-                <div>
-
-                  <div class="card">
-
-                    <div class="card-header">
-
-                      <h3>
-                        Dados da venda
-                      </h3>
+                  <div class="form-grid-3">
+
+                    <div class="form-group">
+
+                      <label for="saleProduct">
+                        Produto
+                      </label>
+
+                      <select id="saleProduct">
+                        <option value="">
+                          Selecione
+                        </option>
+                      </select>
 
                     </div>
 
-                    <div class="card-body">
 
-                      <div class="form-grid">
+                    <div class="form-group">
 
-                        <div class="form-group">
+                      <label for="saleQuantity">
+                        Quantidade
+                      </label>
 
-                          <label for="saleClient">
-                            Cliente
-                          </label>
-
-                          <select id="saleClient">
-                            <option value="">
-                              Consumidor final
-                            </option>
-                          </select>
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                          <label for="saleDate">
-                            Data
-                          </label>
-
-                          <input
-                            type="date"
-                            id="saleDate"
-                            required
-                          >
-
-                        </div>
-
-                      </div>
-
-
-                      <div class="form-grid-3">
-
-                        <div class="form-group">
-
-                          <label for="saleProduct">
-                            Produto
-                          </label>
-
-                          <select id="saleProduct">
-                            <option value="">
-                              Selecione
-                            </option>
-                          </select>
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                          <label for="saleQuantity">
-                            Quantidade
-                          </label>
-
-                          <input
-                            type="number"
-                            id="saleQuantity"
-                            min="1"
-                            value="1"
-                          >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                          <label>
-                            &nbsp;
-                          </label>
-
-                          <button
-                            type="button"
-                            class="btn btn-rose btn-block"
-                            id="saleAddProduct"
-                          >
-                            + Adicionar
-                          </button>
-
-                        </div>
-
-                      </div>
-
-
-                      <div id="saleCart"></div>
+                      <input
+                        type="number"
+                        id="saleQuantity"
+                        min="1"
+                        value="1"
+                      >
 
                     </div>
 
-                  </div>
 
-                </div>
+                    <div class="form-group">
 
-
-                <div>
-
-                  <div class="card">
-
-                    <div class="card-header">
-
-                      <h3>
-                        Resumo
-                      </h3>
-
-                    </div>
-
-                    <div class="card-body">
-
-                      <div class="cart-summary">
-
-                        <div class="summary-line">
-
-                          <span>
-                            Subtotal
-                          </span>
-
-                          <strong id="saleSubtotal">
-                            R$ 0,00
-                          </strong>
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                          <label for="saleDiscount">
-                            Desconto
-                          </label>
-
-                          <input
-                            type="number"
-                            id="saleDiscount"
-                            min="0"
-                            step="0.01"
-                            value="0"
-                          >
-
-                        </div>
-
-
-                        <div class="summary-line total">
-
-                          <span>
-                            Total
-                          </span>
-
-                          <strong id="saleTotal">
-                            R$ 0,00
-                          </strong>
-
-                        </div>
-
-                      </div>
-
-
-                      <div class="entry-highlight">
-
-                        <strong>
-                          Entrada
-                        </strong>
-
-                        <div class="form-group">
-
-                          <label for="saleEntry">
-                            Valor da entrada
-                          </label>
-
-                          <input
-                            type="number"
-                            id="saleEntry"
-                            min="0"
-                            step="0.01"
-                            value="0"
-                          >
-
-                        </div>
-
-                        <div>
-
-                          Saldo:
-                          <strong id="saleBalance">
-                            R$ 0,00
-                          </strong>
-
-                        </div>
-
-                      </div>
-
-
-                      <div class="form-group">
-
-                        <label for="salePayment">
-                          Forma de pagamento
-                        </label>
-
-                        <select id="salePayment">
-
-                          <option value="pix">
-                            PIX
-                          </option>
-
-                          <option value="dinheiro">
-                            Dinheiro
-                          </option>
-
-                          <option value="cartao">
-                            Cartão
-                          </option>
-
-                          <option value="transferencia">
-                            Transferência
-                          </option>
-
-                        </select>
-
-                      </div>
-
-
-                      <div class="form-group">
-
-                        <label for="saleInstallments">
-                          Parcelas
-                        </label>
-
-                        <input
-                          type="number"
-                          id="saleInstallments"
-                          min="1"
-                          value="1"
-                        >
-
-                      </div>
-
-
-                      <div class="form-group">
-
-                        <label>
-                          Valor por parcela
-                        </label>
-
-                        <div
-                          id="saleInstallmentValue"
-                          class="entry-highlight"
-                        >
-                          R$ 0,00
-                        </div>
-
-                      </div>
-
-
-                      <div class="form-group">
-
-                        <label for="saleNotes">
-                          Observações
-                        </label>
-
-                        <textarea
-                          id="saleNotes"
-                          placeholder="Observações da venda"
-                        ></textarea>
-
-                      </div>
-
+                      <label>&nbsp;</label>
 
                       <button
-                        type="submit"
-                        class="btn btn-primary btn-block"
+                        type="button"
+                        class="btn btn-rose btn-block"
+                        id="saleAddProduct"
                       >
-                        Registrar venda
+                        + Adicionar
                       </button>
 
                     </div>
 
                   </div>
 
-                </div>
 
-              </div>
-
-            </form>
-
-          </section>
-
-
-          <!-- =========================
-               VENDAS
-          ========================== -->
-
-          <section
-            id="page-sales"
-            class="page"
-          >
-
-            <div class="page-header">
-
-              <div>
-
-                <h2>
-                  Vendas
-                </h2>
-
-                <p>
-                  Histórico de vendas e recebimentos
-                </p>
-
-              </div>
-
-            </div>
-
-
-            <div class="card">
-
-              <div class="card-body">
-
-                <div class="table-wrapper">
-
-                  <table>
-
-                    <thead>
-
-                      <tr>
-                        <th>Data</th>
-                        <th>Cliente</th>
-                        <th>Total</th>
-                        <th>Entrada</th>
-                        <th>A receber</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                      </tr>
-
-                    </thead>
-
-                    <tbody id="salesTableBody"></tbody>
-
-                  </table>
+                  <div id="saleCart"></div>
 
                 </div>
 
@@ -1111,65 +717,160 @@
 
             </div>
 
-          </section>
+
+            <div>
+
+              <div class="card">
+
+                <div class="card-header">
+                  <h3>Resumo</h3>
+                </div>
+
+                <div class="card-body">
+
+                  <div class="cart-summary">
+
+                    <div class="summary-line">
+
+                      <span>Subtotal</span>
+
+                      <strong id="saleSubtotal">
+                        R$ 0,00
+                      </strong>
+
+                    </div>
 
 
-          <!-- =========================
-               ESTOQUE
-          ========================== -->
+                    <div class="form-group">
 
-          <section
-            id="page-stock"
-            class="page"
-          >
+                      <label for="saleDiscount">
+                        Desconto
+                      </label>
 
-            <div class="page-header">
+                      <input
+                        type="number"
+                        id="saleDiscount"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                      >
 
-              <div>
-
-                <h2>
-                  Estoque
-                </h2>
-
-                <p>
-                  Movimentações e controle de estoque
-                </p>
-
-              </div>
-
-              <button
-                class="btn btn-primary"
-                id="newStockButton"
-              >
-                + Movimentar estoque
-              </button>
-
-            </div>
+                    </div>
 
 
-            <div class="card">
+                    <div class="summary-line total">
 
-              <div class="card-body">
+                      <span>Total</span>
 
-                <div class="table-wrapper">
+                      <strong id="saleTotal">
+                        R$ 0,00
+                      </strong>
 
-                  <table>
+                    </div>
 
-                    <thead>
+                  </div>
 
-                      <tr>
-                        <th>Data</th>
-                        <th>Produto</th>
-                        <th>Tipo</th>
-                        <th>Quantidade</th>
-                        <th>Observação</th>
-                      </tr>
 
-                    </thead>
+                  <div class="entry-highlight">
 
-                    <tbody id="stockTableBody"></tbody>
+                    <strong>Entrada</strong>
 
-                  </table>
+                    <div class="form-group">
+
+                      <label for="saleEntry">
+                        Valor da entrada
+                      </label>
+
+                      <input
+                        type="number"
+                        id="saleEntry"
+                        min="0"
+                        step="0.01"
+                        value="0"
+                      >
+
+                    </div>
+
+                    <div>
+                      Saldo:
+                      <strong id="saleBalance">
+                        R$ 0,00
+                      </strong>
+                    </div>
+
+                  </div>
+
+
+                  <div class="form-group">
+
+                    <label for="salePayment">
+                      Forma de pagamento
+                    </label>
+
+                    <select id="salePayment">
+
+                      <option value="pix">PIX</option>
+                      <option value="dinheiro">Dinheiro</option>
+                      <option value="cartao">Cartão</option>
+                      <option value="transferencia">
+                        Transferência
+                      </option>
+
+                    </select>
+
+                  </div>
+
+
+                  <div class="form-group">
+
+                    <label for="saleInstallments">
+                      Parcelas
+                    </label>
+
+                    <input
+                      type="number"
+                      id="saleInstallments"
+                      min="1"
+                      value="1"
+                    >
+
+                  </div>
+
+
+                  <div class="form-group">
+
+                    <label>Valor por parcela</label>
+
+                    <div
+                      id="saleInstallmentValue"
+                      class="entry-highlight"
+                    >
+                      R$ 0,00
+                    </div>
+
+                  </div>
+
+
+                  <div class="form-group">
+
+                    <label for="saleNotes">
+                      Observações
+                    </label>
+
+                    <textarea
+                      id="saleNotes"
+                      placeholder="Observações da venda"
+                    ></textarea>
+
+                  </div>
+
+
+                  <button
+                    type="submit"
+                    class="btn btn-primary btn-block"
+                  >
+                    Registrar venda
+                  </button>
 
                 </div>
 
@@ -1177,397 +878,56 @@
 
             </div>
 
-          </section>
+          </div>
 
+        </form>
 
-          <!-- =========================
-               RELATÓRIOS
-          ========================== -->
+      </section>
 
-          <section
-            id="page-reports"
-            class="page"
-          >
 
-            <div class="page-header">
+      <section
+        id="page-sales"
+        class="page"
+      >
 
-              <div>
+        <div class="page-header">
 
-                <h2>
-                  Relatórios
-                </h2>
+          <div>
+            <h2>Vendas</h2>
 
-                <p>
-                  Indicadores financeiros e operacionais
-                </p>
-
-              </div>
-
-            </div>
-
-
-            <div class="dashboard-grid">
-
-              <div class="stat-card">
-
-                <div class="stat-label">
-                  Total de vendas
-                </div>
-
-                <div
-                  id="reportTotalSales"
-                  class="stat-value"
-                >
-                  R$ 0,00
-                </div>
-
-              </div>
-
-
-              <div class="stat-card">
-
-                <div class="stat-label">
-                  Total de compras
-                </div>
-
-                <div
-                  id="reportTotalPurchases"
-                  class="stat-value"
-                >
-                  R$ 0,00
-                </div>
-
-              </div>
-
-
-              <div class="stat-card">
-
-                <div class="stat-label">
-                  A receber
-                </div>
-
-                <div
-                  id="reportReceivable"
-                  class="stat-value"
-                >
-                  R$ 0,00
-                </div>
-
-              </div>
-
-
-              <div class="stat-card">
-
-                <div class="stat-label">
-                  A pagar
-                </div>
-
-                <div
-                  id="reportPayable"
-                  class="stat-value"
-                >
-                  R$ 0,00
-                </div>
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          <!-- =========================
-               COMPRAS
-          ========================== -->
-
-          <section
-            id="page-purchases"
-            class="page"
-          >
-
-            <div class="page-header">
-
-              <div>
-
-                <h2>
-                  Compras
-                </h2>
-
-                <p>
-                  Compras de fornecedores e contas a pagar
-                </p>
-
-              </div>
-
-              <button
-                class="btn btn-primary"
-                id="newPurchaseButton"
-              >
-                + Nova compra
-              </button>
-
-            </div>
-
-
-            <div class="purchase-summary">
-
-              <div class="purchase-card">
-
-                <span>
-                  Total em compras
-                </span>
-
-                <strong id="purchasesTotal">
-                  R$ 0,00
-                </strong>
-
-              </div>
-
-
-              <div class="purchase-card">
-
-                <span>
-                  Total pago
-                </span>
-
-                <strong id="purchasesPaid">
-                  R$ 0,00
-                </strong>
-
-              </div>
-
-
-              <div class="purchase-card">
-
-                <span>
-                  A pagar
-                </span>
-
-                <strong id="purchasesBalance">
-                  R$ 0,00
-                </strong>
-
-              </div>
-
-            </div>
-
-
-            <div class="card">
-
-              <div class="card-header">
-
-                <h3>
-                  Compras cadastradas
-                </h3>
-
-              </div>
-
-              <div class="card-body">
-
-                <div class="table-wrapper">
-
-                  <table>
-
-                    <thead>
-
-                      <tr>
-                        <th>Data</th>
-                        <th>Fornecedor</th>
-                        <th>Total</th>
-                        <th>Entrada</th>
-                        <th>A pagar</th>
-                        <th>Parcelas</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                      </tr>
-
-                    </thead>
-
-                    <tbody id="purchasesTableBody"></tbody>
-
-                  </table>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </section>
+            <p>
+              Histórico de vendas e recebimentos
+            </p>
+          </div>
 
         </div>
 
-      </main>
 
-    </div>
+        <div class="card">
 
-  </div>
+          <div class="card-body">
 
+            <div class="table-wrapper">
 
-  <!-- =========================
-       MODAL PRODUTO
-  ========================== -->
+              <table>
 
-  <div
-    id="productModal"
-    class="modal"
-  >
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Total</th>
+                    <th>Entrada</th>
+                    <th>A receber</th>
+                    <th>Status</th>
+                    <th>Pagamento</th>
+                    <th>Parcelas</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
 
-    <div class="modal-content">
+                <tbody id="salesTableBody"></tbody>
 
-      <div class="modal-header">
-
-        <h3 id="productModalTitle">
-          Novo produto
-        </h3>
-
-        <button
-          type="button"
-          class="modal-close"
-          data-close="productModal"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <form id="productForm">
-
-        <div class="modal-body">
-
-          <input
-            type="hidden"
-            id="productId"
-          >
-
-          <div class="form-grid">
-
-            <div class="form-group">
-
-              <label for="productCode">
-                Código
-              </label>
-
-              <input id="productCode">
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="productName">
-                Produto
-              </label>
-
-              <input
-                id="productName"
-                required
-              >
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="productBrand">
-                Marca
-              </label>
-
-              <input id="productBrand">
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="productSupplier">
-                Fornecedor
-              </label>
-
-              <select id="productSupplier">
-
-                <option value="">
-                  Selecione
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="productSize">
-                Tamanho
-              </label>
-
-              <input id="productSize">
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="productCost">
-                Custo
-              </label>
-
-              <input
-                type="number"
-                id="productCost"
-                min="0"
-                step="0.01"
-              >
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="productPrice">
-                Preço de venda
-              </label>
-
-              <input
-                type="number"
-                id="productPrice"
-                min="0"
-                step="0.01"
-                required
-              >
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="productStock">
-                Estoque
-              </label>
-
-              <input
-                type="number"
-                id="productStock"
-                min="0"
-                step="1"
-              >
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="productMinStock">
-                Estoque mínimo
-              </label>
-
-              <input
-                type="number"
-                id="productMinStock"
-                min="0"
-                step="1"
-              >
+              </table>
 
             </div>
 
@@ -1575,730 +935,97 @@
 
         </div>
 
+      </section>
 
-        <div class="modal-footer">
+
+      <section
+        id="page-stock"
+        class="page"
+      >
+
+        <div class="page-header">
+
+          <div>
+            <h2>Estoque</h2>
+
+            <p>
+              Movimentações e controle de estoque
+            </p>
+          </div>
 
           <button
             type="button"
-            class="btn btn-light"
-            data-close="productModal"
-          >
-            Cancelar
-          </button>
-
-          <button
-            type="submit"
             class="btn btn-primary"
+            id="newStockButton"
           >
-            Salvar
+            + Movimentar estoque
           </button>
 
         </div>
 
-      </form>
 
-    </div>
+        <div class="card">
 
-  </div>
+          <div class="card-body">
 
+            <div class="table-wrapper">
 
-  <!-- =========================
-       MODAL CLIENTE
-  ========================== -->
+              <table>
 
-  <div
-    id="clientModal"
-    class="modal"
-  >
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Marca</th>
+                    <th>Estoque</th>
+                    <th>Mínimo</th>
+                    <th>Custo</th>
+                    <th>Preço</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
 
-    <div class="modal-content">
+                <tbody id="stockTableBody"></tbody>
 
-      <div class="modal-header">
-
-        <h3 id="clientModalTitle">
-          Novo cliente
-        </h3>
-
-        <button
-          type="button"
-          class="modal-close"
-          data-close="clientModal"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <form id="clientForm">
-
-        <div class="modal-body">
-
-          <input
-            type="hidden"
-            id="clientId"
-          >
-
-          <div class="form-group">
-
-            <label for="clientName">
-              Nome
-            </label>
-
-            <input
-              id="clientName"
-              required
-            >
-
-          </div>
-
-
-          <div class="form-grid">
-
-            <div class="form-group">
-
-              <label for="clientPhone">
-                Telefone
-              </label>
-
-              <input id="clientPhone">
+              </table>
 
             </div>
-
-
-            <div class="form-group">
-
-              <label for="clientAddress">
-                Endereço
-              </label>
-
-              <input id="clientAddress">
-
-            </div>
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label for="clientNotes">
-              Observações
-            </label>
-
-            <textarea id="clientNotes"></textarea>
 
           </div>
 
         </div>
 
-
-        <div class="modal-footer">
-
-          <button
-            type="button"
-            class="btn btn-light"
-            data-close="clientModal"
-          >
-            Cancelar
-          </button>
-
-          <button
-            type="submit"
-            class="btn btn-primary"
-          >
-            Salvar
-          </button>
-
-        </div>
-
-      </form>
-
-    </div>
-
-  </div>
+      </section>
 
 
-  <!-- =========================
-       MODAL FORNECEDOR
-  ========================== -->
+      <section
+        id="page-reports"
+        class="page"
+      >
 
-  <div
-    id="supplierModal"
-    class="modal"
-  >
+        <div class="page-header">
 
-    <div class="modal-content">
+          <div>
+            <h2>Relatórios</h2>
 
-      <div class="modal-header">
-
-        <h3 id="supplierModalTitle">
-          Novo fornecedor
-        </h3>
-
-        <button
-          type="button"
-          class="modal-close"
-          data-close="supplierModal"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <form id="supplierForm">
-
-        <div class="modal-body">
-
-          <input
-            type="hidden"
-            id="supplierId"
-          >
-
-          <div class="form-group">
-
-            <label for="supplierName">
-              Nome
-            </label>
-
-            <input
-              id="supplierName"
-              required
-            >
-
-          </div>
-
-
-          <div class="form-grid">
-
-            <div class="form-group">
-
-              <label for="supplierPhone">
-                Telefone
-              </label>
-
-              <input id="supplierPhone">
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="supplierWhatsapp">
-                WhatsApp
-              </label>
-
-              <input id="supplierWhatsapp">
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="supplierDocument">
-                CPF/CNPJ
-              </label>
-
-              <input id="supplierDocument">
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="supplierAddress">
-                Endereço
-              </label>
-
-              <input id="supplierAddress">
-
-            </div>
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label for="supplierNotes">
-              Observações
-            </label>
-
-            <textarea id="supplierNotes"></textarea>
-
+            <p>
+              Indicadores financeiros e operacionais
+            </p>
           </div>
 
         </div>
 
 
-        <div class="modal-footer">
+        <div class="dashboard-grid">
 
-          <button
-            type="button"
-            class="btn btn-light"
-            data-close="supplierModal"
-          >
-            Cancelar
-          </button>
+          <div class="stat-card">
 
-          <button
-            type="submit"
-            class="btn btn-primary"
-          >
-            Salvar
-          </button>
-
-        </div>
-
-      </form>
-
-    </div>
-
-  </div>
-
-
-  <!-- =========================
-       MODAL ESTOQUE
-  ========================== -->
-
-  <div
-    id="stockModal"
-    class="modal"
-  >
-
-    <div class="modal-content">
-
-      <div class="modal-header">
-
-        <h3>
-          Movimentar estoque
-        </h3>
-
-        <button
-          type="button"
-          class="modal-close"
-          data-close="stockModal"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <form id="stockForm">
-
-        <div class="modal-body">
-
-          <div class="form-group">
-
-            <label for="stockProduct">
-              Produto
-            </label>
-
-            <select
-              id="stockProduct"
-              required
-            >
-
-              <option value="">
-                Selecione
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <div class="form-grid">
-
-            <div class="form-group">
-
-              <label for="stockQuantity">
-                Quantidade
-              </label>
-
-              <input
-                type="number"
-                id="stockQuantity"
-                min="1"
-                required
-              >
-
+            <div class="stat-label">
+              Total de vendas
             </div>
-
-
-            <div class="form-group">
-
-              <label for="stockType">
-                Tipo
-              </label>
-
-              <select id="stockType">
-
-                <option value="entrada">
-                  Entrada
-                </option>
-
-                <option value="saida">
-                  Saída
-                </option>
-
-                <option value="ajuste">
-                  Ajuste
-                </option>
-
-              </select>
-
-            </div>
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label for="stockNote">
-              Observação
-            </label>
-
-            <textarea id="stockNote"></textarea>
-
-          </div>
-
-        </div>
-
-
-        <div class="modal-footer">
-
-          <button
-            type="button"
-            class="btn btn-light"
-            data-close="stockModal"
-          >
-            Cancelar
-          </button>
-
-          <button
-            type="submit"
-            class="btn btn-primary"
-          >
-            Salvar
-          </button>
-
-        </div>
-
-      </form>
-
-    </div>
-
-  </div>
-
-
-  <!-- =========================
-       MODAL PAGAMENTO VENDA
-  ========================== -->
-
-  <div
-    id="paymentModal"
-    class="modal"
-  >
-
-    <div class="modal-content">
-
-      <div class="modal-header">
-
-        <h3>
-          Registrar pagamento
-        </h3>
-
-        <button
-          type="button"
-          class="modal-close"
-          data-close="paymentModal"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <form id="paymentForm">
-
-        <div class="modal-body">
-
-          <input
-            type="hidden"
-            id="paymentSaleId"
-          >
-
-          <div class="form-group">
-
-            <label for="paymentAmount">
-              Valor
-            </label>
-
-            <input
-              type="number"
-              id="paymentAmount"
-              min="0.01"
-              step="0.01"
-              required
-            >
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label for="paymentMethod">
-              Forma de pagamento
-            </label>
-
-            <select id="paymentMethod">
-
-              <option value="pix">
-                PIX
-              </option>
-
-              <option value="dinheiro">
-                Dinheiro
-              </option>
-
-              <option value="cartao">
-                Cartão
-              </option>
-
-              <option value="transferencia">
-                Transferência
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label for="paymentNote">
-              Observação
-            </label>
-
-            <textarea id="paymentNote"></textarea>
-
-          </div>
-
-        </div>
-
-
-        <div class="modal-footer">
-
-          <button
-            type="button"
-            class="btn btn-light"
-            data-close="paymentModal"
-          >
-            Cancelar
-          </button>
-
-          <button
-            type="submit"
-            class="btn btn-success"
-          >
-            Registrar pagamento
-          </button>
-
-        </div>
-
-      </form>
-
-    </div>
-
-  </div>
-
-
-  <!-- =========================
-       DETALHES DA VENDA
-  ========================== -->
-
-  <div
-    id="saleDetailsModal"
-    class="modal"
-  >
-
-    <div class="modal-content modal-large">
-
-      <div class="modal-header">
-
-        <h3>
-          Detalhes da venda
-        </h3>
-
-        <button
-          type="button"
-          class="modal-close"
-          data-close="saleDetailsModal"
-        >
-          ×
-        </button>
-
-      </div>
-
-      <div
-        id="saleDetailsBody"
-        class="modal-body"
-      ></div>
-
-    </div>
-
-  </div>
-
-
-  <!-- =========================
-       MODAL COMPRA
-  ========================== -->
-
-  <div
-    id="purchaseModal"
-    class="modal"
-  >
-
-    <div class="modal-content modal-large">
-
-      <div class="modal-header">
-
-        <h3>
-          Nova compra
-        </h3>
-
-        <button
-          type="button"
-          class="modal-close"
-          data-close="purchaseModal"
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <form id="purchaseForm">
-
-        <div class="modal-body">
-
-          <div class="form-grid">
-
-            <div class="form-group">
-
-              <label for="purchaseSupplier">
-                Fornecedor
-              </label>
-
-              <select
-                id="purchaseSupplier"
-                required
-              >
-
-                <option value="">
-                  Selecione
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="purchaseDate">
-                Data
-              </label>
-
-              <input
-                type="date"
-                id="purchaseDate"
-                required
-              >
-
-            </div>
-
-          </div>
-
-
-          <div class="form-grid-3">
-
-            <div class="form-group">
-
-              <label for="purchaseProduct">
-                Produto
-              </label>
-
-              <select id="purchaseProduct">
-
-                <option value="">
-                  Selecione
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="purchaseQuantity">
-                Quantidade
-              </label>
-
-              <input
-                type="number"
-                id="purchaseQuantity"
-                min="1"
-                value="1"
-              >
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="purchaseCost">
-                Custo unitário
-              </label>
-
-              <input
-                type="number"
-                id="purchaseCost"
-                min="0"
-                step="0.01"
-              >
-
-            </div>
-
-          </div>
-
-
-          <button
-            type="button"
-            id="purchaseAddProduct"
-            class="btn btn-rose"
-          >
-            + Adicionar produto
-          </button>
-
-
-          <div
-            id="purchaseItems"
-            style="margin-top:20px;"
-          ></div>
-
-
-          <div class="entry-highlight">
-
-            <strong>
-              Total da compra
-            </strong>
 
             <div
-              id="purchaseTotalValue"
-              style="font-size:22px;margin-top:5px;"
+              id="reportTotalSales"
+              class="stat-value"
             >
               R$ 0,00
             </div>
@@ -2306,280 +1033,1157 @@
           </div>
 
 
-          <div class="form-grid">
+          <div class="stat-card">
 
-            <div class="form-group">
-
-              <label for="purchaseEntry">
-                Entrada
-              </label>
-
-              <input
-                type="number"
-                id="purchaseEntry"
-                min="0"
-                step="0.01"
-                value="0"
-              >
-
+            <div class="stat-label">
+              Total de compras
             </div>
 
-
-            <div class="form-group">
-
-              <label for="purchasePayment">
-                Forma de pagamento
-              </label>
-
-              <select id="purchasePayment">
-
-                <option value="pix">
-                  PIX
-                </option>
-
-                <option value="dinheiro">
-                  Dinheiro
-                </option>
-
-                <option value="cartao">
-                  Cartão
-                </option>
-
-                <option value="transferencia">
-                  Transferência
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="form-group">
-
-              <label for="purchaseInstallments">
-                Parcelas
-              </label>
-
-              <input
-                type="number"
-                id="purchaseInstallments"
-                min="1"
-                value="1"
-              >
-
+            <div
+              id="reportTotalPurchases"
+              class="stat-value"
+            >
+              R$ 0,00
             </div>
 
           </div>
 
 
-          <div class="entry-highlight">
+          <div class="stat-card">
 
-            <strong>
+            <div class="stat-label">
+              A receber
+            </div>
+
+            <div
+              id="reportReceivable"
+              class="stat-value"
+            >
+              R$ 0,00
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-label">
               A pagar
-            </strong>
+            </div>
 
             <div
-              id="purchaseBalanceValue"
-              style="font-size:20px;margin-top:5px;"
+              id="reportPayable"
+              class="stat-value"
             >
               R$ 0,00
             </div>
 
           </div>
 
+        </div>
 
-          <div class="form-group">
+      </section>
 
-            <label for="purchaseNotes">
-              Observações
-            </label>
 
-            <textarea id="purchaseNotes"></textarea>
+      <section
+        id="page-purchases"
+        class="page"
+      >
+
+        <div class="page-header">
+
+          <div>
+            <h2>Compras</h2>
+
+            <p>
+              Compras de fornecedores e contas a pagar
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-primary"
+            id="newPurchaseButton"
+          >
+            + Nova compra
+          </button>
+
+        </div>
+
+
+        <div class="purchase-summary">
+
+          <div class="purchase-card">
+
+            <span>Total em compras</span>
+
+            <strong id="purchasesTotal">
+              R$ 0,00
+            </strong>
+
+          </div>
+
+
+          <div class="purchase-card">
+
+            <span>Total pago</span>
+
+            <strong id="purchasesPaid">
+              R$ 0,00
+            </strong>
+
+          </div>
+
+
+          <div class="purchase-card">
+
+            <span>A pagar</span>
+
+            <strong id="purchasesBalance">
+              R$ 0,00
+            </strong>
 
           </div>
 
         </div>
 
 
-        <div class="modal-footer">
+        <div class="card">
 
-          <button
-            type="button"
-            class="btn btn-light"
-            data-close="purchaseModal"
-          >
-            Cancelar
-          </button>
+          <div class="card-header">
+            <h3>Compras cadastradas</h3>
+          </div>
 
-          <button
-            type="submit"
-            class="btn btn-primary"
-          >
-            Registrar compra
-          </button>
+          <div class="card-body">
+
+            <div class="table-wrapper">
+
+              <table>
+
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Fornecedor</th>
+                    <th>Total</th>
+                    <th>Entrada</th>
+                    <th>A pagar</th>
+                    <th>Parcelas</th>
+                    <th>Status</th>
+                    <th>Pagamento</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+
+                <tbody id="purchasesTableBody"></tbody>
+
+              </table>
+
+            </div>
+
+          </div>
 
         </div>
 
-      </form>
+      </section>
 
     </div>
+
+  </main>
+
+</div>
+```
+
+  </div>
+
+  <!-- MODAL PRODUTO -->
+
+  <div id="productModal" class="modal">
+
+```
+<div class="modal-content">
+
+  <div class="modal-header">
+
+    <h3 id="productModalTitle">
+      Novo produto
+    </h3>
+
+    <button
+      type="button"
+      class="modal-close"
+      data-close-modal="productModal"
+    >
+      ×
+    </button>
 
   </div>
 
 
-  <!-- =========================
-       DETALHES DA COMPRA
-  ========================== -->
+  <form id="productForm">
 
-  <div
-    id="purchaseDetailsModal"
-    class="modal"
-  >
+    <div class="modal-body">
 
-    <div class="modal-content modal-large">
+      <input
+        type="hidden"
+        id="productId"
+      >
 
-      <div class="modal-header">
+      <div class="form-grid">
 
-        <h3>
-          Detalhes da compra
-        </h3>
+        <div class="form-group">
+          <label for="productCode">Código</label>
+          <input id="productCode">
+        </div>
 
-        <button
-          type="button"
-          class="modal-close"
-          data-close="purchaseDetailsModal"
-        >
-          ×
-        </button>
+        <div class="form-group">
+          <label for="productName">Produto</label>
+          <input id="productName" required>
+        </div>
+
+        <div class="form-group">
+          <label for="productBrand">Marca</label>
+          <input id="productBrand">
+        </div>
+
+        <div class="form-group">
+          <label for="productSupplier">Fornecedor</label>
+
+          <select id="productSupplier">
+            <option value="">Selecione</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="productSize">Tamanho</label>
+          <input id="productSize">
+        </div>
+
+        <div class="form-group">
+          <label for="productCost">Custo</label>
+
+          <input
+            type="number"
+            id="productCost"
+            min="0"
+            step="0.01"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="productPrice">Preço de venda</label>
+
+          <input
+            type="number"
+            id="productPrice"
+            min="0"
+            step="0.01"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="productStock">Estoque</label>
+
+          <input
+            type="number"
+            id="productStock"
+            min="0"
+            step="1"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="productMinStock">
+            Estoque mínimo
+          </label>
+
+          <input
+            type="number"
+            id="productMinStock"
+            min="0"
+            step="1"
+          >
+        </div>
 
       </div>
+
+    </div>
+
+
+    <div class="modal-footer">
+
+      <button
+        type="button"
+        class="btn btn-light"
+        data-close-modal="productModal"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+      >
+        Salvar
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+```
+
+  </div>
+
+  <!-- MODAL CLIENTE -->
+
+  <div id="clientModal" class="modal">
+
+```
+<div class="modal-content">
+
+  <div class="modal-header">
+
+    <h3 id="clientModalTitle">
+      Novo cliente
+    </h3>
+
+    <button
+      type="button"
+      class="modal-close"
+      data-close-modal="clientModal"
+    >
+      ×
+    </button>
+
+  </div>
+
+
+  <form id="clientForm">
+
+    <div class="modal-body">
+
+      <input
+        type="hidden"
+        id="clientId"
+      >
+
+      <div class="form-group">
+        <label for="clientName">Nome</label>
+
+        <input
+          id="clientName"
+          required
+        >
+      </div>
+
+
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="clientPhone">Telefone</label>
+          <input id="clientPhone">
+        </div>
+
+        <div class="form-group">
+          <label for="clientAddress">Endereço</label>
+          <input id="clientAddress">
+        </div>
+
+      </div>
+
+
+      <div class="form-group">
+        <label for="clientNotes">Observações</label>
+        <textarea id="clientNotes"></textarea>
+      </div>
+
+    </div>
+
+
+    <div class="modal-footer">
+
+      <button
+        type="button"
+        class="btn btn-light"
+        data-close-modal="clientModal"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+      >
+        Salvar
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+```
+
+  </div>
+
+  <!-- MODAL FORNECEDOR -->
+
+  <div id="supplierModal" class="modal">
+
+```
+<div class="modal-content">
+
+  <div class="modal-header">
+
+    <h3 id="supplierModalTitle">
+      Novo fornecedor
+    </h3>
+
+    <button
+      type="button"
+      class="modal-close"
+      data-close-modal="supplierModal"
+    >
+      ×
+    </button>
+
+  </div>
+
+
+  <form id="supplierForm">
+
+    <div class="modal-body">
+
+      <input
+        type="hidden"
+        id="supplierId"
+      >
+
+      <div class="form-group">
+        <label for="supplierName">Nome</label>
+
+        <input
+          id="supplierName"
+          required
+        >
+      </div>
+
+
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="supplierPhone">Telefone</label>
+          <input id="supplierPhone">
+        </div>
+
+        <div class="form-group">
+          <label for="supplierWhatsapp">WhatsApp</label>
+          <input id="supplierWhatsapp">
+        </div>
+
+        <div class="form-group">
+          <label for="supplierDocument">
+            CPF/CNPJ
+          </label>
+
+          <input id="supplierDocument">
+        </div>
+
+        <div class="form-group">
+          <label for="supplierAddress">
+            Endereço
+          </label>
+
+          <input id="supplierAddress">
+        </div>
+
+      </div>
+
+
+      <div class="form-group">
+        <label for="supplierNotes">
+          Observações
+        </label>
+
+        <textarea id="supplierNotes"></textarea>
+      </div>
+
+    </div>
+
+
+    <div class="modal-footer">
+
+      <button
+        type="button"
+        class="btn btn-light"
+        data-close-modal="supplierModal"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+      >
+        Salvar
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+```
+
+  </div>
+
+  <!-- MODAL ESTOQUE -->
+
+  <div id="stockModal" class="modal">
+
+```
+<div class="modal-content">
+
+  <div class="modal-header">
+
+    <h3>Movimentar estoque</h3>
+
+    <button
+      type="button"
+      class="modal-close"
+      data-close-modal="stockModal"
+    >
+      ×
+    </button>
+
+  </div>
+
+
+  <form id="stockForm">
+
+    <div class="modal-body">
+
+      <div class="form-group">
+
+        <label for="stockProduct">
+          Produto
+        </label>
+
+        <select
+          id="stockProduct"
+          required
+        >
+          <option value="">Selecione</option>
+        </select>
+
+      </div>
+
+
+      <div class="form-grid">
+
+        <div class="form-group">
+
+          <label for="stockQuantity">
+            Quantidade
+          </label>
+
+          <input
+            type="number"
+            id="stockQuantity"
+            min="1"
+            required
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="stockType">
+            Tipo
+          </label>
+
+          <select id="stockType">
+
+            <option value="entrada">
+              Entrada
+            </option>
+
+            <option value="saida">
+              Saída
+            </option>
+
+            <option value="ajuste">
+              Ajuste
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label for="stockNote">
+          Observação
+        </label>
+
+        <textarea id="stockNote"></textarea>
+
+      </div>
+
+    </div>
+
+
+    <div class="modal-footer">
+
+      <button
+        type="button"
+        class="btn btn-light"
+        data-close-modal="stockModal"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+      >
+        Salvar
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+```
+
+  </div>
+
+  <!-- PAGAMENTO VENDA -->
+
+  <div id="paymentModal" class="modal">
+
+```
+<div class="modal-content">
+
+  <div class="modal-header">
+
+    <h3>Registrar pagamento</h3>
+
+    <button
+      type="button"
+      class="modal-close"
+      data-close-modal="paymentModal"
+    >
+      ×
+    </button>
+
+  </div>
+
+
+  <form id="paymentForm">
+
+    <div class="modal-body">
+
+      <input
+        type="hidden"
+        id="paymentSaleId"
+      >
+
+      <div class="form-group">
+
+        <label for="paymentAmount">
+          Valor
+        </label>
+
+        <input
+          type="number"
+          id="paymentAmount"
+          min="0.01"
+          step="0.01"
+          required
+        >
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label for="paymentMethod">
+          Forma de pagamento
+        </label>
+
+        <select id="paymentMethod">
+
+          <option value="pix">PIX</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="cartao">Cartão</option>
+          <option value="transferencia">
+            Transferência
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label for="paymentNote">
+          Observação
+        </label>
+
+        <textarea id="paymentNote"></textarea>
+
+      </div>
+
+    </div>
+
+
+    <div class="modal-footer">
+
+      <button
+        type="button"
+        class="btn btn-light"
+        data-close-modal="paymentModal"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-success"
+      >
+        Registrar pagamento
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+```
+
+  </div>
+
+  <!-- DETALHES VENDA -->
+
+  <div id="saleDetailsModal" class="modal">
+
+```
+<div class="modal-content modal-large">
+
+  <div class="modal-header">
+
+    <h3>Detalhes da venda</h3>
+
+    <button
+      type="button"
+      class="modal-close"
+      data-close-modal="saleDetailsModal"
+    >
+      ×
+    </button>
+
+  </div>
+
+  <div
+    id="saleDetailsBody"
+    class="modal-body"
+  ></div>
+
+</div>
+```
+
+  </div>
+
+  <!-- MODAL COMPRA -->
+
+  <div id="purchaseModal" class="modal">
+
+```
+<div class="modal-content modal-large">
+
+  <div class="modal-header">
+
+    <h3>Nova compra</h3>
+
+    <button
+      type="button"
+      class="modal-close"
+      data-close-modal="purchaseModal"
+    >
+      ×
+    </button>
+
+  </div>
+
+
+  <form id="purchaseForm">
+
+    <div class="modal-body">
+
+      <div class="form-grid">
+
+        <div class="form-group">
+
+          <label for="purchaseSupplier">
+            Fornecedor
+          </label>
+
+          <select
+            id="purchaseSupplier"
+            required
+          >
+            <option value="">Selecione</option>
+          </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="purchaseDate">
+            Data
+          </label>
+
+          <input
+            type="date"
+            id="purchaseDate"
+            required
+          >
+
+        </div>
+
+      </div>
+
+
+      <div class="form-grid-3">
+
+        <div class="form-group">
+
+          <label for="purchaseProduct">
+            Produto
+          </label>
+
+          <select id="purchaseProduct">
+            <option value="">Selecione</option>
+          </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="purchaseQuantity">
+            Quantidade
+          </label>
+
+          <input
+            type="number"
+            id="purchaseQuantity"
+            min="1"
+            value="1"
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="purchaseCost">
+            Custo unitário
+          </label>
+
+          <input
+            type="number"
+            id="purchaseCost"
+            min="0"
+            step="0.01"
+          >
+
+        </div>
+
+      </div>
+
+
+      <button
+        type="button"
+        id="purchaseAddProduct"
+        class="btn btn-rose"
+      >
+        + Adicionar produto
+      </button>
+
 
       <div
-        id="purchaseDetailsBody"
-        class="modal-body"
+        id="purchaseItems"
+        style="margin-top:20px;"
       ></div>
 
-    </div>
 
-  </div>
+      <div class="entry-highlight">
 
+        <strong>Total da compra</strong>
 
-  <!-- =========================
-       PAGAMENTO DE COMPRA
-  ========================== -->
-
-  <div
-    id="purchasePaymentModal"
-    class="modal"
-  >
-
-    <div class="modal-content">
-
-      <div class="modal-header">
-
-        <h3>
-          Registrar pagamento
-        </h3>
-
-        <button
-          type="button"
-          class="modal-close"
-          data-close="purchasePaymentModal"
+        <div
+          id="purchaseTotalValue"
+          style="font-size:22px;margin-top:5px;"
         >
-          ×
-        </button>
+          R$ 0,00
+        </div>
 
       </div>
 
 
-      <form id="purchasePaymentForm">
+      <div class="form-grid">
 
-        <div class="modal-body">
+        <div class="form-group">
 
-          <div class="form-group">
+          <label for="purchaseEntry">
+            Entrada
+          </label>
 
-            <label for="purchasePaymentAmount">
-              Valor
-            </label>
-
-            <input
-              type="number"
-              id="purchasePaymentAmount"
-              min="0.01"
-              step="0.01"
-              required
-            >
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label for="purchasePaymentMethod">
-              Forma de pagamento
-            </label>
-
-            <select id="purchasePaymentMethod">
-
-              <option value="pix">
-                PIX
-              </option>
-
-              <option value="dinheiro">
-                Dinheiro
-              </option>
-
-              <option value="cartao">
-                Cartão
-              </option>
-
-              <option value="transferencia">
-                Transferência
-              </option>
-
-            </select>
-
-          </div>
-
-
-          <div class="form-group">
-
-            <label for="purchasePaymentNote">
-              Observação
-            </label>
-
-            <textarea id="purchasePaymentNote"></textarea>
-
-          </div>
+          <input
+            type="number"
+            id="purchaseEntry"
+            min="0"
+            step="0.01"
+            value="0"
+          >
 
         </div>
 
 
-        <div class="modal-footer">
+        <div class="form-group">
 
-          <button
-            type="button"
-            class="btn btn-light"
-            data-close="purchasePaymentModal"
-          >
-            Cancelar
-          </button>
+          <label for="purchasePayment">
+            Forma de pagamento
+          </label>
 
-          <button
-            type="submit"
-            class="btn btn-success"
-          >
-            Registrar pagamento
-          </button>
+          <select id="purchasePayment">
+
+            <option value="pix">PIX</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao">Cartão</option>
+            <option value="transferencia">
+              Transferência
+            </option>
+
+          </select>
 
         </div>
 
-      </form>
+
+        <div class="form-group">
+
+          <label for="purchaseInstallments">
+            Parcelas
+          </label>
+
+          <input
+            type="number"
+            id="purchaseInstallments"
+            min="1"
+            value="1"
+          >
+
+        </div>
+
+      </div>
+
+
+      <div class="entry-highlight">
+
+        <strong>A pagar</strong>
+
+        <div
+          id="purchaseBalanceValue"
+          style="font-size:20px;margin-top:5px;"
+        >
+          R$ 0,00
+        </div>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label for="purchaseNotes">
+          Observações
+        </label>
+
+        <textarea id="purchaseNotes"></textarea>
+
+      </div>
 
     </div>
 
+
+    <div class="modal-footer">
+
+      <button
+        type="button"
+        class="btn btn-light"
+        data-close-modal="purchaseModal"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-primary"
+      >
+        Registrar compra
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+```
+
   </div>
 
+  <!-- DETALHES COMPRA -->
+
+  <div id="purchaseDetailsModal" class="modal">
+
+```
+<div class="modal-content modal-large">
+
+  <div class="modal-header">
+
+    <h3>Detalhes da compra</h3>
+
+    <button
+      type="button"
+      class="modal-close"
+      data-close-modal="purchaseDetailsModal"
+    >
+      ×
+    </button>
+
+  </div>
+
+  <div
+    id="purchaseDetailsBody"
+    class="modal-body"
+  ></div>
+
+</div>
+```
+
+  </div>
+
+  <!-- PAGAMENTO COMPRA -->
+
+  <div id="purchasePaymentModal" class="modal">
+
+```
+<div class="modal-content">
+
+  <div class="modal-header">
+
+    <h3>Registrar pagamento</h3>
+
+    <button
+      type="button"
+      class="modal-close"
+      data-close-modal="purchasePaymentModal"
+    >
+      ×
+    </button>
+
+  </div>
+
+
+  <form id="purchasePaymentForm">
+
+    <div class="modal-body">
+
+      <div class="form-group">
+
+        <label for="purchasePaymentAmount">
+          Valor
+        </label>
+
+        <input
+          type="number"
+          id="purchasePaymentAmount"
+          min="0.01"
+          step="0.01"
+          required
+        >
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label for="purchasePaymentMethod">
+          Forma de pagamento
+        </label>
+
+        <select id="purchasePaymentMethod">
+
+          <option value="pix">PIX</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="cartao">Cartão</option>
+          <option value="transferencia">
+            Transferência
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="form-group">
+
+        <label for="purchasePaymentNote">
+          Observação
+        </label>
+
+        <textarea id="purchasePaymentNote"></textarea>
+
+      </div>
+
+    </div>
+
+
+    <div class="modal-footer">
+
+      <button
+        type="button"
+        class="btn btn-light"
+        data-close-modal="purchasePaymentModal"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn btn-success"
+      >
+        Registrar pagamento
+      </button>
+
+    </div>
+
+  </form>
+
+</div>
+```
+
+  </div>
 
   <script src="/app.js"></script>
 
