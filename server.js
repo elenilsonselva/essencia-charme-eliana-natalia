@@ -1551,18 +1551,12 @@ app.get(
     ===================================================== */
 
     doc
-      .fontSize(10)
-      .font("Helvetica")
-      .text(
-        `Data: ${dateBR(
-          sale.date
-        )}`
-      )
-      .text(
-        `Status: ${
-          sale.status || ""
-        }`
-      );
+  .fontSize(10)
+  .text(
+    `Data: ${dateBR(sale.date)}    Status: ${sale.status || "Em aberto"}`
+  );
+
+doc.moveDown();
 
     doc.moveDown(0.7);
 
