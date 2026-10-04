@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <link rel="manifest" href="/manifest.webmanifest">
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#d96b9b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Essência & Charme">
+
+  <title>Essência & Charme</title>
+
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,sans-serif;background:#f8f5f6;color:#332a30}
+    header{background:#6d3d5c;color:white;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:2}
+    header h1{margin:0;font-size:22px}
+    nav{display:flex;gap:6px;overflow:auto;background:white;padding:8px;border-bottom:1px solid #ddd}
+    button,.btn{border:0;border-radius:8px;padding:10px 14px;cursor:pointer;background:#6d3d5c;color:white}
+    nav button{background:#eee;color:#333}
+    .active{background:#6d3d5c!important;color:#fff!important}
+    .wrap{max-width:1200px;margin:auto;padding:18px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .card{background:#fff;padding:16px;border-radius:12px;box-shadow:0 1px 5px #ddd}
+    .big{font-size:25px;font-weight:bold;margin-top:6px}
+    .section{display:none}
+    .section.active{display:block}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    input,select,textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:7px}
+    table{width:100%;border-collapse:collapse;background:#fff}
+    th,td{padding:9px;border-bottom:1px solid #eee;text-align:left;font-size:14px}
+    .formgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .modal{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;padding:15px}
+    .modalbox{background:white;border-radius:12px;padding:20px;max-width:650px;width:100%;max-height:90vh;overflow:auto}
+    .cart{margin:12px 0}
+    .danger{background:#a33}
+    .muted{color:#777}
+
+    @media(max-width:700px){
+      .grid,.formgrid{grid-template-columns:1fr 1fr}
+      table{font-size:12px}
+      .wrap{padding:10px}
+      header h1{font-size:18px}
+    }
+
+    @media(max-width:450px){
+      .grid,.formgrid{grid-template-columns:1fr}
+      .hide-mobile{display:none}
+    }
+  </style>
+
+  <style>
+    .online-badge{font-size:11px;opacity:.9;margin-left:8px}
+    .brand-sub{font-size:11px;opacity:.8}
+  </style>
+
+  <style>
+    #loginScreen{
+      position:fixed;
+      inset:0;
+      background:#f7f1ed;
+      z-index:99999;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px
+    }
+
+    .login-card{
+      width:min(390px,100%);
+      background:#fff;
+      border-radius:22px;
+      padding:28px;
+      box-shadow:0 12px 45px #0002;
+      text-align:center
+    }
+
+    .login-card h2{margin:0 0 5px}
+    .login-card p{margin:0 0 22px;opacity:.7}
+
+    .login-card input{
+      width:100%;
+      box-sizing:border-box;
+      padding:13px;
+      border:1px solid #ddd;
+      border-radius:10px;
+      margin:6px 0
+    }
+
+    .login-card button{
+      width:100%;
+      padding:13px;
+      border:0;
+      border-radius:10px;
+      background:#6d3d52;
+      color:white;
+      font-weight:700;
+      margin-top:8px
+    }
+
+    #loginError{
+      color:#b42318;
+      font-size:13px;
+      min-height:18px;
+      margin-top:8px
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="loginScreen">
+  <div class="login-card">
+    <h2>Essência & Charme</h2>
+    <p>by Eliana Natália</p>
+
+    <form id="loginForm">
+      <input id="loginUser" autocomplete="username" placeholder="Usuário" value="admin" required>
+      <input id="loginPass" autocomplete="current-password" type="password" placeholder="Senha" required>
+      <button>Entrar</button>
+    </form>
+
+    <div id="loginError"></div>
+  </div>
+</div>
+
+<header>
+  <h1>🌸 Essência & Charme</h1>
+  <span>by Eliana Natália</span>
+  <button onclick="logout()" class="secondary" style="margin-left:auto">Sair</button>
+</header>
+
+<nav>
+  <button onclick="show('dash',this)" class="active">Dashboard</button>
+  <button onclick="show('prod',this)">Produtos</button>
+  <button onclick="show('cli',this)">Clientes</button>
+  <button onclick="show('venda',this)">Nova Venda</button>
+  <button onclick="show('hist',this)">Vendas</button>
+  <button onclick="show('est',this)">Estoque</button>
+  <button onclick="show('rel',this)">Relatórios</button>
+</nav>
+
+<main class="wrap">
+
+<section id="dash" class="section active">
+  <h2>Dashboard</h2>
+
+  <div class="grid">
+    <div class="card">
+      Vendas hoje
+      <div class="big" id="dt">R$ 0,00</div>
+    </div>
+
+    <div class="card">
+      Vendas no mês
+      <div class="big" id="dm">R$ 0,00</div>
+    </div>
+
+    <div class="card">
+      Estoque baixo
+      <div class="big" id="dl">0</div>
+    </div>
+
+    <div class="card">
+      Fiado em aberto
+      <div class="big" id="dd">R$ 0,00</div>
+    </div>
+  </div>
+</section>
+
+<section id="prod" class="section">
+  <h2>Produtos</h2>
+
+  <div class="toolbar">
+    <button onclick="openProd()">+ Novo produto</button>
+    <input id="ps" placeholder="Buscar produto..." oninput="renderProducts()">
+  </div>
+
+  <div id="pt"></div>
+</section>
+
+<section id="cli" class="section">
+  <h2>Clientes</h2>
+
+  <div class="toolbar">
+    <button onclick="openCli()">+ Novo cliente</button>
+    <input id="cs" placeholder="Buscar cliente..." oninput="renderClients()">
+  </div>
+
+  <div id="ct"></div>
+</section>
+
+<section id="venda" class="section">
+  <h2>Nova Venda</h2>
+
+  <div class="card">
+
+    <div class="formgrid">
+
+      <div>
+        <label>Produto</label>
+        <select id="vp"></select>
+      </div>
+
+      <div>
+        <label>Quantidade</label>
+        <input id="vq" type="number" value="1" min="1">
+      </div>
+
+      <div>
+        <label>&nbsp;</label>
+        <button onclick="addCart()">Adicionar</button>
+      </div>
+
+    </div>
+
+    <div id="cart" class="cart"></div>
+
+    <div class="formgrid">
+
+      <div>
+        <label>Cliente</label>
+        <select id="vc"></select>
+      </div>
+
+      <div>
+        <label>Desconto (R$)</label>
+        <input id="vd" type="number" min="0" value="0">
+      </div>
+
+      <div>
+        <label>Pagamento</label>
+        <select id="vpay">
+          <option>Dinheiro</option>
+          <option>PIX</option>
+          <option>Cartão de débito</option>
+          <option>Cartão de crédito</option>
+          <option>Fiado</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div style="margin-top:10px">
+      <label>Parcelas</label>
+      <input id="vi" type="number" value="1" min="1" style="max-width:150px">
+    </div>
+
+    <h3>
+      Total:
+      <span id="vtotal">R$ 0,00</span>
+    </h3>
+
+    <button onclick="finishSale()">Finalizar venda</button>
+
+  </div>
+</section>
+
+<section id="hist" class="section">
+  <h2>Histórico de vendas</h2>
+  <div id="st"></div>
+</section>
+
+<section id="est" class="section">
+  <h2>Estoque</h2>
+
+  <div class="toolbar">
+    <button onclick="stockMove()">+ Entrada / saída</button>
+  </div>
+
+  <div id="et"></div>
+</section>
+
+<section id="rel" class="section">
+  <h2>Relatórios</h2>
+
+  <div class="toolbar">
+    <input type="date" id="rf">
+    <input type="date" id="rt">
+    <button onclick="loadReports()">Atualizar</button>
+  </div>
+
+  <div id="rr"></div>
+</section>
+
+</main>
+
+<div class="modal" id="modal">
+  <div class="modalbox" id="mb"></div>
+</div>
+
+<script>
+
+async function authCheck(){
+  const r=await fetch('/api/me');
+  const x=await r.json();
+
+  if(x.authenticated){
+    document.getElementById('loginScreen').style.display='none';
+    return true;
+  }
+
+  document.getElementById('loginScreen').style.display='flex';
+  return false;
+}
+
+document.getElementById('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+
+  const er=document.getElementById('loginError');
+  er.textContent='';
+
+  const r=await fetch('/api/login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      username:loginUser.value,
+      password:loginPass.value
+    })
+  });
+
+  const x=await r.json();
+
+  if(r.ok){
+    document.getElementById('loginScreen').style.display='none';
+    location.reload();
+  }else{
+    er.textContent=x.error||'Falha no login';
+  }
+});
+
+async function logout(){
+  await fetch('/api/logout',{method:'POST'});
+  location.reload();
+}
+
+authCheck();
+
+let products=[],clients=[],cart=[];
+
+const $=id=>document.getElementById(id);
+
+const money=v=>'R$ '+Number(v||0)
+  .toFixed(2)
+  .replace('.',',');
+
+function show(id,b){
+  document.querySelectorAll('.section')
+    .forEach(x=>x.classList.remove('active'));
+
+  $(id).classList.add('active');
+
+  document.querySelectorAll('nav button')
+    .forEach(x=>x.classList.remove('active'));
+
+  b?.classList.add('active');
+
+  if(id==='prod')loadProducts();
+  if(id==='cli')loadClients();
+
+  if(id==='venda'){
+    loadProducts();
+    loadClients();
+  }
+
+  if(id==='hist')loadSales();
+  if(id==='est')renderStock();
+  if(id==='rel')loadReports();
+}
+
+async function api(u,o){
+  let r=await fetch(u,o);
+  let j=await r.json();
+
+  if(!r.ok)throw Error(j.error||'Erro');
+
+  return j;
+}
+
+async function dash(){
+  let d=await api('/api/dashboard');
+
+  $('dt').textContent=money(d.today.total);
+  $('dm').textContent=money(d.month.total);
+  $('dl').textContent=d.low;
+  $('dd').textContent=money(d.debt.v);
+}
+
+async function loadProducts(){
+  products=await api('/api/products');
+  renderProducts();
+  fillSale();
+}
+
+function renderProducts(){
+  let q=($('ps')?.value||'').toLowerCase();
+
+  let a=products.filter(p=>
+    (p.name+' '+p.brand+' '+p.code)
+      .toLowerCase()
+      .includes(q)
+  );
+
+  $('pt').innerHTML=
+    '<table>'+
+    '<tr>'+
+    '<th>Foto</th>'+
+    '<th>Código</th>'+
+    '<th>Produto</th>'+
+    '<th>Marca</th>'+
+    '<th>Preço</th>'+
+    '<th>Estoque</th>'+
+    '<th>Ações</th>'+
+    '</tr>'+
+    a.map(p=>`
+      <tr>
+        <td>${p.photo?'<img src="'+p.photo+'" width="38">':'—'}</td>
+        <td>${p.code||''}</td>
+        <td>${p.name} ${p.size?'('+p.size+')':''}</td>
+        <td>${p.brand}</td>
+        <td>${money(p.price)}</td>
+        <td>${p.stock}</td>
+        <td>
+          <button onclick="openProd(${p.id})">Editar</button>
+          <button class="danger" onclick="delProd(${p.id})">Excluir</button>
+        </td>
+      </tr>
+    `).join('')+
+    '</table>';
+}
+
+function openProd(id){
+  let p=products.find(x=>x.id===id)||{};
+
+  $('mb').innerHTML=`
+    <h3>${id?'Editar':'Novo'} produto</h3>
+
+    <form id="pf">
+
+      <div class="formgrid">
+
+        <input name="code" placeholder="Código" value="${p.code||''}">
+
+        <input name="name" required placeholder="Nome" value="${p.name||''}">
+
+        <input name="brand" placeholder="Marca" value="${p.brand||''}">
+
+        <input name="size" placeholder="Tamanho" value="${p.size||''}">
+
+        <input name="cost" type="number" step="0.01" placeholder="Custo" value="${p.cost||0}">
+
+        <input name="price" type="number" step="0.01" placeholder="Venda" value="${p.price||0}">
+
+        <input name="stock" type="number" placeholder="Estoque" value="${p.stock||0}">
+
+        <input name="min_stock" type="number" placeholder="Estoque mínimo" value="${p.min_stock||1}">
+
+        <input name="photo" type="file" accept="image/*">
+
+      </div>
+
+      <br>
+
+      <button>Salvar</button>
+
+      <button type="button" onclick="closeM()">Cancelar</button>
+
+    </form>
+  `;
+
+  showM();
+
+  $('pf').onsubmit=async e=>{
+    e.preventDefault();
+
+    let f=new FormData(e.target);
+
+    await api(
+      id?'/api/products/'+id:'/api/products',
+      {
+        method:id?'PUT':'POST',
+        body:f
+      }
+    );
+
+    closeM();
+    loadProducts();
+    dash();
+  };
+}
+
+async function delProd(id){
+  if(confirm('Excluir produto?')){
+    await api('/api/products/'+id,{method:'DELETE'});
+    loadProducts();
+  }
+}
+
+async function loadClients(){
+  clients=await api('/api/clients');
+  renderClients();
+  fillSale();
+}
+
+function renderClients(){
+  let q=($('cs')?.value||'').toLowerCase();
+
+  let a=clients.filter(c=>
+    c.name.toLowerCase().includes(q) ||
+    (c.phone||'').includes(q)
+  );
+
+  $('ct').innerHTML=
+    '<table>'+
+    '<tr>'+
+    '<th>Nome</th>'+
+    '<th>Telefone</th>'+
+    '<th>Endereço</th>'+
+    '<th>Ações</th>'+
+    '</tr>'+
+    a.map(c=>`
+      <tr>
+        <td>${c.name}</td>
+        <td>${c.phone||''}</td>
+        <td>${c.address||''}</td>
+        <td>
+          <button onclick="openCli(${c.id})">Editar</button>
+          <button class="danger" onclick="delCli(${c.id})">Excluir</button>
+        </td>
+      </tr>
+    `).join('')+
+    '</table>';
+}
+
+function openCli(id){
+  let c=clients.find(x=>x.id===id)||{};
+
+  $('mb').innerHTML=`
+    <h3>${id?'Editar':'Novo'} cliente</h3>
+
+    <form id="cf">
+
+      <input name="name" required placeholder="Nome" value="${c.name||''}">
+      <br>
+
+      <input name="phone" placeholder="Telefone" value="${c.phone||''}">
+      <br>
+
+      <input name="address" placeholder="Endereço" value="${c.address||''}">
+      <br>
+
+      <textarea name="notes" placeholder="Observações">${c.notes||''}</textarea>
+      <br>
+
+      <button>Salvar</button>
+
+      <button type="button" onclick="closeM()">Cancelar</button>
+
+    </form>
+  `;
+
+  showM();
+
+  $('cf').onsubmit=async e=>{
+    e.preventDefault();
+
+    await api(
+      id?'/api/clients/'+id:'/api/clients',
+      {
+        method:id?'PUT':'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(
+          Object.fromEntries(new FormData(e.target))
+        )
+      }
+    );
+
+    closeM();
+    loadClients();
+  };
+}
+
+async function delCli(id){
+  if(confirm('Excluir cliente?')){
+    await api('/api/clients/'+id,{method:'DELETE'});
+    loadClients();
+  }
+}
+
+function fillSale(){
+  $('vp').innerHTML=products.map(p=>
+    `<option value="${p.id}">
+      ${p.name} — ${money(p.price)} (estoque ${p.stock})
+    </option>`
+  ).join('');
+
+  $('vc').innerHTML=
+    '<option value="">Consumidor</option>'+
+    clients.map(c=>
+      `<option value="${c.id}">${c.name}</option>`
+    ).join('');
+}
+
+function addCart(){
+  let p=products.find(x=>x.id==$('vp').value);
+  let q=+$('vq').value;
+
+  if(!p||q<1)return;
+
+  if(q>p.stock)
+    return alert('Estoque insuficiente');
+
+  let x=cart.find(i=>i.product_id==p.id);
+
+  if(x)
+    x.qty+=q;
+  else
+    cart.push({
+      product_id:p.id,
+      name:p.name,
+      price:p.price,
+      qty:q
+    });
+
+  renderCart();
+}
+
+function renderCart(){
+
+  let sub=cart.reduce(
+    (s,i)=>s+i.price*i.qty,
+    0
+  );
+
+  let d=+$('vd').value||0;
+
+  $('cart').innerHTML=cart.length?
+    '<table>'+
+    '<tr>'+
+    '<th>Produto</th>'+
+    '<th>Qtd.</th>'+
+    '<th>Valor</th>'+
+    '<th></th>'+
+    '</tr>'+
+    cart.map((i,n)=>`
+      <tr>
+        <td>${i.name}</td>
+        <td>${i.qty}</td>
+        <td>${money(i.price*i.qty)}</td>
+        <td>
+          <button class="danger"
+            onclick="cart.splice(${n},1);renderCart()">
+            ×
+          </button>
+        </td>
+      </tr>
+    `).join('')+
+    '</table>'
+    :
+    '<p class="muted">Nenhum item.</p>';
+
+  $('vtotal').textContent=
+    money(Math.max(0,sub-d));
+}
+
+$('vd').addEventListener('input',renderCart);
+
+async function finishSale(){
+
+  if(!cart.length)
+    return alert('Adicione produtos');
+
+  let d=+$('vd').value||0;
+  let pay=$('vpay').value;
+
+  if(pay==='Fiado'&&!$('vc').value)
+    return alert('Selecione o cliente para venda fiada');
+
+  try{
+
+    let r=await api('/api/sales',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        client_id:$('vc').value||null,
+        items:cart,
+        discount:d,
+        payment:pay,
+        installments:+$('vi').value||1
+      })
+    });
+
+    if(confirm('Venda realizada! Deseja abrir o comprovante PDF?'))
+      window.open('/api/sales/'+r.id+'/pdf','_blank');
+
+    cart=[];
+    renderCart();
+    loadProducts();
+    dash();
+
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+async function loadSales(){
+
+  let a=await api('/api/sales');
+
+  $('st').innerHTML=
+    '<table>'+
+    '<tr>'+
+    '<th>#</th>'+
+    '<th>Data</th>'+
+    '<th>Cliente</th>'+
+    '<th>Total</th>'+
+    '<th>Pagamento</th>'+
+    '<th>Status</th>'+
+    '<th>PDF</th>'+
+    '</tr>'+
+    a.map(s=>`
+      <tr>
+        <td>${s.id}</td>
+        <td>${new Date(s.date).toLocaleString('pt-BR')}</td>
+        <td>${s.client||'Consumidor'}</td>
+        <td>${money(s.total)}</td>
+        <td>${s.payment}</td>
+        <td>${s.status==='open'?'Em aberto':'Pago'}</td>
+        <td>
+          <a class="btn"
+             target="_blank"
+             href="/api/sales/${s.id}/pdf">
+             PDF
+          </a>
+        </td>
+      </tr>
+    `).join('')+
+    '</table>';
+}
+
+function renderStock(){
+
+  $('et').innerHTML=
+    '<table>'+
+    '<tr>'+
+    '<th>Produto</th>'+
+    '<th>Estoque</th>'+
+    '<th>Mínimo</th>'+
+    '<th>Situação</th>'+
+    '</tr>'+
+    products.map(p=>`
+      <tr>
+        <td>${p.name}</td>
+        <td>${p.stock}</td>
+        <td>${p.min_stock}</td>
+        <td>${p.stock<=p.min_stock?'⚠️ Baixo':'OK'}</td>
+      </tr>
+    `).join('')+
+    '</table>';
+}
+
+function stockMove(){
+
+  if(!products.length)return;
+
+  $('mb').innerHTML=`
+    <h3>Movimentar estoque</h3>
+
+    <form id="sf">
+
+      <select name="product_id">
+        ${products.map(p=>
+          `<option value="${p.id}">
+            ${p.name} (${p.stock})
+          </option>`
+        ).join('')}
+      </select>
+
+      <br>
+
+      <select name="type">
+        <option>ENTRADA</option>
+        <option>SAIDA</option>
+      </select>
+
+      <br>
+
+      <input
+        name="qty"
+        type="number"
+        min="1"
+        required
+        placeholder="Quantidade">
+
+      <br>
+
+      <input
+        name="note"
+        placeholder="Observação">
+
+      <br>
+
+      <button>Salvar</button>
+
+      <button
+        type="button"
+        onclick="closeM()">
+        Cancelar
+      </button>
+
+    </form>
+  `;
+
+  showM();
+
+  $('sf').onsubmit=async e=>{
+    e.preventDefault();
+
+    try{
+
+      await api('/api/stock',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify(
+          Object.fromEntries(
+            new FormData(e.target)
+          )
+        )
+      });
+
+      closeM();
+      loadProducts();
+      renderStock();
+
+    }catch(x){
+      alert(x.message);
+    }
+  };
+}
+
+async function loadReports(){
+
+  let f=$('rf').value;
+  let t=$('rt').value;
+
+  if(!f){
+    let d=new Date();
+
+    f=new Date(
+      d.getFullYear(),
+      d.getMonth(),
+      1
+    ).toISOString().slice(0,10);
+  }
+
+  if(!t)
+    t=new Date().toISOString().slice(0,10);
+
+  let r=await api(
+    '/api/reports?from='+f+'&to='+t
+  );
+
+  $('rr').innerHTML=`
+
+    <div class="grid">
+
+      <div class="card">
+        Faturamento
+        <div class="big">
+          ${money(r.totals.revenue)}
+        </div>
+      </div>
+
+      <div class="card">
+        Lucro estimado
+        <div class="big">
+          ${money(r.totals.profit)}
+        </div>
+      </div>
+
+      <div class="card">
+        Vendas
+        <div class="big">
+          ${r.sales.length}
+        </div>
+      </div>
+
+      <div class="card">
+        Fiado aberto
+        <div class="big">
+          ${money(
+            r.debts.reduce(
+              (a,x)=>a+x.total,
+              0
+            )
+          )}
+        </div>
+      </div>
+
+    </div>
+
+    <h3>Mais vendidos</h3>
+
+    <table>
+      <tr>
+        <th>Produto</th>
+        <th>Quantidade</th>
+      </tr>
+
+      ${r.top.map(x=>`
+        <tr>
+          <td>${x.name}</td>
+          <td>${x.qty}</td>
+        </tr>
+      `).join('')}
+
+    </table>
+
+    <h3>Clientes devedores</h3>
+
+    <table>
+      <tr>
+        <th>Cliente</th>
+        <th>Venda</th>
+        <th>Valor</th>
+        <th></th>
+      </tr>
+
+      ${r.debts.map(x=>`
+        <tr>
+          <td>${x.name||'Sem cliente'}</td>
+          <td>#${x.id}</td>
+          <td>${money(x.total)}</td>
+          <td>
+            <button onclick="payDebt(${x.id})">
+              Receber
+            </button>
+          </td>
+        </tr>
+      `).join('')}
+
+    </table>
+  `;
+}
+
+async function payDebt(id){
+
+  if(!confirm('Marcar esta venda como recebida?'))
+    return;
+
+  try{
+
+    await api('/api/sales/'+id+'/pay',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        payment:'Dinheiro'
+      })
+    });
+
+    alert('Recebimento registrado.');
+
+    loadReports();
+    dash();
+
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+function showM(){
+  $('modal').style.display='flex';
+}
+
+function closeM(){
+  $('modal').style.display='none';
+}
+
+dash();
+loadProducts();
+loadClients();
+renderCart();
+
+
+/* ================================
+   PWA - SERVICE WORKER
+   ================================ */
+
+if('serviceWorker' in navigator){
+
+  window.addEventListener('load',()=>{
+
+    navigator.serviceWorker
+      .register('/service-worker.js')
+      .then(()=>{
+        console.log('PWA ativado');
+      })
+      .catch(error=>{
+        console.error(
+          'Erro ao ativar o PWA:',
+          error
+        );
+      });
+
+  });
+
+}
+
+</script>
+
+</body>
+</html>
