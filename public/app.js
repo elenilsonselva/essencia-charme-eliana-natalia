@@ -50,7 +50,12 @@ function money(value) {
 }
 
 function number(value) {
-  if (value === null || value === undefined || value === "") {
+
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
     return 0;
   }
 
@@ -63,15 +68,20 @@ function number(value) {
   text = text.replace(/\s/g, "");
 
   if (text.includes(",")) {
-    text = text.replace(/\./g, "").replace(",", ".");
+    text = text
+      .replace(/\./g, "")
+      .replace(",", ".");
   }
 
   const result = parseFloat(text);
 
-  return Number.isFinite(result) ? result : 0;
+  return Number.isFinite(result)
+    ? result
+    : 0;
 }
 
 function escapeHtml(value) {
+
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -81,6 +91,7 @@ function escapeHtml(value) {
 }
 
 function formatDate(value) {
+
   if (!value) return "";
 
   const date = new Date(value);
@@ -93,18 +104,40 @@ function formatDate(value) {
 }
 
 function today() {
+
   const date = new Date();
 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const year =
+    date.getFullYear();
+
+  const month =
+    String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+
+  const day =
+    String(
+      date.getDate()
+    ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 }
 
-function showAlert(message, type = "success") {
-  if (typeof window.showToast === "function") {
-    window.showToast(message, type);
+function showAlert(
+  message,
+  type = "success"
+) {
+
+  if (
+    typeof window.showToast ===
+    "function"
+  ) {
+
+    window.showToast(
+      message,
+      type
+    );
+
     return;
   }
 
@@ -112,10 +145,16 @@ function showAlert(message, type = "success") {
 }
 
 function openModal(id) {
+
   const modal = $(id);
 
   if (!modal) {
-    console.warn("Modal não encontrado:", id);
+
+    console.warn(
+      "Modal não encontrado:",
+      id
+    );
+
     return;
   }
 
@@ -124,6 +163,7 @@ function openModal(id) {
 }
 
 function closeModal(id) {
+
   const modal = $(id);
 
   if (!modal) return;
@@ -133,10 +173,15 @@ function closeModal(id) {
 }
 
 function closeAllModals() {
-  qsa(".modal").forEach(modal => {
-    modal.classList.remove("open");
-    modal.style.display = "none";
-  });
+
+  qsa(".modal").forEach(
+    modal => {
+
+      modal.classList.remove("open");
+      modal.style.display = "none";
+
+    }
+  );
 }
 
 
@@ -144,14 +189,22 @@ function closeAllModals() {
    API
 ========================================================= */
 
-async function api(url, options = {}) {
+async function api(
+  url,
+  options = {}
+) {
 
   const config = {
-    credentials: "same-origin",
+
+    credentials:
+      "same-origin",
+
     ...options,
+
     headers: {
       ...(options.headers || {})
     }
+
   };
 
   if (
@@ -159,22 +212,42 @@ async function api(url, options = {}) {
     typeof config.body !== "string" &&
     !(config.body instanceof FormData)
   ) {
-    config.headers["Content-Type"] = "application/json";
-    config.body = JSON.stringify(config.body);
+
+    config.headers[
+      "Content-Type"
+    ] =
+      "application/json";
+
+    config.body =
+      JSON.stringify(
+        config.body
+      );
   }
 
-  const response = await fetch(url, config);
+  const response =
+    await fetch(
+      url,
+      config
+    );
 
-  const text = await response.text();
+  const text =
+    await response.text();
 
   let data = {};
 
   try {
-    data = text ? JSON.parse(text) : {};
+
+    data =
+      text
+        ? JSON.parse(text)
+        : {};
+
   } catch {
+
     data = {
       raw: text
     };
+
   }
 
   if (!response.ok) {
@@ -205,43 +278,66 @@ function setLoginError(message) {
 
   if (!element) return;
 
-  element.textContent = message || "";
-  element.style.display = message ? "block" : "none";
+  element.textContent =
+    message || "";
+
+  element.style.display =
+    message
+      ? "block"
+      : "none";
 }
 
 async function checkLogin() {
 
   try {
 
-    const response = await fetch(
-      "/api/me",
-      {
-        credentials: "same-origin"
-      }
-    );
+    const response =
+      await fetch(
+        "/api/me",
+        {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store"
+        }
+      );
 
-    const data = await response.json().catch(() => ({}));
+    const data =
+      await response
+        .json()
+        .catch(() => ({}));
 
-    if (response.ok && data.authenticated) {
+    if (
+      response.ok &&
+      data.authenticated
+    ) {
 
-      currentUser = data.username || "";
+      currentUser =
+        data.username || "";
 
       showApp();
 
-      const loggedUser = $("loggedUser");
+      const loggedUser =
+        $("loggedUser");
 
       if (loggedUser) {
+
         loggedUser.textContent =
           currentUser
             ? `Olá, ${currentUser}`
             : "";
+
       }
 
       return true;
     }
 
   } catch (error) {
-    console.error("Erro ao verificar login:", error);
+
+    console.error(
+      "Erro ao verificar login:",
+      error
+    );
+
   }
 
   showLogin();
@@ -251,29 +347,47 @@ async function checkLogin() {
 
 function showLogin() {
 
-  const loginScreen = $("loginScreen");
-  const app = $("app");
+  const loginScreen =
+    $("loginScreen");
+
+  const app =
+    $("app");
 
   if (loginScreen) {
-    loginScreen.style.display = "flex";
+
+    loginScreen.style.display =
+      "flex";
+
   }
 
   if (app) {
-    app.style.display = "none";
+
+    app.style.display =
+      "none";
+
   }
 }
 
 function showApp() {
 
-  const loginScreen = $("loginScreen");
-  const app = $("app");
+  const loginScreen =
+    $("loginScreen");
+
+  const app =
+    $("app");
 
   if (loginScreen) {
-    loginScreen.style.display = "none";
+
+    loginScreen.style.display =
+      "none";
+
   }
 
   if (app) {
-    app.style.display = "block";
+
+    app.style.display =
+      "block";
+
   }
 }
 
@@ -293,8 +407,15 @@ async function login(event) {
     $("loginPassword")?.value ||
     "";
 
-  if (!username || !password) {
-    setLoginError("Informe usuário e senha.");
+  if (
+    !username ||
+    !password
+  ) {
+
+    setLoginError(
+      "Informe usuário e senha."
+    );
+
     return;
   }
 
@@ -320,11 +441,14 @@ async function login(event) {
 
     showApp();
 
-    const loggedUser = $("loggedUser");
+    const loggedUser =
+      $("loggedUser");
 
     if (loggedUser) {
+
       loggedUser.textContent =
         `Olá, ${currentUser}`;
+
     }
 
     await loadAll();
@@ -333,7 +457,12 @@ async function login(event) {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "Erro no login:",
+      error
+    );
+
+    showLogin();
 
     setLoginError(
       error.message ||
@@ -359,7 +488,10 @@ async function logout(event) {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "Erro ao sair:",
+      error
+    );
 
   }
 
@@ -377,25 +509,38 @@ function showPage(pageName) {
 
   if (!pageName) return;
 
-  qsa(".page").forEach(page => {
-    page.classList.remove("active");
-  });
+  qsa(".page").forEach(
+    page => {
+
+      page.classList.remove(
+        "active"
+      );
+
+    }
+  );
 
   const page =
     $(`page-${pageName}`);
 
   if (page) {
-    page.classList.add("active");
-  }
 
-  qsa(".nav-item").forEach(item => {
-
-    item.classList.toggle(
-      "active",
-      item.dataset.page === pageName
+    page.classList.add(
+      "active"
     );
 
-  });
+  }
+
+  qsa(".nav-item").forEach(
+    item => {
+
+      item.classList.toggle(
+        "active",
+        item.dataset.page ===
+          pageName
+      );
+
+    }
+  );
 
   const titles = {
 
@@ -436,37 +581,77 @@ function showPage(pageName) {
 
   }
 
-  if (pageName === "products") {
+  if (
+    pageName ===
+    "products"
+  ) {
+
     renderProducts();
+
   }
 
-  if (pageName === "clients") {
+  if (
+    pageName ===
+    "clients"
+  ) {
+
     renderClients();
+
   }
 
-  if (pageName === "suppliers") {
+  if (
+    pageName ===
+    "suppliers"
+  ) {
+
     renderSuppliers();
+
   }
 
-  if (pageName === "sales") {
+  if (
+    pageName ===
+    "sales"
+  ) {
+
     prepareSalePage();
     renderSales();
+
   }
 
-  if (pageName === "stock") {
+  if (
+    pageName ===
+    "stock"
+  ) {
+
     renderStock();
+
   }
 
-  if (pageName === "purchases") {
+  if (
+    pageName ===
+    "purchases"
+  ) {
+
     renderPurchases();
+
   }
 
-  if (pageName === "reports") {
+  if (
+    pageName ===
+    "reports"
+  ) {
+
     loadReports();
+
   }
 
-  if (pageName === "dashboard") {
+  if (
+    pageName ===
+    "dashboard"
+  ) {
+
     loadDashboard();
+
   }
 }
 
@@ -494,24 +679,29 @@ async function loadAll() {
 
     ]);
 
-  results.forEach(result => {
+  results.forEach(
+    result => {
 
-    if (result.status === "rejected") {
+      if (
+        result.status ===
+        "rejected"
+      ) {
 
-      console.error(
-        "Erro no carregamento:",
-        result.reason
-      );
+        console.error(
+          "Erro no carregamento:",
+          result.reason
+        );
+
+      }
 
     }
-
-  });
+  );
 
   updateProductSelects();
 
   updateClientSelect();
 
-  updateSupplierSelect();
+  updateSupplierSelects();
 
   renderProducts();
 
@@ -538,7 +728,9 @@ async function loadProducts() {
   try {
 
     const data =
-      await api("/api/products");
+      await api(
+        "/api/products"
+      );
 
     products =
       Array.isArray(data)
@@ -586,102 +778,108 @@ function renderProducts() {
   }
 
   tbody.innerHTML =
-    products.map(product => {
+    products
+      .map(product => {
 
-      const id =
-        product.id ??
-        product.product_id;
+        const id =
+          product.id ??
+          product.product_id;
 
-      const stock =
-        number(product.stock);
+        const stock =
+          number(
+            product.stock
+          );
 
-      const minimum =
-        number(
-          product.min_stock ??
-          product.minimum_stock ??
-          0
-        );
+        const minimum =
+          number(
+            product.min_stock ??
+            product.minimum_stock ??
+            0
+          );
 
-      return `
-        <tr>
+        return `
+          <tr>
 
-          <td>
-            ${escapeHtml(
-              product.name ||
-              product.product_name ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                product.name ||
+                product.product_name ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${escapeHtml(
-              product.brand ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                product.brand ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${escapeHtml(
-              product.supplier_name ||
-              product.supplier ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                product.supplier_name ||
+                product.supplier ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${money(
-              product.cost ??
-              product.cost_price ??
-              0
-            )}
-          </td>
+            <td>
+              ${money(
+                product.cost ??
+                product.cost_price ??
+                0
+              )}
+            </td>
 
-          <td>
-            ${money(
-              product.price ??
-              product.sale_price ??
-              0
-            )}
-          </td>
+            <td>
+              ${money(
+                product.price ??
+                product.sale_price ??
+                0
+              )}
+            </td>
 
-          <td class="${
-            stock <= minimum
-              ? "stock-low"
-              : ""
-          }">
-            ${stock}
-          </td>
+            <td class="${
+              stock <= minimum
+                ? "stock-low"
+                : ""
+            }">
+              ${stock}
+            </td>
 
-          <td>
-            ${formatDate(
-              product.created_at ||
-              product.createdAt
-            )}
-          </td>
+            <td>
+              ${formatDate(
+                product.created_at ||
+                product.createdAt
+              )}
+            </td>
 
-          <td class="actions">
+            <td class="actions">
 
-            <button
-              type="button"
-              onclick="editProduct(${id})">
-              Editar
-            </button>
+              <button
+                type="button"
+                onclick="editProduct(${id})">
+                Editar
+              </button>
 
-            <button
-              type="button"
-              onclick="deleteProduct(${id})">
-              Excluir
-            </button>
+              <button
+                type="button"
+                onclick="deleteProduct(${id})">
+                Excluir
+              </button>
 
-          </td>
+            </td>
 
-        </tr>
-      `;
+          </tr>
+        `;
 
-    }).join("");
+      })
+      .join("");
 }
 
-function openProductModal(product = null) {
+function openProductModal(
+  product = null
+) {
 
   const form =
     $("productForm");
@@ -781,7 +979,9 @@ function openProductModal(product = null) {
 
   updateSupplierSelects();
 
-  openModal("productModal");
+  openModal(
+    "productModal"
+  );
 }
 
 function editProduct(id) {
@@ -805,10 +1005,14 @@ function editProduct(id) {
     return;
   }
 
-  openProductModal(product);
+  openProductModal(
+    product
+  );
 }
 
-async function saveProduct(event) {
+async function saveProduct(
+  event
+) {
 
   event.preventDefault();
 
@@ -819,43 +1023,56 @@ async function saveProduct(event) {
   const body = {
 
     code:
-      $("productCode")?.value?.trim() ||
+      $("productCode")
+        ?.value
+        ?.trim() ||
       "",
 
     name:
-      $("productName")?.value?.trim() ||
+      $("productName")
+        ?.value
+        ?.trim() ||
       "",
 
     brand:
-      $("productBrand")?.value?.trim() ||
+      $("productBrand")
+        ?.value
+        ?.trim() ||
       "",
 
     size:
-      $("productSize")?.value?.trim() ||
+      $("productSize")
+        ?.value
+        ?.trim() ||
       "",
 
     supplier_id:
-      $("productSupplier")?.value ||
+      $("productSupplier")
+        ?.value ||
       null,
 
     cost:
       number(
-        $("productCost")?.value
+        $("productCost")
+          ?.value
       ),
 
     price:
       number(
-        $("productPrice")?.value
+        $("productPrice")
+          ?.value
       ),
 
     stock:
       number(
-        $("productStock")?.value
+        $("productStock")
+          ?.value
       ),
 
     min_stock:
       number(
-        $("productMinStock")?.value
+        $("productMinStock")
+          ?.value
       )
 
   };
@@ -885,7 +1102,9 @@ async function saveProduct(event) {
       }
     );
 
-    closeModal("productModal");
+    closeModal(
+      "productModal"
+    );
 
     await loadProducts();
 
@@ -911,11 +1130,15 @@ async function saveProduct(event) {
   }
 }
 
-async function deleteProduct(id) {
+async function deleteProduct(
+  id
+) {
 
-  if (!confirm(
-    "Deseja realmente excluir este produto?"
-  )) {
+  if (
+    !confirm(
+      "Deseja realmente excluir este produto?"
+    )
+  ) {
 
     return;
   }
@@ -961,7 +1184,9 @@ async function loadClients() {
   try {
 
     const data =
-      await api("/api/clients");
+      await api(
+        "/api/clients"
+      );
 
     clients =
       Array.isArray(data)
@@ -1009,72 +1234,76 @@ function renderClients() {
   }
 
   tbody.innerHTML =
-    clients.map(client => {
+    clients
+      .map(client => {
 
-      const id =
-        client.id ??
-        client.client_id;
+        const id =
+          client.id ??
+          client.client_id;
 
-      return `
-        <tr>
+        return `
+          <tr>
 
-          <td>
-            ${escapeHtml(
-              client.name ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                client.name ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${escapeHtml(
-              client.phone ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                client.phone ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${escapeHtml(
-              client.address ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                client.address ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${escapeHtml(
-              client.notes ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                client.notes ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${formatDate(
-              client.created_at
-            )}
-          </td>
+            <td>
+              ${formatDate(
+                client.created_at
+              )}
+            </td>
 
-          <td class="actions">
+            <td class="actions">
 
-            <button
-              type="button"
-              onclick="editClient(${id})">
-              Editar
-            </button>
+              <button
+                type="button"
+                onclick="editClient(${id})">
+                Editar
+              </button>
 
-            <button
-              type="button"
-              onclick="deleteClient(${id})">
-              Excluir
-            </button>
+              <button
+                type="button"
+                onclick="deleteClient(${id})">
+                Excluir
+              </button>
 
-          </td>
+            </td>
 
-        </tr>
-      `;
+          </tr>
+        `;
 
-    }).join("");
+      })
+      .join("");
 }
 
-function openClientModal(client = null) {
+function openClientModal(
+  client = null
+) {
 
   const form =
     $("clientForm");
@@ -1124,7 +1353,9 @@ function openClientModal(client = null) {
 
   }
 
-  openModal("clientModal");
+  openModal(
+    "clientModal"
+  );
 }
 
 function editClient(id) {
@@ -1148,10 +1379,14 @@ function editClient(id) {
     return;
   }
 
-  openClientModal(client);
+  openClientModal(
+    client
+  );
 }
 
-async function saveClient(event) {
+async function saveClient(
+  event
+) {
 
   event.preventDefault();
 
@@ -1162,19 +1397,27 @@ async function saveClient(event) {
   const body = {
 
     name:
-      $("clientName")?.value?.trim() ||
+      $("clientName")
+        ?.value
+        ?.trim() ||
       "",
 
     phone:
-      $("clientPhone")?.value?.trim() ||
+      $("clientPhone")
+        ?.value
+        ?.trim() ||
       "",
 
     address:
-      $("clientAddress")?.value?.trim() ||
+      $("clientAddress")
+        ?.value
+        ?.trim() ||
       "",
 
     notes:
-      $("clientNotes")?.value?.trim() ||
+      $("clientNotes")
+        ?.value
+        ?.trim() ||
       ""
 
   };
@@ -1204,7 +1447,9 @@ async function saveClient(event) {
       }
     );
 
-    closeModal("clientModal");
+    closeModal(
+      "clientModal"
+    );
 
     await loadClients();
 
@@ -1230,11 +1475,15 @@ async function saveClient(event) {
   }
 }
 
-async function deleteClient(id) {
+async function deleteClient(
+  id
+) {
 
-  if (!confirm(
-    "Deseja realmente excluir este cliente?"
-  )) {
+  if (
+    !confirm(
+      "Deseja realmente excluir este cliente?"
+    )
+  ) {
 
     return;
   }
@@ -1280,7 +1529,9 @@ async function loadSuppliers() {
   try {
 
     const data =
-      await api("/api/suppliers");
+      await api(
+        "/api/suppliers"
+      );
 
     suppliers =
       Array.isArray(data)
@@ -1328,72 +1579,76 @@ function renderSuppliers() {
   }
 
   tbody.innerHTML =
-    suppliers.map(supplier => {
+    suppliers
+      .map(supplier => {
 
-      const id =
-        supplier.id ??
-        supplier.supplier_id;
+        const id =
+          supplier.id ??
+          supplier.supplier_id;
 
-      return `
-        <tr>
+        return `
+          <tr>
 
-          <td>
-            ${escapeHtml(
-              supplier.name ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                supplier.name ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${escapeHtml(
-              supplier.phone ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                supplier.phone ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${escapeHtml(
-              supplier.email ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                supplier.email ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${escapeHtml(
-              supplier.address ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                supplier.address ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${formatDate(
-              supplier.created_at
-            )}
-          </td>
+            <td>
+              ${formatDate(
+                supplier.created_at
+              )}
+            </td>
 
-          <td class="actions">
+            <td class="actions">
 
-            <button
-              type="button"
-              onclick="editSupplier(${id})">
-              Editar
-            </button>
+              <button
+                type="button"
+                onclick="editSupplier(${id})">
+                Editar
+              </button>
 
-            <button
-              type="button"
-              onclick="deleteSupplier(${id})">
-              Excluir
-            </button>
+              <button
+                type="button"
+                onclick="deleteSupplier(${id})">
+                Excluir
+              </button>
 
-          </td>
+            </td>
 
-        </tr>
-      `;
+          </tr>
+        `;
 
-    }).join("");
+      })
+      .join("");
 }
 
-function openSupplierModal(supplier = null) {
+function openSupplierModal(
+  supplier = null
+) {
 
   const form =
     $("supplierForm");
@@ -1451,7 +1706,9 @@ function openSupplierModal(supplier = null) {
 
   }
 
-  openModal("supplierModal");
+  openModal(
+    "supplierModal"
+  );
 }
 
 function editSupplier(id) {
@@ -1475,10 +1732,14 @@ function editSupplier(id) {
     return;
   }
 
-  openSupplierModal(supplier);
+  openSupplierModal(
+    supplier
+  );
 }
 
-async function saveSupplier(event) {
+async function saveSupplier(
+  event
+) {
 
   event.preventDefault();
 
@@ -1489,23 +1750,33 @@ async function saveSupplier(event) {
   const body = {
 
     name:
-      $("supplierName")?.value?.trim() ||
+      $("supplierName")
+        ?.value
+        ?.trim() ||
       "",
 
     phone:
-      $("supplierPhone")?.value?.trim() ||
+      $("supplierPhone")
+        ?.value
+        ?.trim() ||
       "",
 
     email:
-      $("supplierEmail")?.value?.trim() ||
+      $("supplierEmail")
+        ?.value
+        ?.trim() ||
       "",
 
     address:
-      $("supplierAddress")?.value?.trim() ||
+      $("supplierAddress")
+        ?.value
+        ?.trim() ||
       "",
 
     notes:
-      $("supplierNotes")?.value?.trim() ||
+      $("supplierNotes")
+        ?.value
+        ?.trim() ||
       ""
 
   };
@@ -1535,7 +1806,9 @@ async function saveSupplier(event) {
       }
     );
 
-    closeModal("supplierModal");
+    closeModal(
+      "supplierModal"
+    );
 
     await loadSuppliers();
 
@@ -1561,11 +1834,15 @@ async function saveSupplier(event) {
   }
 }
 
-async function deleteSupplier(id) {
+async function deleteSupplier(
+  id
+) {
 
-  if (!confirm(
-    "Deseja realmente excluir este fornecedor?"
-  )) {
+  if (
+    !confirm(
+      "Deseja realmente excluir este fornecedor?"
+    )
+  ) {
 
     return;
   }
@@ -1610,95 +1887,117 @@ function updateProductSelects() {
 
   const selects =
     qsa(
-      "#saleProduct, #purchaseProduct"
+      "#saleProduct, #purchaseProduct, #stockProduct"
     );
 
-  selects.forEach(select => {
+  selects.forEach(
+    select => {
 
-    const current =
-      select.value;
+      const current =
+        select.value;
 
-    select.innerHTML = `
-      <option value="">
-        Selecione o produto
-      </option>
-    `;
+      select.innerHTML = `
+        <option value="">
+          Selecione o produto
+        </option>
+      `;
 
-    products.forEach(product => {
+      products.forEach(
+        product => {
 
-      const id =
-        product.id ??
-        product.product_id;
+          const id =
+            product.id ??
+            product.product_id;
 
-      const name =
-        product.name ||
-        product.product_name ||
-        "";
+          const name =
+            product.name ||
+            product.product_name ||
+            "";
 
-      const stock =
-        number(product.stock);
+          const stock =
+            number(
+              product.stock
+            );
 
-      const option =
-        document.createElement("option");
+          const option =
+            document.createElement(
+              "option"
+            );
 
-      option.value =
-        id;
+          option.value =
+            id;
 
-      option.textContent =
-        `${name} — Estoque: ${stock}`;
+          option.textContent =
+            `${name} — Estoque: ${stock}`;
 
-      select.appendChild(option);
+          select.appendChild(
+            option
+          );
 
-    });
+        }
+      );
 
-    if (current) {
-      select.value = current;
+      if (current) {
+        select.value =
+          current;
+      }
+
     }
-
-  });
+  );
 }
 
 function updateClientSelect() {
 
   const selects =
-    qsa("#saleClient");
+    qsa(
+      "#saleClient"
+    );
 
-  selects.forEach(select => {
+  selects.forEach(
+    select => {
 
-    const current =
-      select.value;
+      const current =
+        select.value;
 
-    select.innerHTML = `
-      <option value="">
-        Selecione o cliente
-      </option>
-    `;
+      select.innerHTML = `
+        <option value="">
+          Selecione o cliente
+        </option>
+      `;
 
-    clients.forEach(client => {
+      clients.forEach(
+        client => {
 
-      const id =
-        client.id ??
-        client.client_id;
+          const id =
+            client.id ??
+            client.client_id;
 
-      const option =
-        document.createElement("option");
+          const option =
+            document.createElement(
+              "option"
+            );
 
-      option.value =
-        id;
+          option.value =
+            id;
 
-      option.textContent =
-        client.name ||
-        "";
+          option.textContent =
+            client.name ||
+            "";
 
-      select.appendChild(option);
+          select.appendChild(
+            option
+          );
 
-    });
+        }
+      );
 
-    if (current) {
-      select.value = current;
+      if (current) {
+        select.value =
+          current;
+      }
+
     }
-
-  });
+  );
 }
 
 function updateSupplierSelects() {
@@ -1708,42 +2007,51 @@ function updateSupplierSelects() {
       "#productSupplier, #purchaseSupplier"
     );
 
-  selects.forEach(select => {
+  selects.forEach(
+    select => {
 
-    const current =
-      select.value;
+      const current =
+        select.value;
 
-    select.innerHTML = `
-      <option value="">
-        Selecione o fornecedor
-      </option>
-    `;
+      select.innerHTML = `
+        <option value="">
+          Selecione o fornecedor
+        </option>
+      `;
 
-    suppliers.forEach(supplier => {
+      suppliers.forEach(
+        supplier => {
 
-      const id =
-        supplier.id ??
-        supplier.supplier_id;
+          const id =
+            supplier.id ??
+            supplier.supplier_id;
 
-      const option =
-        document.createElement("option");
+          const option =
+            document.createElement(
+              "option"
+            );
 
-      option.value =
-        id;
+          option.value =
+            id;
 
-      option.textContent =
-        supplier.name ||
-        "";
+          option.textContent =
+            supplier.name ||
+            "";
 
-      select.appendChild(option);
+          select.appendChild(
+            option
+          );
 
-    });
+        }
+      );
 
-    if (current) {
-      select.value = current;
+      if (current) {
+        select.value =
+          current;
+      }
+
     }
-
-  });
+  );
 }
 
 
@@ -1756,7 +2064,9 @@ async function loadSales() {
   try {
 
     const data =
-      await api("/api/sales");
+      await api(
+        "/api/sales"
+      );
 
     sales =
       Array.isArray(data)
@@ -1780,6 +2090,159 @@ async function loadSales() {
 
     throw error;
   }
+}
+
+
+/* =========================================================
+   RENDER VENDAS
+========================================================= */
+
+function renderSales() {
+
+  const tbody =
+    $("salesTableBody") ||
+    $("salesBody");
+
+  if (!tbody) return;
+
+  if (!sales.length) {
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="9" class="empty">
+          Nenhuma venda registrada.
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
+  tbody.innerHTML =
+    sales
+      .map(sale => {
+
+        const id =
+          sale.id ??
+          sale.sale_id;
+
+        const total =
+          number(
+            sale.total
+          );
+
+        const entry =
+          number(
+            sale.entry ??
+            sale.paid_amount ??
+            0
+          );
+
+        const remaining =
+          Math.max(
+            0,
+            total - entry
+          );
+
+        const installments =
+          Number(
+            sale.installments ||
+            sale.installment_count ||
+            1
+          );
+
+        const client =
+          sale.client_name ||
+          sale.customer_name ||
+          "Consumidor";
+
+        const status =
+          sale.status ||
+          (
+            remaining <= 0
+              ? "Pago"
+              : "Pendente"
+          );
+
+        return `
+          <tr>
+
+            <td>
+              ${formatDate(
+                sale.date ||
+                sale.created_at
+              )}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                client
+              )}
+            </td>
+
+            <td>
+              ${money(total)}
+            </td>
+
+            <td>
+              ${money(entry)}
+            </td>
+
+            <td>
+              ${money(remaining)}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                status
+              )}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                sale.payment_method ||
+                sale.payment ||
+                ""
+              )}
+            </td>
+
+            <td>
+              ${installments}
+            </td>
+
+            <td class="actions">
+
+              <button
+                type="button"
+                onclick="viewSale(${id})">
+                Ver
+              </button>
+
+              <button
+                type="button"
+                onclick="downloadSalePdf(${id})">
+                PDF
+              </button>
+
+              ${
+                remaining > 0
+                  ? `
+                    <button
+                      type="button"
+                      onclick="openSalePayment(${id})">
+                      Pagamento
+                    </button>
+                  `
+                  : ""
+              }
+
+            </td>
+
+          </tr>
+        `;
+
+      })
+      .join("");
 }
 
 function prepareSalePage() {
@@ -1844,7 +2307,9 @@ function addSaleProduct() {
   }
 
   const stock =
-    number(product.stock);
+    number(
+      product.stock
+    );
 
   if (quantity > stock) {
 
@@ -1859,7 +2324,9 @@ function addSaleProduct() {
   const existing =
     saleCart.find(
       item =>
-        Number(item.product_id) ===
+        Number(
+          item.product_id
+        ) ===
         Number(productId)
     );
 
@@ -1869,7 +2336,10 @@ function addSaleProduct() {
       existing.quantity +
       quantity;
 
-    if (newQuantity > stock) {
+    if (
+      newQuantity >
+      stock
+    ) {
 
       showAlert(
         `Estoque insuficiente. Disponível: ${stock}.`,
@@ -1911,11 +2381,16 @@ function addSaleProduct() {
   calculateSaleTotals();
 
   if ($("saleQuantity")) {
-    $("saleQuantity").value = 1;
+
+    $("saleQuantity").value =
+      1;
+
   }
 }
 
-function removeSaleProduct(index) {
+function removeSaleProduct(
+  index
+) {
 
   saleCart.splice(
     Number(index),
@@ -1927,7 +2402,10 @@ function removeSaleProduct(index) {
   calculateSaleTotals();
 }
 
-function changeSaleQuantity(index, value) {
+function changeSaleQuantity(
+  index,
+  value
+) {
 
   const item =
     saleCart[index];
@@ -1939,7 +2417,9 @@ function changeSaleQuantity(index, value) {
 
   if (quantity <= 0) {
 
-    removeSaleProduct(index);
+    removeSaleProduct(
+      index
+    );
 
     return;
   }
@@ -1951,15 +2431,22 @@ function changeSaleQuantity(index, value) {
           p.id ??
           p.product_id
         ) ===
-        Number(item.product_id)
+        Number(
+          item.product_id
+        )
     );
 
   if (product) {
 
     const stock =
-      number(product.stock);
+      number(
+        product.stock
+      );
 
-    if (quantity > stock) {
+    if (
+      quantity >
+      stock
+    ) {
 
       showAlert(
         `Estoque insuficiente. Disponível: ${stock}.`,
@@ -2001,57 +2488,68 @@ function renderSaleCart() {
   }
 
   container.innerHTML =
-    saleCart.map(
-      (item, index) => {
+    saleCart
+      .map(
+        (item, index) => {
 
-        const subtotal =
-          item.quantity *
-          item.price;
+          const subtotal =
+            item.quantity *
+            item.price;
 
-        return `
-          <div class="cart-item">
+          return `
+            <div class="cart-item">
 
-            <div class="cart-product">
-              ${escapeHtml(item.name)}
+              <div class="cart-product">
+                ${escapeHtml(
+                  item.name
+                )}
+              </div>
+
+              <div class="cart-price">
+                ${money(
+                  item.price
+                )}
+              </div>
+
+              <div class="cart-quantity">
+
+                <input
+                  type="number"
+                  min="1"
+                  value="${item.quantity}"
+                  onchange="changeSaleQuantity(${index}, this.value)"
+                >
+
+              </div>
+
+              <div class="cart-subtotal">
+                ${money(
+                  subtotal
+                )}
+              </div>
+
+              <button
+                type="button"
+                onclick="removeSaleProduct(${index})">
+                Remover
+              </button>
+
             </div>
+          `;
 
-            <div class="cart-price">
-              ${money(item.price)}
-            </div>
-
-            <div class="cart-quantity">
-
-              <input
-                type="number"
-                min="1"
-                value="${item.quantity}"
-                onchange="changeSaleQuantity(${index}, this.value)"
-              >
-
-            </div>
-
-            <div class="cart-subtotal">
-              ${money(subtotal)}
-            </div>
-
-            <button
-              type="button"
-              onclick="removeSaleProduct(${index})">
-              Remover
-            </button>
-
-          </div>
-        `;
-
-      }
-    ).join("");
+        }
+      )
+      .join("");
 }
 
 function calculateSaleTotals() {
 
   const subtotal =
     saleCart.reduce(
-      (sum, item) =>
+      (
+        sum,
+        item
+      ) =>
         sum +
         (
           item.quantity *
@@ -2074,7 +2572,8 @@ function calculateSaleTotals() {
     Math.max(
       1,
       parseInt(
-        $("saleInstallments")?.value ||
+        $("saleInstallments")
+          ?.value ||
         "1",
         10
       )
@@ -2096,7 +2595,8 @@ function calculateSaleTotals() {
 
   const installmentValue =
     installments > 0
-      ? remaining / installments
+      ? remaining /
+        installments
       : remaining;
 
   const fields = {
@@ -2118,32 +2618,35 @@ function calculateSaleTotals() {
 
   };
 
-  Object.entries(fields)
-    .forEach(
-      ([id, value]) => {
+  Object.entries(
+    fields
+  ).forEach(
+    ([id, value]) => {
 
-        const element =
-          $(id);
+      const element =
+        $(id);
 
-        if (!element) return;
+      if (!element) return;
 
-        if (
-          element.tagName === "INPUT" ||
-          element.tagName === "SELECT"
-        ) {
+      if (
+        element.tagName ===
+          "INPUT" ||
+        element.tagName ===
+          "SELECT"
+      ) {
 
-          element.value =
-            value.toFixed(2);
+        element.value =
+          value.toFixed(2);
 
-        } else {
+      } else {
 
-          element.textContent =
-            money(value);
-
-        }
+        element.textContent =
+          money(value);
 
       }
-    );
+
+    }
+  );
 
   const totalElement =
     $("saleTotalDisplay");
@@ -2171,7 +2674,9 @@ function calculateSaleTotals() {
   if (installmentElement) {
 
     installmentElement.textContent =
-      money(installmentValue);
+      money(
+        installmentValue
+      );
 
   }
 
@@ -2194,7 +2699,9 @@ function calculateSaleTotals() {
   };
 }
 
-async function saveSale(event) {
+async function saveSale(
+  event
+) {
 
   event.preventDefault();
 
@@ -2216,8 +2723,10 @@ async function saveSale(event) {
     null;
 
   const paymentMethod =
-    $("salePaymentMethod")?.value ||
-    $("salePayment")?.value ||
+    $("salePaymentMethod")
+      ?.value ||
+    $("salePayment")
+      ?.value ||
     "Pendente";
 
   const body = {
@@ -2247,18 +2756,26 @@ async function saveSale(event) {
       totals.total,
 
     items:
-      saleCart.map(item => ({
+      saleCart.map(
+        item => ({
 
-        product_id:
-          Number(item.product_id),
+          product_id:
+            Number(
+              item.product_id
+            ),
 
-        quantity:
-          Number(item.quantity),
+          quantity:
+            Number(
+              item.quantity
+            ),
 
-        price:
-          Number(item.price)
+          price:
+            Number(
+              item.price
+            )
 
-      }))
+        })
+      )
 
   };
 
@@ -2314,7 +2831,9 @@ async function saveSale(event) {
       "Venda registrada com sucesso."
     );
 
-    showPage("sales");
+    showPage(
+      "sales"
+    );
 
   } catch (error) {
 
@@ -2327,15 +2846,276 @@ async function saveSale(event) {
     );
   }
 }
+
+
 /* =========================================================
-   VENDAS — CONTINUAÇÃO
+   VISUALIZAR VENDA
 ========================================================= */
 
-<button
-  type="button"
-  onclick="downloadSalePdf(${id})">
-  PDF
-</button>
+async function viewSale(id) {
+
+  try {
+
+    const data =
+      await api(
+        `/api/sales/${id}`
+      );
+
+    const sale =
+      data.sale ||
+      data;
+
+    const items =
+      data.items ||
+      sale.items ||
+      [];
+
+    const total =
+      number(
+        sale.total
+      );
+
+    const entry =
+      number(
+        sale.entry ??
+        sale.paid_amount
+      );
+
+    const remaining =
+      Math.max(
+        0,
+        total -
+        entry
+      );
+
+    let html = `
+
+      <div class="details">
+
+        <p>
+          <strong>Cliente:</strong>
+          ${escapeHtml(
+            sale.client_name ||
+            sale.customer_name ||
+            "Consumidor"
+          )}
+        </p>
+
+        <p>
+          <strong>Data:</strong>
+          ${formatDate(
+            sale.date ||
+            sale.created_at
+          )}
+        </p>
+
+        <p>
+          <strong>Total:</strong>
+          ${money(total)}
+        </p>
+
+        <p>
+          <strong>Entrada:</strong>
+          ${money(entry)}
+        </p>
+
+        <p>
+          <strong>A receber:</strong>
+          ${money(remaining)}
+        </p>
+
+      </div>
+
+      <h4>Produtos</h4>
+
+      <div class="details-items">
+    `;
+
+    if (items.length) {
+
+      html +=
+        items
+          .map(
+            item => {
+
+              const quantity =
+                number(
+                  item.quantity
+                );
+
+              const price =
+                number(
+                  item.price ??
+                  item.unit_price
+                );
+
+              return `
+
+                <div class="detail-row">
+
+                  <span>
+                    ${escapeHtml(
+                      item.product_name ||
+                      item.name ||
+                      ""
+                    )}
+                  </span>
+
+                  <span>
+                    ${quantity}
+                    ×
+                    ${money(price)}
+                  </span>
+
+                </div>
+
+              `;
+
+            }
+          )
+          .join("");
+
+    } else {
+
+      html += `
+        <p>
+          Nenhum item encontrado.
+        </p>
+      `;
+
+    }
+
+    html += `
+      </div>
+    `;
+
+    const container =
+      $("saleDetails");
+
+    if (container) {
+
+      container.innerHTML =
+        html;
+
+    }
+
+    openModal(
+      "saleDetailsModal"
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    showAlert(
+      error.message ||
+      "Não foi possível carregar a venda.",
+      "error"
+    );
+  }
+}
+
+
+/* =========================================================
+   PDF DA VENDA
+========================================================= */
+
+async function downloadSalePdf(
+  id
+) {
+
+  try {
+
+    const response =
+      await fetch(
+        `/api/sales/${id}/pdf`,
+        {
+          method: "GET",
+          credentials: "same-origin"
+        }
+      );
+
+    if (!response.ok) {
+
+      const text =
+        await response.text();
+
+      let message =
+        `Erro HTTP ${response.status}`;
+
+      try {
+
+        const data =
+          JSON.parse(text);
+
+        message =
+          data.error ||
+          data.message ||
+          message;
+
+      } catch {
+
+        if (text) {
+          message = text;
+        }
+
+      }
+
+      throw new Error(
+        message
+      );
+    }
+
+    const blob =
+      await response.blob();
+
+    const url =
+      window.URL.createObjectURL(
+        blob
+      );
+
+    const link =
+      document.createElement(
+        "a"
+      );
+
+    link.href =
+      url;
+
+    link.download =
+      `venda-${id}.pdf`;
+
+    document.body.appendChild(
+      link
+    );
+
+    link.click();
+
+    link.remove();
+
+    window.URL.revokeObjectURL(
+      url
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Erro ao gerar PDF da venda:",
+      error
+    );
+
+    showAlert(
+      error.message ||
+      "Não foi possível gerar o PDF da venda.",
+      "error"
+    );
+  }
+}
+
+
+/* =========================================================
+   PAGAMENTO DA VENDA
+========================================================= */
 
 function openSalePayment(id) {
 
@@ -2361,7 +3141,9 @@ function openSalePayment(id) {
   if ($("paymentAmount")) {
 
     const total =
-      number(sale?.total);
+      number(
+        sale?.total
+      );
 
     const entry =
       number(
@@ -2372,8 +3154,16 @@ function openSalePayment(id) {
     $("paymentAmount").value =
       Math.max(
         0,
-        total - entry
+        total -
+        entry
       ).toFixed(2);
+
+  }
+
+  if ($("paymentDate")) {
+
+    $("paymentDate").value =
+      today();
 
   }
 
@@ -2382,7 +3172,9 @@ function openSalePayment(id) {
   );
 }
 
-async function saveSalePayment(event) {
+async function saveSalePayment(
+  event
+) {
 
   event.preventDefault();
 
@@ -2398,7 +3190,8 @@ async function saveSalePayment(event) {
 
   const amount =
     number(
-      $("paymentAmount")?.value
+      $("paymentAmount")
+        ?.value
     );
 
   if (amount <= 0) {
@@ -2416,12 +3209,15 @@ async function saveSalePayment(event) {
     amount,
 
     payment_method:
-      $("paymentMethod")?.value ||
-      $("paymentType")?.value ||
+      $("paymentMethod")
+        ?.value ||
+      $("paymentType")
+        ?.value ||
       "Dinheiro",
 
     date:
-      $("paymentDate")?.value ||
+      $("paymentDate")
+        ?.value ||
       today()
 
   };
@@ -2440,9 +3236,14 @@ async function saveSalePayment(event) {
       "paymentModal"
     );
 
+    currentSaleId =
+      null;
+
     await loadSales();
 
     renderSales();
+
+    await loadDashboard();
 
     showAlert(
       "Pagamento registrado."
@@ -2470,7 +3271,9 @@ async function loadStock() {
   try {
 
     const data =
-      await api("/api/stock");
+      await api(
+        "/api/stock"
+      );
 
     stockMoves =
       Array.isArray(data)
@@ -2519,86 +3322,92 @@ function renderStockFromProducts() {
   }
 
   tbody.innerHTML =
-    products.map(product => {
+    products
+      .map(product => {
 
-      const id =
-        product.id ??
-        product.product_id;
+        const id =
+          product.id ??
+          product.product_id;
 
-      const stock =
-        number(product.stock);
+        const stock =
+          number(
+            product.stock
+          );
 
-      const minimum =
-        number(
-          product.min_stock ??
-          product.minimum_stock
-        );
+        const minimum =
+          number(
+            product.min_stock ??
+            product.minimum_stock
+          );
 
-      return `
-        <tr>
+        return `
+          <tr>
 
-          <td>
-            ${escapeHtml(
-              product.name ||
-              product.product_name ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                product.name ||
+                product.product_name ||
+                ""
+              )}
+            </td>
 
-          <td>
-            ${escapeHtml(
-              product.brand ||
-              ""
-            )}
-          </td>
+            <td>
+              ${escapeHtml(
+                product.brand ||
+                ""
+              )}
+            </td>
 
-          <td class="${
-            stock <= minimum
-              ? "stock-low"
-              : ""
-          }">
-            ${stock}
-          </td>
+            <td class="${
+              stock <= minimum
+                ? "stock-low"
+                : ""
+            }">
+              ${stock}
+            </td>
 
-          <td>
-            ${minimum}
-          </td>
+            <td>
+              ${minimum}
+            </td>
 
-          <td>
-            ${money(
-              product.cost ??
-              product.cost_price
-            )}
-          </td>
+            <td>
+              ${money(
+                product.cost ??
+                product.cost_price
+              )}
+            </td>
 
-          <td>
-            ${money(
-              product.price ??
-              product.sale_price
-            )}
-          </td>
+            <td>
+              ${money(
+                product.price ??
+                product.sale_price
+              )}
+            </td>
 
-          <td class="actions">
+            <td class="actions">
 
-            <button
-              type="button"
-              onclick="openStockModal(${id})">
-              Movimentar
-            </button>
+              <button
+                type="button"
+                onclick="openStockModal(${id})">
+                Movimentar
+              </button>
 
-          </td>
+            </td>
 
-        </tr>
-      `;
+          </tr>
+        `;
 
-    }).join("");
+      })
+      .join("");
 }
 
 function renderStock() {
   renderStockFromProducts();
 }
 
-function openStockModal(productId = null) {
+function openStockModal(
+  productId = null
+) {
 
   const form =
     $("stockForm");
@@ -2612,8 +3421,10 @@ function openStockModal(productId = null) {
     updateProductSelects();
 
     if (productId) {
+
       $("stockProduct").value =
         productId;
+
     }
 
   }
@@ -2637,7 +3448,9 @@ function openStockModal(productId = null) {
   );
 }
 
-async function saveStockMove(event) {
+async function saveStockMove(
+  event
+) {
 
   event.preventDefault();
 
@@ -2646,7 +3459,8 @@ async function saveStockMove(event) {
 
   const quantity =
     number(
-      $("stockQuantity")?.value
+      $("stockQuantity")
+        ?.value
     );
 
   const type =
@@ -2654,7 +3468,9 @@ async function saveStockMove(event) {
     "entrada";
 
   const note =
-    $("stockNote")?.value?.trim() ||
+    $("stockNote")
+      ?.value
+      ?.trim() ||
     "";
 
   if (!productId) {
@@ -2695,7 +3511,8 @@ async function saveStockMove(event) {
           note,
 
           date:
-            $("stockDate")?.value ||
+            $("stockDate")
+              ?.value ||
             today()
 
         }
@@ -2746,7 +3563,9 @@ async function loadPurchases() {
   try {
 
     const data =
-      await api("/api/purchases");
+      await api(
+        "/api/purchases"
+      );
 
     purchases =
       Array.isArray(data)
@@ -2796,121 +3615,130 @@ function renderPurchases() {
   }
 
   tbody.innerHTML =
-    purchases.map(purchase => {
+    purchases
+      .map(
+        purchase => {
 
-      const id =
-        purchase.id ??
-        purchase.purchase_id;
+          const id =
+            purchase.id ??
+            purchase.purchase_id;
 
-      const total =
-        number(purchase.total);
+          const total =
+            number(
+              purchase.total
+            );
 
-      const entry =
-        number(
-          purchase.entry ??
-          purchase.paid_amount ??
-          0
-        );
+          const entry =
+            number(
+              purchase.entry ??
+              purchase.paid_amount ??
+              0
+            );
 
-      const remaining =
-        Math.max(
-          0,
-          total - entry
-        );
+          const remaining =
+            Math.max(
+              0,
+              total -
+              entry
+            );
 
-      const installments =
-        Number(
-          purchase.installments ||
-          purchase.installment_count ||
-          1
-        );
+          const installments =
+            Number(
+              purchase.installments ||
+              purchase.installment_count ||
+              1
+            );
 
-      const status =
-        purchase.status ||
-        (
-          remaining <= 0
-            ? "Pago"
-            : "Pendente"
-        );
+          const status =
+            purchase.status ||
+            (
+              remaining <= 0
+                ? "Pago"
+                : "Pendente"
+            );
 
-      return `
-        <tr>
+          return `
+            <tr>
 
-          <td>
-            ${formatDate(
-              purchase.date ||
-              purchase.created_at
-            )}
-          </td>
+              <td>
+                ${formatDate(
+                  purchase.date ||
+                  purchase.created_at
+                )}
+              </td>
 
-          <td>
-            ${escapeHtml(
-              purchase.supplier_name ||
-              purchase.supplier ||
-              ""
-            )}
-          </td>
+              <td>
+                ${escapeHtml(
+                  purchase.supplier_name ||
+                  purchase.supplier ||
+                  ""
+                )}
+              </td>
 
-          <td>
-            ${money(total)}
-          </td>
+              <td>
+                ${money(total)}
+              </td>
 
-          <td>
-            ${money(entry)}
-          </td>
+              <td>
+                ${money(entry)}
+              </td>
 
-          <td>
-            ${money(remaining)}
-          </td>
+              <td>
+                ${money(remaining)}
+              </td>
 
-          <td>
-            ${installments}
-          </td>
+              <td>
+                ${installments}
+              </td>
 
-          <td>
-            ${escapeHtml(status)}
-          </td>
+              <td>
+                ${escapeHtml(
+                  status
+                )}
+              </td>
 
-          <td>
-            ${escapeHtml(
-              purchase.payment_method ||
-              purchase.payment ||
-              ""
-            )}
-          </td>
+              <td>
+                ${escapeHtml(
+                  purchase.payment_method ||
+                  purchase.payment ||
+                  ""
+                )}
+              </td>
 
-          <td class="actions">
+              <td class="actions">
 
-            <button
-              type="button"
-              onclick="viewPurchase(${id})">
-              Ver
-            </button>
+                <button
+                  type="button"
+                  onclick="viewPurchase(${id})">
+                  Ver
+                </button>
 
-            <button
-              type="button"
-              onclick="downloadPurchasePdf(${id})">
-              PDF
-            </button>
+                <button
+                  type="button"
+                  onclick="downloadPurchasePdf(${id})">
+                  PDF
+                </button>
 
-            ${
-              remaining > 0
-                ? `
-                  <button
-                    type="button"
-                    onclick="openPurchasePayment(${id})">
-                    Pagamento
-                  </button>
-                `
-                : ""
-            }
+                ${
+                  remaining > 0
+                    ? `
+                      <button
+                        type="button"
+                        onclick="openPurchasePayment(${id})">
+                        Pagamento
+                      </button>
+                    `
+                    : ""
+                }
 
-          </td>
+              </td>
 
-        </tr>
-      `;
+            </tr>
+          `;
 
-    }).join("");
+        }
+      )
+      .join("");
 
   updatePurchaseSummary();
 }
@@ -2919,15 +3747,23 @@ function updatePurchaseSummary() {
 
   const total =
     purchases.reduce(
-      (sum, purchase) =>
+      (
+        sum,
+        purchase
+      ) =>
         sum +
-        number(purchase.total),
+        number(
+          purchase.total
+        ),
       0
     );
 
   const paid =
     purchases.reduce(
-      (sum, purchase) =>
+      (
+        sum,
+        purchase
+      ) =>
         sum +
         number(
           purchase.entry ??
@@ -2939,7 +3775,8 @@ function updatePurchaseSummary() {
   const payable =
     Math.max(
       0,
-      total - paid
+      total -
+      paid
     );
 
   const totalElement =
@@ -2952,18 +3789,24 @@ function updatePurchaseSummary() {
     $("purchasesPayable");
 
   if (totalElement) {
+
     totalElement.textContent =
       money(total);
+
   }
 
   if (paidElement) {
+
     paidElement.textContent =
       money(paid);
+
   }
 
   if (payableElement) {
+
     payableElement.textContent =
       money(payable);
+
   }
 
   const total2 =
@@ -2976,22 +3819,30 @@ function updatePurchaseSummary() {
     $("purchasePayableValue");
 
   if (total2) {
+
     total2.textContent =
       money(total);
+
   }
 
   if (paid2) {
+
     paid2.textContent =
       money(paid);
+
   }
 
   if (payable2) {
+
     payable2.textContent =
       money(payable);
+
   }
 }
 
-function openPurchaseModal(purchase = null) {
+function openPurchaseModal(
+  purchase = null
+) {
 
   const form =
     $("purchaseForm");
@@ -3097,13 +3948,15 @@ function addPurchaseItem() {
 
   const quantity =
     number(
-      $("purchaseQuantity")?.value ||
+      $("purchaseQuantity")
+        ?.value ||
       1
     );
 
   const price =
     number(
-      $("purchaseUnitPrice")?.value ||
+      $("purchaseUnitPrice")
+        ?.value ||
       product.cost ||
       product.cost_price ||
       0
@@ -3139,7 +3992,9 @@ function addPurchaseItem() {
     if (quantityInput) {
 
       quantityInput.value =
-        number(quantityInput.value) +
+        number(
+          quantityInput.value
+        ) +
         quantity;
 
     }
@@ -3147,7 +4002,9 @@ function addPurchaseItem() {
   } else {
 
     const row =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
     row.className =
       "purchase-item";
@@ -3196,7 +4053,9 @@ function addPurchaseItem() {
       </div>
 
       <div class="purchase-item-subtotal">
-        ${money(quantity * price)}
+        ${money(
+          quantity * price
+        )}
       </div>
 
       <button
@@ -3210,19 +4069,25 @@ function addPurchaseItem() {
 
     `;
 
-    container.appendChild(row);
+    container.appendChild(
+      row
+    );
   }
 
   calculatePurchaseTotal();
 
   if ($("purchaseQuantity")) {
+
     $("purchaseQuantity").value =
       1;
+
   }
 
   if ($("purchaseUnitPrice")) {
+
     $("purchaseUnitPrice").value =
       "";
+
   }
 }
 
@@ -3237,39 +4102,41 @@ function getPurchaseItems() {
     ".purchase-item",
     container
   )
-    .map(row => {
+    .map(
+      row => {
 
-      const productId =
-        row.dataset.productId;
+        const productId =
+          row.dataset.productId;
 
-      const quantity =
-        number(
-          qs(
-            ".purchase-item-quantity",
-            row
-          )?.value
-        );
+        const quantity =
+          number(
+            qs(
+              ".purchase-item-quantity",
+              row
+            )?.value
+          );
 
-      const price =
-        number(
-          qs(
-            ".purchase-item-price",
-            row
-          )?.value
-        );
+        const price =
+          number(
+            qs(
+              ".purchase-item-price",
+              row
+            )?.value
+          );
 
-      return {
+        return {
 
-        product_id:
-          Number(productId),
+          product_id:
+            Number(productId),
 
-        quantity,
+          quantity,
 
-        price
+          price
 
-      };
+        };
 
-    })
+      }
+    )
     .filter(
       item =>
         item.product_id &&
@@ -3284,75 +4151,91 @@ function calculatePurchaseTotal() {
 
   let total = 0;
 
-  items.forEach(item => {
+  items.forEach(
+    item => {
 
-    total +=
-      item.quantity *
-      item.price;
-
-  });
-
-  qsa(
-    ".purchase-item",
-    $("purchaseItems")
-  ).forEach(row => {
-
-    const quantity =
-      number(
-        qs(
-          ".purchase-item-quantity",
-          row
-        )?.value
-      );
-
-    const price =
-      number(
-        qs(
-          ".purchase-item-price",
-          row
-        )?.value
-      );
-
-    const subtotal =
-      qs(
-        ".purchase-item-subtotal",
-        row
-      );
-
-    if (subtotal) {
-
-      subtotal.textContent =
-        money(
-          quantity * price
-        );
+      total +=
+        item.quantity *
+        item.price;
 
     }
+  );
 
-  });
+  const itemsContainer =
+    $("purchaseItems");
+
+  if (itemsContainer) {
+
+    qsa(
+      ".purchase-item",
+      itemsContainer
+    ).forEach(
+      row => {
+
+        const quantity =
+          number(
+            qs(
+              ".purchase-item-quantity",
+              row
+            )?.value
+          );
+
+        const price =
+          number(
+            qs(
+              ".purchase-item-price",
+              row
+            )?.value
+          );
+
+        const subtotal =
+          qs(
+            ".purchase-item-subtotal",
+            row
+          );
+
+        if (subtotal) {
+
+          subtotal.textContent =
+            money(
+              quantity *
+              price
+            );
+
+        }
+
+      }
+    );
+
+  }
 
   const entry =
     number(
-      $("purchaseEntry")?.value
+      $("purchaseEntry")
+        ?.value
     );
 
   const payable =
     Math.max(
       0,
-      total - entry
+      total -
+      entry
     );
 
   const installments =
     Math.max(
       1,
       parseInt(
-        $("purchaseInstallments")?.value ||
+        $("purchaseInstallments")
+          ?.value ||
         "1",
         10
       )
     );
 
   const installmentValue =
-    payable / installments;
+    payable /
+    installments;
 
   const totalElement =
     $("purchaseTotal");
@@ -3402,7 +4285,9 @@ function calculatePurchaseTotal() {
   if (installmentDisplay) {
 
     installmentDisplay.textContent =
-      money(installmentValue);
+      money(
+        installmentValue
+      );
 
   }
 
@@ -3421,7 +4306,9 @@ function calculatePurchaseTotal() {
   };
 }
 
-async function savePurchase(event) {
+async function savePurchase(
+  event
+) {
 
   event.preventDefault();
 
@@ -3442,7 +4329,8 @@ async function savePurchase(event) {
     calculatePurchaseTotal();
 
   const supplierId =
-    $("purchaseSupplier")?.value ||
+    $("purchaseSupplier")
+      ?.value ||
     null;
 
   const body = {
@@ -3453,7 +4341,8 @@ async function savePurchase(event) {
         : null,
 
     date:
-      $("purchaseDate")?.value ||
+      $("purchaseDate")
+        ?.value ||
       today(),
 
     entry:
@@ -3463,8 +4352,10 @@ async function savePurchase(event) {
       totals.installments,
 
     payment_method:
-      $("purchasePaymentMethod")?.value ||
-      $("purchasePayment")?.value ||
+      $("purchasePaymentMethod")
+        ?.value ||
+      $("purchasePayment")
+        ?.value ||
       "Pendente",
 
     total:
@@ -3530,7 +4421,9 @@ async function savePurchase(event) {
   }
 }
 
-async function viewPurchase(id) {
+async function viewPurchase(
+  id
+) {
 
   try {
 
@@ -3549,7 +4442,9 @@ async function viewPurchase(id) {
       [];
 
     const total =
-      number(purchase.total);
+      number(
+        purchase.total
+      );
 
     const entry =
       number(
@@ -3560,7 +4455,8 @@ async function viewPurchase(id) {
     const remaining =
       Math.max(
         0,
-        total - entry
+        total -
+        entry
       );
 
     let html = `
@@ -3608,38 +4504,46 @@ async function viewPurchase(id) {
     if (items.length) {
 
       html +=
-        items.map(item => {
+        items
+          .map(
+            item => {
 
-          const quantity =
-            number(item.quantity);
+              const quantity =
+                number(
+                  item.quantity
+                );
 
-          const price =
-            number(
-              item.price ??
-              item.unit_price
-            );
+              const price =
+                number(
+                  item.price ??
+                  item.unit_price
+                );
 
-          return `
+              return `
 
-            <div class="detail-row">
+                <div class="detail-row">
 
-              <span>
-                ${escapeHtml(
-                  item.product_name ||
-                  item.name ||
-                  ""
-                )}
-              </span>
+                  <span>
+                    ${escapeHtml(
+                      item.product_name ||
+                      item.name ||
+                      ""
+                    )}
+                  </span>
 
-              <span>
-                ${quantity} × ${money(price)}
-              </span>
+                  <span>
+                    ${quantity}
+                    ×
+                    ${money(price)}
+                  </span>
 
-            </div>
+                </div>
 
-          `;
+              `;
 
-        }).join("");
+            }
+          )
+          .join("");
 
     } else {
 
@@ -3686,7 +4590,9 @@ async function viewPurchase(id) {
    PDF DA COMPRA
 ========================================================= */
 
-async function downloadPurchasePdf(id) {
+async function downloadPurchasePdf(
+  id
+) {
 
   try {
 
@@ -3725,17 +4631,23 @@ async function downloadPurchasePdf(id) {
 
       }
 
-      throw new Error(message);
+      throw new Error(
+        message
+      );
     }
 
     const blob =
       await response.blob();
 
     const url =
-      window.URL.createObjectURL(blob);
+      window.URL.createObjectURL(
+        blob
+      );
 
     const link =
-      document.createElement("a");
+      document.createElement(
+        "a"
+      );
 
     link.href =
       url;
@@ -3775,7 +4687,9 @@ async function downloadPurchasePdf(id) {
    PAGAMENTO DA COMPRA
 ========================================================= */
 
-function openPurchasePayment(id) {
+function openPurchasePayment(
+  id
+) {
 
   currentPurchaseId =
     Number(id);
@@ -3796,10 +4710,14 @@ function openPurchasePayment(id) {
 
   }
 
-  if ($("purchasePaymentAmount")) {
+  if (
+    $("purchasePaymentAmount")
+  ) {
 
     const total =
-      number(purchase?.total);
+      number(
+        purchase?.total
+      );
 
     const entry =
       number(
@@ -3807,11 +4725,23 @@ function openPurchasePayment(id) {
         purchase?.paid_amount
       );
 
-    $("purchasePaymentAmount").value =
+    $("purchasePaymentAmount")
+      .value =
       Math.max(
         0,
-        total - entry
+        total -
+        entry
       ).toFixed(2);
+
+  }
+
+  if (
+    $("purchasePaymentDate")
+  ) {
+
+    $("purchasePaymentDate")
+      .value =
+      today();
 
   }
 
@@ -3820,7 +4750,9 @@ function openPurchasePayment(id) {
   );
 }
 
-async function savePurchasePayment(event) {
+async function savePurchasePayment(
+  event
+) {
 
   event.preventDefault();
 
@@ -3836,7 +4768,8 @@ async function savePurchasePayment(event) {
 
   const amount =
     number(
-      $("purchasePaymentAmount")?.value
+      $("purchasePaymentAmount")
+        ?.value
     );
 
   if (amount <= 0) {
@@ -3854,12 +4787,15 @@ async function savePurchasePayment(event) {
     amount,
 
     payment_method:
-      $("purchasePaymentMethod")?.value ||
-      $("purchasePaymentType")?.value ||
+      $("purchasePaymentMethod")
+        ?.value ||
+      $("purchasePaymentType")
+        ?.value ||
       "Dinheiro",
 
     date:
-      $("purchasePaymentDate")?.value ||
+      $("purchasePaymentDate")
+        ?.value ||
       today()
 
   };
@@ -3906,7 +4842,10 @@ async function savePurchasePayment(event) {
    DASHBOARD
 ========================================================= */
 
-function setText(id, value) {
+function setText(
+  id,
+  value
+) {
 
   const element =
     $(id);
@@ -3927,26 +4866,41 @@ async function loadDashboard() {
 
   const totalSales =
     sales.reduce(
-      (sum, sale) =>
+      (
+        sum,
+        sale
+      ) =>
         sum +
-        number(sale.total),
+        number(
+          sale.total
+        ),
       0
     );
 
   const totalPurchases =
     purchases.reduce(
-      (sum, purchase) =>
+      (
+        sum,
+        purchase
+      ) =>
         sum +
-        number(purchase.total),
+        number(
+          purchase.total
+        ),
       0
     );
 
   const receivable =
     sales.reduce(
-      (sum, sale) => {
+      (
+        sum,
+        sale
+      ) => {
 
         const total =
-          number(sale.total);
+          number(
+            sale.total
+          );
 
         const paid =
           number(
@@ -3957,7 +4911,8 @@ async function loadDashboard() {
         return sum +
           Math.max(
             0,
-            total - paid
+            total -
+            paid
           );
 
       },
@@ -3966,10 +4921,15 @@ async function loadDashboard() {
 
   const payable =
     purchases.reduce(
-      (sum, purchase) => {
+      (
+        sum,
+        purchase
+      ) => {
 
         const total =
-          number(purchase.total);
+          number(
+            purchase.total
+          );
 
         const paid =
           number(
@@ -3980,7 +4940,8 @@ async function loadDashboard() {
         return sum +
           Math.max(
             0,
-            total - paid
+            total -
+            paid
           );
 
       },
@@ -4058,9 +5019,13 @@ async function loadReports() {
   try {
 
     const data =
-      await api("/api/reports");
+      await api(
+        "/api/reports"
+      );
 
-    renderReports(data);
+    renderReports(
+      data
+    );
 
   } catch (error) {
 
@@ -4068,10 +5033,13 @@ async function loadReports() {
       "Erro ao carregar relatórios:",
       error
     );
+
   }
 }
 
-function renderReports(data = {}) {
+function renderReports(
+  data = {}
+) {
 
   const reports =
     data.reports ||
@@ -4117,11 +5085,15 @@ function renderReports(data = {}) {
             </div>
 
             <strong>
-              ${money(month.total)}
+              ${money(
+                month.total
+              )}
             </strong>
 
             <small>
-              ${number(month.quantity)}
+              ${number(
+                month.quantity
+              )}
               parcela(s)
             </small>
 
@@ -4169,7 +5141,8 @@ function newSale() {
 
   if ($("saleInstallments")) {
 
-    $("saleInstallments").value =
+    $("saleInstallments")
+      .value =
       1;
 
   }
@@ -4196,7 +5169,9 @@ function newSale() {
 
   calculateSaleTotals();
 
-  showPage("sales");
+  showPage(
+    "sales"
+  );
 }
 
 function newPurchase() {
@@ -4233,46 +5208,50 @@ function setupEvents() {
     );
 
   qsa(".nav-item")
-    .forEach(button => {
+    .forEach(
+      button => {
 
-      button.addEventListener(
-        "click",
-        function(event) {
+        button.addEventListener(
+          "click",
+          function(event) {
 
-          event.preventDefault();
+            event.preventDefault();
 
-          const page =
-            button.dataset.page;
+            const page =
+              button.dataset.page;
 
-          if (page) {
-            showPage(page);
+            if (page) {
+              showPage(page);
+            }
+
           }
+        );
 
-        }
-      );
-
-    });
+      }
+    );
 
   qsa(".quick-action")
-    .forEach(button => {
+    .forEach(
+      button => {
 
-      button.addEventListener(
-        "click",
-        function(event) {
+        button.addEventListener(
+          "click",
+          function(event) {
 
-          event.preventDefault();
+            event.preventDefault();
 
-          const page =
-            button.dataset.page;
+            const page =
+              button.dataset.page;
 
-          if (page) {
-            showPage(page);
+            if (page) {
+              showPage(page);
+            }
+
           }
+        );
 
-        }
-      );
-
-    });
+      }
+    );
 
   $("newProductButton")
     ?.addEventListener(
@@ -4438,42 +5417,25 @@ function setupEvents() {
 
   qsa(
     "[data-close-modal], [data-close]"
-  ).forEach(button => {
+  ).forEach(
+    button => {
 
-    button.addEventListener(
-      "click",
-      function(event) {
-
-        event.preventDefault();
-
-        event.stopPropagation();
-
-        const modalId =
-          button.dataset.closeModal ||
-          button.dataset.close;
-
-        if (modalId) {
-          closeModal(modalId);
-        }
-
-      }
-    );
-
-  });
-
-  qsa(".modal")
-    .forEach(modal => {
-
-      modal.addEventListener(
+      button.addEventListener(
         "click",
         function(event) {
 
-          if (
-            event.target === modal
-          ) {
+          event.preventDefault();
+
+          event.stopPropagation();
+
+          const modalId =
+            button.dataset.closeModal ||
+            button.dataset.close;
+
+          if (modalId) {
 
             closeModal(
-              modal.id
+              modalId
             );
 
           }
@@ -4481,14 +5443,41 @@ function setupEvents() {
         }
       );
 
-    });
+    }
+  );
+
+  qsa(".modal")
+    .forEach(
+      modal => {
+
+        modal.addEventListener(
+          "click",
+          function(event) {
+
+            if (
+              event.target ===
+              modal
+            ) {
+
+              closeModal(
+                modal.id
+              );
+
+            }
+
+          }
+        );
+
+      }
+    );
 
   document.addEventListener(
     "keydown",
     function(event) {
 
       if (
-        event.key === "Escape"
+        event.key ===
+        "Escape"
       ) {
 
         closeAllModals();
@@ -4567,6 +5556,9 @@ window.changeSaleQuantity =
 window.viewSale =
   viewSale;
 
+window.downloadSalePdf =
+  downloadSalePdf;
+
 window.openSalePayment =
   openSalePayment;
 
@@ -4585,11 +5577,6 @@ window.calculatePurchaseTotal =
 window.viewPurchase =
   viewPurchase;
 
-/*
-   NOVO:
-   Permite que o botão PDF da compra
-   encontre a função no HTML.
-*/
 window.downloadPurchasePdf =
   downloadPurchasePdf;
 
@@ -4637,9 +5624,12 @@ document.addEventListener(
 
       }
 
-      if ($("purchasePaymentDate")) {
+      if (
+        $("purchasePaymentDate")
+      ) {
 
-        $("purchasePaymentDate").value =
+        $("purchasePaymentDate")
+          .value =
           today();
 
       }
@@ -4663,6 +5653,8 @@ document.addEventListener(
         "Erro na inicialização:",
         error
       );
+
+      showLogin();
 
     }
 
