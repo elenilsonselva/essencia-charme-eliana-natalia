@@ -1725,12 +1725,17 @@ app.post(
 ========================================================= */
 
 app.get(
+ app.get(
   "/api/sales/:id/pdf",
   requireAuth,
   asyncHandler(async (req, res) => {
 
     const saleId =
       integer(req.params.id);
+
+    /* =====================================================
+       VENDA
+    ===================================================== */
 
     const saleResult =
       await pool.query(
@@ -1757,6 +1762,10 @@ app.get(
     const sale =
       saleResult.rows[0];
 
+    /* =====================================================
+       ITENS
+    ===================================================== */
+
     const itemsResult =
       await pool.query(
         `
@@ -1775,6 +1784,10 @@ app.get(
         [saleId]
       );
 
+    /* =====================================================
+       PARCELAS
+    ===================================================== */
+
     const installmentsResult =
       await pool.query(
         `
@@ -1785,6 +1798,10 @@ app.get(
         `,
         [saleId]
       );
+
+    /* =====================================================
+       PAGAMENTOS
+    ===================================================== */
 
     const paymentsResult =
       await pool.query(
@@ -1797,28 +1814,9 @@ app.get(
         [saleId]
       );
 
-    const doc =
-      new PDFDocument({
-        size: "A4",
-        margin: 45,
-      });
-
-    res.setHeader(
-      "Content-Type",
-      "application/pdf"
-    );
-
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="venda-${saleId}.pdf"`
-    );
-
-    doc.pipe(res);
-
-    const pageWidth =
-      doc.page.width -
-      doc.page.margins.left -
-      doc.page.margins.right;
+    /* =====================================================
+       FUNÇÕES AUXILIARES
+    ===================================================== */
 
     function brl(value) {
       return Number(value || 0)
@@ -1832,7 +1830,10 @@ app.get(
     }
 
     function dateBR(value) {
-      if (!value) return "";
+
+      if (!value) {
+        return "";
+      }
 
       const text =
         String(value).slice(0, 10);
@@ -1848,6 +1849,7 @@ app.get(
     }
 
     function line() {
+
       doc
         .moveTo(
           doc.page.margins.left,
@@ -1860,6 +1862,211 @@ app.get(
         )
         .stroke();
     }
+
+    /*
+     * Remove caracteres que podem causar
+     * problemas no nome do arquivo.
+     */
+
+    function safeFileName(value) {
+
+      return String(value || "")
+        .replace(/[<>:"/\\|?*]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    /* =====================================================
+       PIX
+       
+       Chave:
+       97984031709
+
+       Recebedora:
+       ELIANA NATALIA
+
+       Cidade:
+       SANTO ANTONIO DO ICA
+
+       Sem valor fixo.
+    ===================================================== */
+
+    function crc16(payload) {
+
+      let crc = 0xFFFF;
+
+      for (
+        let i = 0;
+        i < payload.length;
+        i++
+      ) {
+
+        crc ^=
+          payload.charCodeAt(i) << 8;
+
+        for (
+          let j = 0;
+          j < 8;
+          j++
+        ) {
+
+          if (
+            crc & 0x8000
+          ) {
+
+            crc =
+              (
+                crc << 1
+              ) ^
+              0x1021;
+
+          } else {
+
+            crc =
+              crc << 1;
+          }
+
+          crc &=
+            0xFFFF;
+        }
+      }
+
+      return crc
+        .toString(16)
+        .toUpperCase()
+        .padStart(4, "0");
+    }
+
+    function pixField(id, value) {
+
+      const text =
+        String(value);
+
+      return (
+        id +
+        text.length
+          .toString()
+          .padStart(2, "0") +
+        text
+      );
+    }
+
+    function createPixPayload() {
+
+      const gui =
+        "BR.GOV.BCB.PIX";
+
+      const merchantAccountInformation =
+        pixField(
+          "00",
+          gui
+        ) +
+        pixField(
+          "01",
+          "97984031709"
+        );
+
+      const payloadWithoutCRC =
+        pixField(
+          "00",
+          "01"
+        ) +
+        pixField(
+          "26",
+          merchantAccountInformation
+        ) +
+        pixField(
+          "52",
+          "0000"
+        ) +
+        pixField(
+          "53",
+          "986"
+        ) +
+        pixField(
+          "58",
+          "BR"
+        ) +
+        pixField(
+          "59",
+          "ELIANA NATALIA"
+        ) +
+        pixField(
+          "60",
+          "SANTO ANTONIO DO ICA"
+        ) +
+        pixField(
+          "62",
+          pixField(
+            "05",
+            "***"
+          )
+        ) +
+        "6304";
+
+      const crc =
+        crc16(
+          payloadWithoutCRC
+        );
+
+      return (
+        payloadWithoutCRC +
+        crc
+      );
+    }
+
+    const pixPayload =
+      createPixPayload();
+
+    /*
+     * Gera o QR Code Pix.
+     */
+
+    const pixQrCode =
+      await QRCode.toDataURL(
+        pixPayload,
+        {
+          errorCorrectionLevel: "M",
+          margin: 1,
+          width: 220,
+        }
+      );
+
+    /* =====================================================
+       PDF
+    ===================================================== */
+
+    const doc =
+      new PDFDocument({
+        size: "A4",
+        margin: 45,
+      });
+
+    res.setHeader(
+      "Content-Type",
+      "application/pdf"
+    );
+
+    const clientName =
+      sale.client_name ||
+      "Consumidor";
+
+    const safeClientName =
+      safeFileName(
+        clientName
+      );
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="Venda - ${safeClientName} CRSAI.pdf"`
+    );
+
+    doc.pipe(res);
+
+    const pageWidth =
+      doc.page.width -
+      doc.page.margins.left -
+      doc.page.margins.right;
 
     /* =====================================================
        CABEÇALHO
@@ -1888,19 +2095,19 @@ app.get(
     doc.moveDown(1);
 
     /* =====================================================
-       TÍTULO DA VENDA
-       VENDA - NOME DO CLIENTE
-    ===================================================== */
+       TÍTULO INTERNO
 
-    const clientName =
-      sale.client_name ||
-      "Consumidor";
+       Continua sendo:
+       VENDA #123
+
+       O nome do cliente está no nome do arquivo.
+    ===================================================== */
 
     doc
       .fontSize(15)
       .font("Helvetica-Bold")
       .text(
-        `VENDA - ${clientName}`,
+        `VENDA #${sale.id}`,
         {
           align: "center",
         }
@@ -1939,7 +2146,9 @@ app.get(
     doc
       .fontSize(12)
       .font("Helvetica-Bold")
-      .text("CLIENTE");
+      .text(
+        "CLIENTE"
+      );
 
     doc
       .fontSize(10)
@@ -1952,12 +2161,14 @@ app.get(
       );
 
     if (sale.client_phone) {
+
       doc.text(
         `Telefone: ${sale.client_phone}`
       );
     }
 
     if (sale.client_address) {
+
       doc.text(
         `Endereço: ${sale.client_address}`
       );
@@ -1976,7 +2187,9 @@ app.get(
     doc
       .fontSize(12)
       .font("Helvetica-Bold")
-      .text("ITENS DA VENDA");
+      .text(
+        "ITENS DA VENDA"
+      );
 
     doc.moveDown(0.4);
 
@@ -2075,7 +2288,9 @@ app.get(
 
       doc.text(
         String(
-          integer(item.quantity)
+          integer(
+            item.quantity
+          )
         ),
         qtyX,
         startY,
@@ -2096,7 +2311,9 @@ app.get(
       doc.text(
         brl(
           Number(item.price) *
-            integer(item.quantity)
+          integer(
+            item.quantity
+          )
         ),
         totalX,
         startY,
@@ -2181,6 +2398,7 @@ app.get(
       );
 
     if (sale.payment) {
+
       doc.text(
         `Forma de pagamento: ${sale.payment}`,
         {
@@ -2191,8 +2409,6 @@ app.get(
 
     /* =====================================================
        PARCELAS
-       ALINHADAS À ESQUERDA
-       CADA PARCELA DENTRO DE UMA LINHA
     ===================================================== */
 
     if (
@@ -2232,11 +2448,8 @@ app.get(
         const rowY =
           doc.y;
 
-        /*
-         * Caixa da parcela
-         */
-
-        const rowHeight = 22;
+        const rowHeight =
+          22;
 
         doc
           .rect(
@@ -2246,10 +2459,6 @@ app.get(
             rowHeight
           )
           .stroke();
-
-        /*
-         * Texto dentro da linha
-         */
 
         doc
           .fontSize(9)
@@ -2266,7 +2475,9 @@ app.get(
           );
 
         doc.y =
-          rowY + rowHeight + 3;
+          rowY +
+          rowHeight +
+          3;
       }
     }
 
@@ -2339,10 +2550,96 @@ app.get(
     }
 
     /* =====================================================
-       RODAPÉ
+       PIX
     ===================================================== */
 
     doc.moveDown(1);
+
+    line();
+
+    doc.moveDown(0.7);
+
+    doc
+      .fontSize(12)
+      .font("Helvetica-Bold")
+      .text(
+        "PAGAMENTO VIA PIX",
+        {
+          align: "center",
+        }
+      );
+
+    doc.moveDown(0.3);
+
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .text(
+        "Eliana Natália",
+        {
+          align: "center",
+        }
+      );
+
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .text(
+        "Chave Pix: 97984031709",
+        {
+          align: "center",
+        }
+      );
+
+    doc.moveDown(0.5);
+
+    /*
+     * QR Code centralizado
+     */
+
+    const qrSize =
+      130;
+
+    const qrX =
+      doc.page.margins.left +
+      (
+        pageWidth -
+        qrSize
+      ) / 2;
+
+    const qrY =
+      doc.y;
+
+    doc.image(
+      pixQrCode,
+      qrX,
+      qrY,
+      {
+        width: qrSize,
+        height: qrSize,
+      }
+    );
+
+    doc.y =
+      qrY +
+      qrSize +
+      8;
+
+    doc
+      .fontSize(8)
+      .font("Helvetica")
+      .text(
+        "Escaneie o QR Code para realizar o pagamento.",
+        {
+          align: "center",
+        }
+      );
+
+    doc.moveDown(0.8);
+
+    /* =====================================================
+       RODAPÉ
+    ===================================================== */
 
     line();
 
@@ -2367,6 +2664,10 @@ app.get(
           align: "center",
         }
       );
+
+    /* =====================================================
+       FINALIZA PDF
+    ===================================================== */
 
     doc.end();
   })
