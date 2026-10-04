@@ -1,1480 +1,2510 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#b86f7d">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Essência & Charme">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <title>Essência & Charme</title>
 
-<title>Essência & Charme - Gestão & Vendas</title>
+  <meta name="theme-color" content="#b86f7d">
+  <meta name="description" content="Sistema de vendas de perfumes e cosméticos">
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
-
-:root{
-  --rose:#b86f7d;
-  --rose-dark:#8f4e5d;
-  --rose-light:#f7e7ea;
-  --rose-pale:#fdf5f6;
-  --cream:#fffaf7;
-  --beige:#f5ede9;
-  --gold:#c6a06b;
-  --gold-light:#ead9bc;
-  --text:#403338;
-  --muted:#8b7d82;
-  --white:#fff;
-  --danger:#b94d5a;
-  --success:#5d9276;
-  --border:#eadfe0;
-  --shadow:0 8px 30px rgba(104,65,76,.08);
-}
-
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:'DM Sans',Arial,sans-serif;
-  background:linear-gradient(135deg,#fdf8f6 0%,#f8eef0 100%);
-  color:var(--text);
-  min-height:100vh;
-}
-
-#loginScreen{
-  position:fixed;
-  inset:0;
-  background:
-    radial-gradient(circle at 15% 20%,rgba(255,255,255,.9) 0,transparent 28%),
-    radial-gradient(circle at 85% 80%,rgba(201,160,107,.13) 0,transparent 25%),
-    linear-gradient(135deg,#f8e9ec,#fff9f5 50%,#f5e9e4);
-  z-index:99999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  overflow:hidden;
-}
-
-#loginScreen:before,
-#loginScreen:after{
-  content:"";
-  position:absolute;
-  border-radius:50%;
-  border:1px solid rgba(184,111,125,.12);
-}
-
-#loginScreen:before{width:420px;height:420px;top:-210px;left:-160px}
-#loginScreen:after{width:350px;height:350px;bottom:-190px;right:-130px}
-
-.login-card{
-  position:relative;
-  width:min(410px,100%);
-  background:rgba(255,255,255,.96);
-  border-radius:30px;
-  padding:42px 36px 36px;
-  box-shadow:0 25px 70px rgba(99,61,72,.15);
-  text-align:center;
-  z-index:2;
-}
-
-.login-logo{
-  width:76px;height:76px;margin:0 auto 17px;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:50%;background:linear-gradient(145deg,var(--rose-light),#fff);
-  border:1px solid #eed6da;color:var(--rose-dark);font-size:34px;
-}
-
-.login-card h2{font-family:'Playfair Display',serif;font-size:30px;color:var(--rose-dark);margin:0 0 5px}
-.login-card p{margin:0 0 28px;color:var(--muted);font-size:13px}
-.login-field{text-align:left;margin-bottom:13px}
-.login-field label{display:block;font-size:12px;font-weight:600;margin:0 0 6px 4px}
-.login-card input{width:100%;padding:14px 15px;border:1px solid var(--border);border-radius:13px;background:#fff;font:inherit;color:var(--text);outline:none}
-.login-card input:focus{border-color:var(--rose);box-shadow:0 0 0 4px rgba(184,111,125,.10)}
-.login-card button{width:100%;padding:14px;border:0;border-radius:13px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:white;font-weight:700;margin-top:8px;cursor:pointer}
-#loginError{color:#b42318;font-size:13px;min-height:18px;margin-top:9px}
-.login-footer{margin-top:22px;font-size:11px;color:#aa9da1}
-
-header{background:rgba(255,255,255,.96);color:var(--text);padding:14px 25px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20;border-bottom:1px solid rgba(226,211,214,.8);backdrop-filter:blur(15px)}
-.brand{display:flex;align-items:center;gap:11px}
-.brand-icon{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:linear-gradient(135deg,var(--rose-light),#fff);color:var(--rose-dark);font-size:21px}
-header h1{font-family:'Playfair Display',serif;margin:0;font-size:22px;color:var(--rose-dark)}
-.brand-sub{display:block;font-size:10px;color:var(--rose);margin-top:4px;letter-spacing:.5px;font-weight:600}
-.header-right{margin-left:auto;display:flex;align-items:center;gap:12px}
-.online-badge{font-size:11px;color:var(--success);background:#edf7f1;padding:6px 10px;border-radius:20px}
-.user-label{font-size:12px;color:var(--muted)}
-
-nav{display:flex;gap:5px;overflow-x:auto;background:rgba(255,250,247,.96);padding:9px 18px;border-bottom:1px solid var(--border)}
-nav button{flex:0 0 auto;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:transparent;color:#75686d;font:500 13px 'DM Sans',sans-serif}
-nav button:hover{background:var(--rose-light);color:var(--rose-dark)}
-nav button.active{background:var(--rose-dark)!important;color:#fff!important;box-shadow:0 5px 14px rgba(143,78,93,.18)}
-
-.wrap{max-width:1350px;margin:auto;padding:28px 22px 45px}
-.section{display:none;animation:fadeIn .25s ease}
-.section.active{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.section>h2{font-family:'Playfair Display',serif;color:var(--rose-dark);font-size:28px;margin:0 0 20px}
-.section>h2:after{content:"";display:block;width:38px;height:2px;background:var(--gold);margin-top:8px;border-radius:2px}
-.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px}
-.toolbar input{max-width:330px}
-
-button,.btn{border:0;border-radius:10px;padding:10px 15px;cursor:pointer;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:white;font:600 13px 'DM Sans',sans-serif;transition:.2s;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px}
-button:hover,.btn:hover{transform:translateY(-1px);box-shadow:0 6px 15px rgba(143,78,93,.16)}
-button.secondary{background:#f4eaec;color:var(--rose-dark)}
-button.danger{background:#fae7e9;color:var(--danger)}
-button.success{background:#e9f5ed;color:#47765d}
-button:disabled{opacity:.55;cursor:not-allowed;transform:none!important;box-shadow:none!important}
-
-#dash:before{content:"Bem-vinda ao seu espaço de gestão";display:block;font-family:'Playfair Display',serif;color:var(--rose-dark);font-size:14px;margin-bottom:5px}
-#dash>h2{margin-bottom:5px}
-
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
-.grid.six{grid-template-columns:repeat(6,1fr)}
-.card{background:rgba(255,255,255,.96);padding:19px;border-radius:17px;border:1px solid var(--border);box-shadow:var(--shadow)}
-.grid .card{position:relative;overflow:hidden}
-.grid .card:before{content:"";position:absolute;left:0;top:0;width:4px;height:100%;background:var(--rose)}
-.grid .card:nth-child(2):before{background:var(--gold)}
-.grid .card:nth-child(3):before{background:#8bb49a}
-.grid .card:nth-child(4):before{background:#b58c9b}
-.grid .card:nth-child(5):before{background:#8f9fc8}
-.grid .card:nth-child(6):before{background:#c49a71}
-.card-title{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.big{font-size:25px;font-weight:700;color:var(--text);margin-top:7px}
-
-input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--text);font:13px 'DM Sans',sans-serif;outline:none;transition:.2s}
-input:focus,select:focus,textarea:focus{border-color:var(--rose);box-shadow:0 0 0 4px rgba(184,111,125,.09)}
-textarea{min-height:90px;resize:vertical}
-label{display:block;font-size:12px;color:#76696e;font-weight:600;margin:0 0 6px 2px}
-.formgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
-
-.table-wrap{overflow-x:auto;border-radius:15px}
-table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--border);border-radius:15px;overflow:hidden;box-shadow:var(--shadow);min-width:720px}
-th{background:#fbf1f3;color:var(--rose-dark);font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
-th,td{padding:12px 13px;border-bottom:1px solid #f0e8e9;text-align:left;font-size:13px;vertical-align:middle}
-tr:last-child td{border-bottom:0}
-table tr:hover td{background:#fffafb}
-td img{border-radius:8px;object-fit:cover;border:1px solid var(--border)}
-.actions{display:flex;gap:6px;flex-wrap:wrap}
-.status{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:700}
-.status.open{background:#fff0d9;color:#946100}
-.status.partial{background:#eee7ff;color:#624b9b}
-.status.paid{background:#e7f5ec;color:#417257}
-.status.cancelled{background:#fae3e5;color:#a33b47}
-
-#venda .card{max-width:1050px}
-.cart{margin:18px 0}
-.cart table{box-shadow:none;min-width:0}
-#vtotal{color:var(--rose-dark);font-size:24px}
-.muted{color:var(--muted);font-size:13px}
-.summary-box{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:15px 0}
-.summary-item{border:1px solid var(--border);background:#fffaf9;padding:12px;border-radius:12px}
-.summary-item span{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
-.summary-item strong{font-size:17px;color:var(--rose-dark)}
-
-.modal{position:fixed;inset:0;background:rgba(48,32,38,.45);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:15px;z-index:100}
-.modal.open{display:flex}
-.modalbox{background:#fff;border:1px solid var(--border);border-radius:21px;padding:25px;max-width:760px;width:100%;max-height:90vh;overflow:auto;box-shadow:0 25px 70px rgba(45,28,34,.2)}
-.modalbox h3{font-family:'Playfair Display',serif;color:var(--rose-dark);font-size:22px;margin-top:0}
-.modalbox .row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
-#rr h3{color:var(--rose-dark);font-family:'Playfair Display',serif;margin-top:28px}
-
-@media(max-width:1100px){.grid.six{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.formgrid{grid-template-columns:repeat(2,1fr)}.summary-box{grid-template-columns:repeat(2,1fr)}.header-right .user-label{display:none}}
-@media(max-width:600px){
-  header{padding:11px 13px}header h1{font-size:18px}.brand-icon{width:37px;height:37px;font-size:18px}.online-badge{display:none}
-  nav{padding:7px 9px}nav button{padding:9px 11px;font-size:12px}.wrap{padding:20px 12px 35px}.section>h2{font-size:24px}
-  .grid,.grid.six{grid-template-columns:1fr 1fr;gap:10px}.card{padding:15px}.big{font-size:20px}.formgrid{grid-template-columns:1fr}.summary-box{grid-template-columns:1fr 1fr}
-  .toolbar{flex-direction:column}.toolbar input{max-width:none}.table-wrap{margin:0 -2px}.modalbox{padding:20px}.modalbox .row{grid-template-columns:1fr}.login-card{padding:34px 24px 28px;border-radius:24px}
-}
-@media(max-width:400px){.grid,.grid.six{grid-template-columns:1fr}.brand-sub{display:none}.summary-box{grid-template-columns:1fr}header .secondary{padding:8px 10px}}
-</style>
+  <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
 
-<div id="loginScreen">
-  <div class="login-card">
-    <div class="login-logo">🌸</div>
-    <h2>Essência & Charme</h2>
-    <p>Gestão, beleza e delicadeza em um só lugar</p>
+  <!-- =====================================================
+       LOGIN
+  ====================================================== -->
 
-    <form id="loginForm">
-      <div class="login-field">
-        <label for="loginUser">Usuário</label>
-        <input id="loginUser" autocomplete="username" placeholder="Digite seu usuário" value="admin" required>
-      </div>
-      <div class="login-field">
-        <label for="loginPass">Senha</label>
-        <input id="loginPass" autocomplete="current-password" type="password" placeholder="Digite sua senha" required>
-      </div>
-      <button id="loginButton" type="submit">Entrar no sistema</button>
-    </form>
+  <section id="loginScreen" class="login-screen">
 
-    <div id="loginError"></div>
-    <div class="login-footer">Essência & Charme · Gestão com charme ✨</div>
-  </div>
-</div>
+    <div class="login-card">
 
-<div id="appShell" style="display:none">
+      <div class="login-logo">
+        <div class="logo-symbol">E</div>
 
-<header>
-  <div class="brand">
-    <div class="brand-icon">🌸</div>
-    <div>
-      <h1>Essência & Charme</h1>
-      <span class="brand-sub">GESTÃO & VENDAS by Eliana Natália</span>
-    </div>
-  </div>
-
-  <div class="header-right">
-    <span class="online-badge">● Sistema online</span>
-    <span class="user-label" id="loggedUser"></span>
-    <button onclick="logout()" class="secondary">Sair</button>
-  </div>
-</header>
-
-<nav>
-  <button data-page="dash" onclick="show('dash',this)" class="active">🏠 Início</button>
-  <button data-page="prod" onclick="show('prod',this)">🌸 Produtos</button>
-  <button data-page="cli" onclick="show('cli',this)">👩 Clientes</button>
-  <button data-page="venda" onclick="show('venda',this)">🛍️ Nova Venda</button>
-  <button data-page="hist" onclick="show('hist',this)">📋 Vendas</button>
-  <button data-page="comp" onclick="show('comp',this)">🧾 Compras</button>
-  <button data-page="est" onclick="show('est',this)">📦 Estoque</button>
-  <button data-page="rel" onclick="show('rel',this)">📊 Relatórios</button>
-</nav>
-
-<main class="wrap">
-
-<section id="dash" class="section active">
-  <h2>Dashboard</h2>
-
-  <div class="grid six">
-    <div class="card"><div class="card-title">💗 Vendas hoje</div><div class="big" id="dt">R$ 0,00</div></div>
-    <div class="card"><div class="card-title">✨ Vendas no mês</div><div class="big" id="dm">R$ 0,00</div></div>
-    <div class="card"><div class="card-title">📦 Estoque baixo</div><div class="big" id="dl">0</div></div>
-    <div class="card"><div class="card-title">💳 A receber</div><div class="big" id="dd">R$ 0,00</div></div>
-    <div class="card"><div class="card-title">🧾 Contas a pagar</div><div class="big" id="dp">R$ 0,00</div></div>
-    <div class="card"><div class="card-title">💵 Recebido no mês</div><div class="big" id="dr">R$ 0,00</div></div>
-  </div>
-
-  <div style="margin-top:20px" class="card">
-    <h3 style="margin-top:0;color:var(--rose-dark)">Últimas vendas</h3>
-    <div id="dashboardSales"></div>
-  </div>
-</section>
-
-<section id="prod" class="section">
-  <h2>Produtos</h2>
-  <div class="toolbar">
-    <button onclick="openProd()">＋ Novo produto</button>
-    <input id="ps" placeholder="🔎 Buscar produto..." oninput="renderProducts()">
-  </div>
-  <div class="table-wrap" id="pt"></div>
-</section>
-
-<section id="cli" class="section">
-  <h2>Clientes</h2>
-  <div class="toolbar">
-    <button onclick="openCli()">＋ Novo cliente</button>
-    <input id="cs" placeholder="🔎 Buscar cliente..." oninput="renderClients()">
-  </div>
-  <div class="table-wrap" id="ct"></div>
-</section>
-
-<section id="venda" class="section">
-  <h2>Nova Venda</h2>
-
-  <div class="card">
-    <div class="formgrid">
-      <div>
-        <label for="vp">Produto</label>
-        <select id="vp"></select>
-      </div>
-      <div>
-        <label for="vq">Quantidade</label>
-        <input id="vq" type="number" value="1" min="1">
-      </div>
-      <div>
-        <label>&nbsp;</label>
-        <button onclick="addCart()">＋ Adicionar</button>
-      </div>
-    </div>
-
-    <div id="cart" class="cart"></div>
-
-    <div class="formgrid">
-      <div>
-        <label for="vc">Cliente</label>
-        <select id="vc"></select>
-      </div>
-      <div>
-        <label for="vpay">Forma de pagamento</label>
-        <select id="vpay">
-          <option>Dinheiro</option>
-          <option>PIX</option>
-          <option>Débito</option>
-          <option>Crédito</option>
-          <option>Fiado</option>
-        </select>
-      </div>
-      <div>
-        <label for="vi">Quantidade de parcelas</label>
-        <input id="vi" type="number" value="1" min="1">
-      </div>
-    </div>
-
-    <div class="formgrid" style="margin-top:13px">
-      <div>
-        <label for="ve">Entrada (R$)</label>
-        <input id="ve" type="number" min="0" step="0.01" value="0">
-      </div>
-      <div>
-        <label for="vdu">Primeiro vencimento</label>
-        <input id="vdu" type="date">
-      </div>
-      <div>
-        <label for="vclientnote">Observação</label>
-        <input id="vclientnote" placeholder="Opcional">
-      </div>
-    </div>
-
-    <div class="summary-box">
-      <div class="summary-item"><span>Subtotal</span><strong id="vsub">R$ 0,00</strong></div>
-      <div class="summary-item"><span>Total</span><strong id="vtotal">R$ 0,00</strong></div>
-      <div class="summary-item"><span>Entrada</span><strong id="ventrada">R$ 0,00</strong></div>
-      <div class="summary-item"><span>Saldo</span><strong id="vsaldo">R$ 0,00</strong></div>
-    </div>
-
-    <button onclick="finishSale()">✓ Finalizar venda</button>
-  </div>
-</section>
-
-<section id="hist" class="section">
-  <h2>Histórico de vendas</h2>
-  <div class="toolbar">
-    <input id="salesSearch" placeholder="🔎 Buscar por cliente ou número..." oninput="renderSales()">
-    <button class="secondary" onclick="loadSales()">↻ Atualizar</button>
-  </div>
-  <div class="table-wrap" id="st"></div>
-</section>
-
-<section id="comp" class="section">
-  <h2>Compras / Contas a Pagar</h2>
-  <div class="toolbar">
-    <button onclick="openPurchase()">＋ Nova compra</button>
-    <input id="purchaseSearch" placeholder="🔎 Buscar fornecedor..." oninput="renderPurchases()">
-    <button class="secondary" onclick="loadPurchases()">↻ Atualizar</button>
-  </div>
-
-  <div class="grid" style="margin-bottom:18px">
-    <div class="card"><div class="card-title">🧾 Total das compras</div><div class="big" id="pTotal">R$ 0,00</div></div>
-    <div class="card"><div class="card-title">💵 Pago</div><div class="big" id="pPaid">R$ 0,00</div></div>
-    <div class="card"><div class="card-title">🔔 Em aberto</div><div class="big" id="pOpen">R$ 0,00</div></div>
-    <div class="card"><div class="card-title">🏪 Fornecedores</div><div class="big" id="pSuppliers">0</div></div>
-  </div>
-
-  <div class="table-wrap" id="purchasesTable"></div>
-</section>
-
-<section id="est" class="section">
-  <h2>Estoque</h2>
-  <div class="toolbar">
-    <button onclick="stockMove()">＋ Entrada / saída</button>
-    <button class="secondary" onclick="loadProducts()">↻ Atualizar</button>
-  </div>
-  <div class="table-wrap" id="et"></div>
-</section>
-
-<section id="rel" class="section">
-  <h2>Relatórios</h2>
-  <div class="toolbar">
-    <input type="date" id="rf">
-    <input type="date" id="rt">
-    <button onclick="loadReports()">↻ Atualizar</button>
-  </div>
-  <div id="rr"></div>
-</section>
-
-</main>
-</div>
-
-<div class="modal" id="modal">
-  <div class="modalbox" id="mb"></div>
-</div>
-
-<script>
-'use strict';
-
-const $ = id => document.getElementById(id);
-
-let products = [];
-let clients = [];
-let sales = [];
-let purchases = [];
-let cart = [];
-let currentUser = '';
-
-function money(value){
-  const n = Number(value || 0);
-  return 'R$ ' + n.toFixed(2).replace('.',',');
-}
-
-function rawMoney(value){
-  return Number(value || 0).toFixed(2);
-}
-
-function esc(value){
-  return String(value ?? '')
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
-    .replace(/'/g,'&#039;');
-}
-
-function formatDate(value){
-  if(!value) return '—';
-  const d = new Date(value);
-  if(Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('pt-BR');
-}
-
-function formatDateTime(value){
-  if(!value) return '—';
-  const d = new Date(value);
-  if(Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString('pt-BR');
-}
-
-function todayISO(){
-  const d = new Date();
-  const offset = d.getTimezoneOffset();
-  return new Date(d.getTime() - offset*60000).toISOString().slice(0,10);
-}
-
-function firstDayISO(){
-  const d = new Date();
-  d.setDate(1);
-  const offset = d.getTimezoneOffset();
-  return new Date(d.getTime() - offset*60000).toISOString().slice(0,10);
-}
-
-async function api(url, options = {}){
-  const opts = {...options, credentials:'same-origin'};
-  opts.headers = opts.headers || {};
-
-  if(opts.body && !(opts.body instanceof FormData) && typeof opts.body !== 'string'){
-    opts.headers['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(opts.body);
-  }
-
-  const response = await fetch(url, opts);
-  const data = await response.json().catch(() => ({}));
-
-  if(response.status === 401){
-    throw new Error('Sessão expirada. Faça login novamente.');
-  }
-
-  if(!response.ok){
-    throw new Error(data.error || 'Erro na operação.');
-  }
-
-  return data;
-}
-
-/* =========================
-   AUTENTICAÇÃO
-========================= */
-
-async function authCheck(){
-  try{
-    const data = await api('/api/me');
-
-    if(data.authenticated){
-      currentUser = data.username || '';
-      $('loggedUser').textContent = currentUser ? `Olá, ${currentUser}` : '';
-      $('loginScreen').style.display = 'none';
-      $('appShell').style.display = 'block';
-      return true;
-    }
-  }catch(error){
-    console.error('Falha ao verificar sessão:', error);
-  }
-
-  $('loginScreen').style.display = 'flex';
-  $('appShell').style.display = 'none';
-  return false;
-}
-
-$('loginForm').addEventListener('submit', async event => {
-  event.preventDefault();
-
-  const button = $('loginButton');
-  const errorBox = $('loginError');
-
-  errorBox.textContent = '';
-  button.disabled = true;
-  button.textContent = 'Entrando...';
-
-  try{
-    await api('/api/login', {
-      method:'POST',
-      body:{
-        username:$('loginUser').value.trim(),
-        password:$('loginPass').value
-      }
-    });
-
-    const ok = await authCheck();
-    if(!ok) throw new Error('O login foi aceito, mas a sessão não pôde ser confirmada.');
-
-    await initializeApp();
-
-  }catch(error){
-    console.error(error);
-    errorBox.textContent = error.message || 'Não foi possível entrar no sistema.';
-  }finally{
-    button.disabled = false;
-    button.textContent = 'Entrar no sistema';
-  }
-});
-
-async function logout(){
-  try{ await fetch('/api/logout',{method:'POST',credentials:'same-origin'}); }
-  catch(error){ console.error(error); }
-  location.reload();
-}
-
-/* =========================
-   NAVEGAÇÃO
-========================= */
-
-function show(id, button){
-  document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
-  const target = $(id);
-  if(target) target.classList.add('active');
-
-  document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-  if(button) button.classList.add('active');
-
-  if(id === 'dash') dash();
-  if(id === 'prod') renderProducts();
-  if(id === 'cli') renderClients();
-  if(id === 'venda'){ fillSale(); renderCart(); }
-  if(id === 'hist') loadSales();
-  if(id === 'comp') loadPurchases();
-  if(id === 'est') renderStock();
-  if(id === 'rel') loadReports();
-}
-
-/* =========================
-   DASHBOARD
-========================= */
-
-async function dash(){
-  try{
-    const data = await api('/api/dashboard');
-
-    $('dt').textContent = money(data.today?.total || 0);
-    $('dm').textContent = money(data.month?.total || 0);
-    $('dl').textContent = Number(data.low || 0);
-    $('dd').textContent = money(data.receivables?.v ?? data.debt?.v ?? 0);
-    $('dp').textContent = money(data.payables?.v ?? 0);
-
-    try{
-      const reports = await api('/api/reports?from=' + firstDayISO() + '&to=' + todayISO());
-      $('dr').textContent = money(reports.totals?.received || 0);
-    }catch(error){
-      $('dr').textContent = 'R$ 0,00';
-    }
-
-    renderDashboardSales();
-  }catch(error){
-    console.error('Erro no dashboard:', error);
-  }
-}
-
-function renderDashboardSales(){
-  const list = [...sales]
-    .sort((a,b) => new Date(b.date || b.created_at) - new Date(a.date || a.created_at))
-    .slice(0,8);
-
-  if(!list.length){
-    $('dashboardSales').innerHTML = '<p class="muted">Nenhuma venda encontrada.</p>';
-    return;
-  }
-
-  $('dashboardSales').innerHTML = `
-    <div class="table-wrap">
-      <table style="min-width:620px">
-        <thead><tr>
-          <th>#</th><th>Data</th><th>Cliente</th><th>Total</th><th>Saldo</th><th>Status</th>
-        </tr></thead>
-        <tbody>
-          ${list.map(s => saleRow(s)).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-}
-
-function saleStatusHtml(s){
-  if(s.status === 'cancelled') return '<span class="status cancelled">Cancelada</span>';
-  const balance = Number(s.balance ?? (Number(s.total||0)-Number(s.paid_amount||0)));
-  if(balance <= .009) return '<span class="status paid">Paga</span>';
-  if(Number(s.paid_amount || 0) > 0) return '<span class="status partial">Parcial</span>';
-  return '<span class="status open">Em aberto</span>';
-}
-
-function saleRow(s){
-  const balance = Math.max(0, Number(s.balance ?? (Number(s.total||0)-Number(s.paid_amount||0))));
-  return `
-    <tr>
-      <td>#${esc(s.id)}</td>
-      <td>${esc(formatDateTime(s.date || s.created_at))}</td>
-      <td>${esc(s.client || 'Consumidor')}</td>
-      <td>${money(s.total)}</td>
-      <td>${money(balance)}</td>
-      <td>${saleStatusHtml(s)}</td>
-    </tr>
-  `;
-}
-
-/* =========================
-   PRODUTOS
-========================= */
-
-async function loadProducts(){
-  products = await api('/api/products');
-  renderProducts();
-  fillSale();
-  renderStock();
-}
-
-function renderProducts(){
-  const q = ($('ps')?.value || '').toLowerCase().trim();
-  const list = products.filter(p =>
-    `${p.name || ''} ${p.brand || ''} ${p.code || ''} ${p.size || ''}`.toLowerCase().includes(q)
-  );
-
-  $('pt').innerHTML = `
-    <table>
-      <thead><tr>
-        <th>Foto</th><th>Código</th><th>Produto</th><th>Marca</th><th>Custo</th><th>Preço</th><th>Estoque</th><th>Ações</th>
-      </tr></thead>
-      <tbody>
-        ${list.map(p => `
-          <tr>
-            <td>${p.photo ? `<img src="${p.photo}" width="42" height="42" alt="">` : '—'}</td>
-            <td>${esc(p.code || '')}</td>
-            <td>${esc(p.name || '')}${p.size ? ` <span class="muted">(${esc(p.size)})</span>` : ''}</td>
-            <td>${esc(p.brand || '')}</td>
-            <td>${money(p.cost)}</td>
-            <td>${money(p.price)}</td>
-            <td>${esc(p.stock)}</td>
-            <td><div class="actions">
-              <button onclick="openProd(${Number(p.id)})">Editar</button>
-              <button class="danger" onclick="delProd(${Number(p.id)})">Excluir</button>
-            </div></td>
-          </tr>
-        `).join('') || '<tr><td colspan="8" class="muted">Nenhum produto encontrado.</td></tr>'}
-      </tbody>
-    </table>
-  `;
-}
-
-function openProd(id){
-  const p = products.find(x => Number(x.id) === Number(id)) || {};
-
-  $('mb').innerHTML = `
-    <h3>${id ? 'Editar produto' : 'Novo produto'}</h3>
-    <form id="pf">
-      <div class="formgrid">
-        <div><label>Código</label><input name="code" value="${esc(p.code || '')}"></div>
-        <div><label>Nome</label><input name="name" required value="${esc(p.name || '')}"></div>
-        <div><label>Marca</label><input name="brand" value="${esc(p.brand || '')}"></div>
-        <div><label>Tamanho</label><input name="size" value="${esc(p.size || '')}"></div>
-        <div><label>Custo</label><input name="cost" type="number" step="0.01" min="0" value="${esc(p.cost ?? 0)}"></div>
-        <div><label>Preço de venda</label><input name="price" type="number" step="0.01" min="0" value="${esc(p.price ?? 0)}"></div>
-        <div><label>Estoque</label><input name="stock" type="number" min="0" value="${esc(p.stock ?? 0)}"></div>
-        <div><label>Estoque mínimo</label><input name="min_stock" type="number" min="0" value="${esc(p.min_stock ?? 1)}"></div>
-        <div><label>Foto</label><input name="photo" type="file" accept="image/*"></div>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="secondary" onclick="closeM()">Cancelar</button>
-        <button type="submit">Salvar</button>
-      </div>
-    </form>
-  `;
-  showM();
-
-  $('pf').addEventListener('submit', async event => {
-    event.preventDefault();
-    try{
-      const form = new FormData(event.target);
-      await api(id ? '/api/products/' + id : '/api/products', {
-        method:id ? 'PUT' : 'POST',
-        body:form
-      });
-      closeM();
-      await loadProducts();
-      await dash();
-    }catch(error){ alert(error.message); }
-  });
-}
-
-async function delProd(id){
-  if(!confirm('Excluir produto?')) return;
-  try{
-    await api('/api/products/' + id,{method:'DELETE'});
-    await loadProducts();
-  }catch(error){ alert(error.message); }
-}
-
-/* =========================
-   CLIENTES
-========================= */
-
-async function loadClients(){
-  clients = await api('/api/clients');
-  renderClients();
-  fillSale();
-}
-
-function renderClients(){
-  const q = ($('cs')?.value || '').toLowerCase().trim();
-  const list = clients.filter(c => `${c.name || ''} ${c.phone || ''}`.toLowerCase().includes(q));
-
-  $('ct').innerHTML = `
-    <table>
-      <thead><tr><th>Nome</th><th>Telefone</th><th>Endereço</th><th>Observações</th><th>Ações</th></tr></thead>
-      <tbody>
-        ${list.map(c => `
-          <tr>
-            <td>${esc(c.name || '')}</td>
-            <td>${esc(c.phone || '')}</td>
-            <td>${esc(c.address || '')}</td>
-            <td>${esc(c.notes || '')}</td>
-            <td><div class="actions">
-              <button onclick="openCli(${Number(c.id)})">Editar</button>
-              <button class="danger" onclick="delCli(${Number(c.id)})">Excluir</button>
-            </div></td>
-          </tr>
-        `).join('') || '<tr><td colspan="5" class="muted">Nenhum cliente encontrado.</td></tr>'}
-      </tbody>
-    </table>
-  `;
-}
-
-function openCli(id){
-  const c = clients.find(x => Number(x.id) === Number(id)) || {};
-
-  $('mb').innerHTML = `
-    <h3>${id ? 'Editar cliente' : 'Novo cliente'}</h3>
-    <form id="cf">
-      <div class="row">
-        <div><label>Nome</label><input name="name" required value="${esc(c.name || '')}"></div>
-        <div><label>Telefone</label><input name="phone" value="${esc(c.phone || '')}"></div>
-      </div>
-      <div style="margin-top:12px"><label>Endereço</label><input name="address" value="${esc(c.address || '')}"></div>
-      <div style="margin-top:12px"><label>Observações</label><textarea name="notes">${esc(c.notes || '')}</textarea></div>
-      <div class="modal-actions">
-        <button type="button" class="secondary" onclick="closeM()">Cancelar</button>
-        <button type="submit">Salvar</button>
-      </div>
-    </form>
-  `;
-  showM();
-
-  $('cf').addEventListener('submit', async event => {
-    event.preventDefault();
-    try{
-      await api(id ? '/api/clients/' + id : '/api/clients', {
-        method:id ? 'PUT' : 'POST',
-        body:Object.fromEntries(new FormData(event.target))
-      });
-      closeM();
-      await loadClients();
-    }catch(error){ alert(error.message); }
-  });
-}
-
-async function delCli(id){
-  if(!confirm('Excluir cliente?')) return;
-  try{
-    await api('/api/clients/' + id,{method:'DELETE'});
-    await loadClients();
-  }catch(error){ alert(error.message); }
-}
-
-/* =========================
-   NOVA VENDA
-========================= */
-
-function fillSale(){
-  if(!$('vp') || !$('vc')) return;
-
-  $('vp').innerHTML = products.length
-    ? products.map(p => `<option value="${Number(p.id)}">${esc(p.name)} — ${money(p.price)} (estoque ${esc(p.stock)})</option>`).join('')
-    : '<option value="">Nenhum produto cadastrado</option>';
-
-  $('vc').innerHTML = '<option value="">Consumidor</option>' +
-    clients.map(c => `<option value="${Number(c.id)}">${esc(c.name)}</option>`).join('');
-
-  if(!$('vdu').value) $('vdu').value = todayISO();
-}
-
-function addCart(){
-  const product = products.find(p => Number(p.id) === Number($('vp').value));
-  const qty = Math.trunc(Number($('vq').value || 0));
-
-  if(!product || qty < 1) return alert('Selecione o produto e informe uma quantidade válida.');
-  if(qty > Number(product.stock || 0)) return alert('Estoque insuficiente.');
-
-  const existing = cart.find(i => Number(i.product_id) === Number(product.id));
-  if(existing){
-    if(existing.qty + qty > Number(product.stock || 0)) return alert('A quantidade total ultrapassa o estoque.');
-    existing.qty += qty;
-  }else{
-    cart.push({product_id:Number(product.id),name:product.name,price:Number(product.price||0),qty});
-  }
-
-  $('vq').value = 1;
-  renderCart();
-}
-
-function cartSubtotal(){
-  return cart.reduce((sum,item) => sum + Number(item.price||0)*Number(item.qty||0), 0);
-}
-
-function renderCart(){
-  const subtotal = cartSubtotal();
-  const entry = Math.max(0,Number($('ve')?.value || 0));
-  const total = subtotal;
-  const balance = Math.max(0,total-entry);
-
-  if(!$('cart')) return;
-
-  $('cart').innerHTML = cart.length ? `
-    <table>
-      <thead><tr><th>Produto</th><th>Qtd.</th><th>Preço</th><th>Total</th><th></th></tr></thead>
-      <tbody>
-        ${cart.map((item,index) => `
-          <tr>
-            <td>${esc(item.name)}</td>
-            <td>${esc(item.qty)}</td>
-            <td>${money(item.price)}</td>
-            <td>${money(item.price * item.qty)}</td>
-            <td><button class="danger" onclick="removeCart(${index})">×</button></td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  ` : '<p class="muted">Nenhum item adicionado à venda.</p>';
-
-  $('vsub').textContent = money(subtotal);
-  $('vtotal').textContent = money(total);
-  $('ventrada').textContent = money(Math.min(entry,total));
-  $('vsaldo').textContent = money(balance);
-}
-
-function removeCart(index){
-  cart.splice(index,1);
-  renderCart();
-}
-
-async function finishSale(){
-  if(!cart.length) return alert('Adicione produtos à venda.');
-
-  const payment = $('vpay').value;
-  const clientId = $('vc').value || null;
-  const installments = Math.max(1,Math.trunc(Number($('vi').value || 1)));
-  const entry = Math.max(0,Number($('ve').value || 0));
-  const total = cartSubtotal();
-
-  if(entry > total + 0.009) return alert('A entrada não pode ser maior que o total.');
-  if((payment === 'Fiado' || entry < total) && !clientId) return alert('Selecione o cliente para venda com saldo a pagar.');
-
-  try{
-    const result = await api('/api/sales',{
-      method:'POST',
-      body:{
-        client_id:clientId,
-        items:cart.map(i => ({product_id:i.product_id,qty:i.qty})),
-        discount:0,
-        payment,
-        installments,
-        entry,
-        first_due_date:$('vdu').value || todayISO()
-      }
-    });
-
-    cart = [];
-    $('ve').value = 0;
-    $('vi').value = 1;
-    $('vc').value = '';
-    $('vclientnote').value = '';
-    renderCart();
-
-    await loadProducts();
-    await loadSales();
-    await dash();
-
-    if(confirm(`Venda #${result.id} realizada com sucesso. Deseja abrir o comprovante?`)){
-      window.open('/api/sales/' + result.id + '/pdf','_blank');
-    }
-
-    show('hist',document.querySelector('nav button[data-page="hist"]'));
-  }catch(error){
-    alert(error.message);
-  }
-}
-
-$('ve').addEventListener('input',renderCart);
-$('vi').addEventListener('input',renderCart);
-$('vpay').addEventListener('change',renderCart);
-
-/* =========================
-   VENDAS / RECEBIMENTOS
-========================= */
-
-async function loadSales(){
-  try{
-    sales = await api('/api/sales');
-    renderSales();
-    renderDashboardSales();
-  }catch(error){ console.error(error); }
-}
-
-function renderSales(){
-  const q = ($('salesSearch')?.value || '').toLowerCase().trim();
-  const list = sales.filter(s => `${s.id} ${s.client || ''} ${s.payment || ''}`.toLowerCase().includes(q));
-
-  $('st').innerHTML = `
-    <table>
-      <thead><tr>
-        <th>#</th><th>Data</th><th>Cliente</th><th>Total</th><th>Entrada</th><th>Pago</th><th>Saldo</th><th>Pagamento</th><th>Status</th><th>Ações</th>
-      </tr></thead>
-      <tbody>
-        ${list.map(s => {
-          const balance = Math.max(0,Number(s.balance ?? Number(s.total||0)-Number(s.paid_amount||0)));
-          return `
-            <tr>
-              <td>#${esc(s.id)}</td>
-              <td>${esc(formatDateTime(s.date || s.created_at))}</td>
-              <td>${esc(s.client || 'Consumidor')}</td>
-              <td>${money(s.total)}</td>
-              <td>${money(s.entry || 0)}</td>
-              <td>${money(s.paid_amount || 0)}</td>
-              <td>${money(balance)}</td>
-              <td>${esc(s.payment || '')}${Number(s.installments || 1) > 1 ? ` · ${esc(s.installments)}x` : ''}</td>
-              <td>${saleStatusHtml(s)}</td>
-              <td>
-                <div class="actions">
-                  <button onclick="viewSale(${Number(s.id)})">Detalhes</button>
-                  ${balance > 0.009 ? `<button onclick="openSalePayment(${Number(s.id)})">Receber</button>` : ''}
-                  <a class="btn secondary" target="_blank" href="/api/sales/${Number(s.id)}/pdf">PDF</a>
-                  <button class="danger" onclick="cancelSale(${Number(s.id)})">Excluir</button>
-                </div>
-              </td>
-            </tr>
-          `;
-        }).join('') || '<tr><td colspan="10" class="muted">Nenhuma venda encontrada.</td></tr>'}
-      </tbody>
-    </table>
-  `;
-}
-
-async function viewSale(id){
-  try{
-    const data = await api('/api/sales/' + id);
-    const sale = data.sale || {};
-
-    $('mb').innerHTML = `
-      <h3>Venda #${esc(sale.id)}</h3>
-      <p class="muted">${esc(formatDateTime(sale.date))} · ${esc(sale.client || 'Consumidor')}</p>
-
-      <div class="summary-box">
-        <div class="summary-item"><span>Total</span><strong>${money(sale.total)}</strong></div>
-        <div class="summary-item"><span>Entrada</span><strong>${money(sale.entry)}</strong></div>
-        <div class="summary-item"><span>Pago</span><strong>${money(sale.paid_amount)}</strong></div>
-        <div class="summary-item"><span>Saldo</span><strong>${money(sale.balance)}</strong></div>
-      </div>
-
-      <h4>Produtos</h4>
-      <div class="table-wrap">
-        <table style="min-width:500px">
-          <thead><tr><th>Produto</th><th>Qtd.</th><th>Preço</th><th>Total</th></tr></thead>
-          <tbody>
-            ${(data.items || []).map(item => `
-              <tr><td>${esc(item.name)}${item.size ? ` (${esc(item.size)})` : ''}</td><td>${esc(item.qty)}</td><td>${money(item.price)}</td><td>${money(Number(item.price)*Number(item.qty))}</td></tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-
-      <h4>Parcelas</h4>
-      <div class="table-wrap">
-        <table style="min-width:560px">
-          <thead><tr><th>#</th><th>Vencimento</th><th>Valor</th><th>Pago</th><th>Saldo</th><th>Status</th></tr></thead>
-          <tbody>
-            ${(data.installments || []).map(inst => `
-              <tr>
-                <td>${esc(inst.installment_no)}</td>
-                <td>${esc(formatDate(inst.due_date))}</td>
-                <td>${money(inst.amount)}</td>
-                <td>${money(inst.paid_amount)}</td>
-                <td>${money(Math.max(0,Number(inst.amount)-Number(inst.paid_amount||0)))}</td>
-                <td>${inst.status === 'paid' ? '<span class="status paid">Paga</span>' : inst.status === 'partial' ? '<span class="status partial">Parcial</span>' : '<span class="status open">Aberta</span>'}</td>
-              </tr>
-            `).join('') || '<tr><td colspan="6" class="muted">Sem parcelas.</td></tr>'}
-          </tbody>
-        </table>
-      </div>
-
-      <h4>Recebimentos</h4>
-      <div class="table-wrap">
-        <table style="min-width:500px">
-          <thead><tr><th>Data</th><th>Valor</th><th>Forma</th><th>Observação</th></tr></thead>
-          <tbody>
-            ${(data.payments || []).map(p => `<tr><td>${esc(formatDateTime(p.paid_at))}</td><td>${money(p.amount)}</td><td>${esc(p.payment)}</td><td>${esc(p.note || '')}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nenhum pagamento registrado.</td></tr>'}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="modal-actions">
-        ${Number(sale.balance || 0) > .009 ? `<button onclick="closeM();openSalePayment(${Number(sale.id)})">Receber</button>` : ''}
-        <a class="btn secondary" target="_blank" href="/api/sales/${Number(sale.id)}/pdf">Abrir PDF</a>
-        <button class="secondary" onclick="closeM()">Fechar</button>
-      </div>
-    `;
-    showM();
-  }catch(error){ alert(error.message); }
-}
-
-async function openSalePayment(id){
-  const sale = sales.find(s => Number(s.id) === Number(id));
-  if(!sale) return;
-
-  const balance = Math.max(0,Number(sale.balance ?? Number(sale.total||0)-Number(sale.paid_amount||0)));
-
-  $('mb').innerHTML = `
-    <h3>Receber venda #${esc(sale.id)}</h3>
-    <p class="muted">Cliente: ${esc(sale.client || 'Consumidor')}</p>
-
-    <div class="summary-box">
-      <div class="summary-item"><span>Total</span><strong>${money(sale.total)}</strong></div>
-      <div class="summary-item"><span>Já pago</span><strong>${money(sale.paid_amount || 0)}</strong></div>
-      <div class="summary-item"><span>Saldo</span><strong>${money(balance)}</strong></div>
-      <div class="summary-item"><span>Parcelas</span><strong>${esc(sale.installments || 1)}x</strong></div>
-    </div>
-
-    <form id="paySaleForm">
-      <div class="row">
         <div>
-          <label>Valor recebido</label>
-          <input name="amount" id="paySaleAmount" type="number" min="0.01" max="${rawMoney(balance)}" step="0.01" value="${rawMoney(balance)}" required>
+          <h1>Essência & Charme</h1>
+          <p>Perfumes, moda & vendas</p>
         </div>
+      </div>
+
+      <div class="login-form">
+
+        <label for="loginUsername">
+          Usuário
+        </label>
+
+        <input
+          id="loginUsername"
+          type="text"
+          value="admin"
+          autocomplete="username"
+        >
+
+        <label for="loginPassword">
+          Senha
+        </label>
+
+        <input
+          id="loginPassword"
+          type="password"
+          autocomplete="current-password"
+        >
+
+        <button
+          id="loginButton"
+          class="btn btn-primary btn-full"
+          type="button"
+        >
+          Entrar
+        </button>
+
+        <div
+          id="loginError"
+          class="form-error"
+        ></div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       APLICAÇÃO
+  ====================================================== -->
+
+  <div id="appShell" class="app-shell hidden">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+      <div class="brand">
+
+        <div class="brand-mark">
+          E
+        </div>
+
         <div>
-          <label>Forma de pagamento</label>
-          <select name="payment">
-            <option>Dinheiro</option><option>PIX</option><option>Débito</option><option>Crédito</option>
+          <div class="brand-name">
+            Essência & Charme
+          </div>
+
+          <div class="brand-subtitle">
+            Perfumes, moda & vendas
+          </div>
+        </div>
+
+      </div>
+
+
+      <nav class="main-nav">
+
+        <button
+          class="nav-item active"
+          data-page="dashboard"
+        >
+          <span>⌂</span>
+          Dashboard
+        </button>
+
+        <button
+          class="nav-item"
+          data-page="products"
+        >
+          <span>🧴</span>
+          Produtos
+        </button>
+
+        <button
+          class="nav-item"
+          data-page="clients"
+        >
+          <span>👥</span>
+          Clientes
+        </button>
+
+        <button
+          class="nav-item"
+          data-page="suppliers"
+        >
+          <span>🚚</span>
+          Fornecedores
+        </button>
+
+        <button
+          class="nav-item nav-sale"
+          data-page="new-sale"
+        >
+          <span>🛒</span>
+          Nova Venda
+        </button>
+
+        <button
+          class="nav-item"
+          data-page="sales"
+        >
+          <span>💰</span>
+          Vendas
+        </button>
+
+        <button
+          class="nav-item"
+          data-page="stock"
+        >
+          <span>📦</span>
+          Estoque
+        </button>
+
+        <button
+          class="nav-item"
+          data-page="reports"
+        >
+          <span>📊</span>
+          Relatórios
+        </button>
+
+        <button
+          class="nav-item"
+          data-page="purchases"
+        >
+          <span>🧾</span>
+          Compras / Contas a Pagar
+        </button>
+
+      </nav>
+
+
+      <div class="sidebar-footer">
+
+        <div
+          id="loggedUser"
+          class="logged-user"
+        ></div>
+
+        <button
+          id="logoutButton"
+          class="logout-button"
+          type="button"
+        >
+          Sair
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <!-- CONTEÚDO -->
+
+    <main class="main-content">
+
+      <!-- HEADER -->
+
+      <header class="topbar">
+
+        <button
+          id="mobileMenuButton"
+          class="mobile-menu-button"
+          type="button"
+        >
+          ☰
+        </button>
+
+        <div>
+
+          <div
+            id="pageTitle"
+            class="page-title"
+          >
+            Dashboard
+          </div>
+
+          <div
+            id="pageSubtitle"
+            class="page-subtitle"
+          >
+            Visão geral do seu negócio
+          </div>
+
+        </div>
+
+        <div class="topbar-actions">
+
+          <button
+            class="btn btn-primary"
+            data-page-button="new-sale"
+            type="button"
+          >
+            + Nova Venda
+          </button>
+
+        </div>
+
+      </header>
+
+
+      <!-- =================================================
+           DASHBOARD
+      ================================================== -->
+
+      <section
+        id="page-dashboard"
+        class="page active"
+      >
+
+        <div class="page-heading">
+
+          <div>
+            <h2>Dashboard</h2>
+            <p>
+              Acompanhe as principais informações do negócio.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="quick-actions">
+
+          <button
+            class="quick-action"
+            data-page-button="new-sale"
+            type="button"
+          >
+            <span>🛒</span>
+            <strong>Nova Venda</strong>
+            <small>Registrar venda para cliente</small>
+          </button>
+
+          <button
+            class="quick-action"
+            data-page-button="products"
+            type="button"
+          >
+            <span>🧴</span>
+            <strong>Novo Produto</strong>
+            <small>Cadastrar produto</small>
+          </button>
+
+          <button
+            class="quick-action"
+            data-page-button="clients"
+            type="button"
+          >
+            <span>👥</span>
+            <strong>Novo Cliente</strong>
+            <small>Cadastrar cliente</small>
+          </button>
+
+          <button
+            class="quick-action"
+            data-page-button="purchases"
+            type="button"
+          >
+            <span>🧾</span>
+            <strong>Nova Compra</strong>
+            <small>Entrada de produtos</small>
+          </button>
+
+        </div>
+
+
+        <div class="stats-grid">
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
+              💰
+            </div>
+
+            <div>
+              <span>Vendas hoje</span>
+              <strong id="dashSalesToday">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
+              📈
+            </div>
+
+            <div>
+              <span>Vendas no mês</span>
+              <strong id="dashSalesMonth">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
+              📥
+            </div>
+
+            <div>
+              <span>A receber</span>
+              <strong id="dashReceivables">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
+              📤
+            </div>
+
+            <div>
+              <span>A pagar</span>
+              <strong id="dashPayables">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
+              📦
+            </div>
+
+            <div>
+              <span>Estoque baixo</span>
+              <strong id="dashLowStock">
+                0
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div class="stat-icon">
+              💵
+            </div>
+
+            <div>
+              <span>Recebido no mês</span>
+              <strong id="dashReceivedMonth">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="dashboard-columns">
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+                <h3>Próximos recebimentos</h3>
+                <p>Parcelas dos clientes</p>
+              </div>
+
+            </div>
+
+            <div
+              id="dashboardReceivables"
+              class="dashboard-list"
+            >
+              <div class="empty-state">
+                Nenhuma parcela pendente.
+              </div>
+            </div>
+
+          </div>
+
+
+          <div class="panel">
+
+            <div class="panel-header">
+
+              <div>
+                <h3>Próximos pagamentos</h3>
+                <p>Parcelas dos fornecedores</p>
+              </div>
+
+            </div>
+
+            <div
+              id="dashboardPayables"
+              class="dashboard-list"
+            >
+              <div class="empty-state">
+                Nenhuma parcela pendente.
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           PRODUTOS
+      ================================================== -->
+
+      <section
+        id="page-products"
+        class="page"
+      >
+
+        <div class="page-heading">
+
+          <div>
+            <h2>Produtos</h2>
+            <p>
+              Cadastre e controle seus perfumes e cosméticos.
+            </p>
+          </div>
+
+          <button
+            id="newProductButton"
+            class="btn btn-primary"
+            type="button"
+          >
+            + Novo Produto
+          </button>
+
+        </div>
+
+
+        <div class="toolbar">
+
+          <input
+            id="productSearch"
+            class="search-input"
+            type="search"
+            placeholder="Pesquisar produto..."
+          >
+
+        </div>
+
+
+        <div class="panel table-panel">
+
+          <div class="table-wrapper">
+
+            <table>
+
+              <thead>
+
+                <tr>
+                  <th>Produto</th>
+                  <th>Marca</th>
+                  <th>Fornecedor</th>
+                  <th>Custo</th>
+                  <th>Venda</th>
+                  <th>Estoque</th>
+                  <th>Ações</th>
+                </tr>
+
+              </thead>
+
+              <tbody id="productsTableBody"></tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           CLIENTES
+      ================================================== -->
+
+      <section
+        id="page-clients"
+        class="page"
+      >
+
+        <div class="page-heading">
+
+          <div>
+            <h2>Clientes</h2>
+            <p>
+              Cadastre seus clientes e acompanhe as vendas.
+            </p>
+          </div>
+
+          <button
+            id="newClientButton"
+            class="btn btn-primary"
+            type="button"
+          >
+            + Novo Cliente
+          </button>
+
+        </div>
+
+
+        <div class="toolbar">
+
+          <input
+            id="clientSearch"
+            class="search-input"
+            type="search"
+            placeholder="Pesquisar cliente..."
+          >
+
+        </div>
+
+
+        <div class="panel table-panel">
+
+          <div class="table-wrapper">
+
+            <table>
+
+              <thead>
+
+                <tr>
+                  <th>Nome</th>
+                  <th>Telefone</th>
+                  <th>Endereço</th>
+                  <th>Observações</th>
+                  <th>Ações</th>
+                </tr>
+
+              </thead>
+
+              <tbody id="clientsTableBody"></tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           FORNECEDORES
+      ================================================== -->
+
+      <section
+        id="page-suppliers"
+        class="page"
+      >
+
+        <div class="page-heading">
+
+          <div>
+            <h2>Fornecedores</h2>
+            <p>
+              Cadastre quem fornece seus produtos.
+            </p>
+          </div>
+
+          <button
+            id="newSupplierButton"
+            class="btn btn-primary"
+            type="button"
+          >
+            + Novo Fornecedor
+          </button>
+
+        </div>
+
+
+        <div class="toolbar">
+
+          <input
+            id="supplierSearch"
+            class="search-input"
+            type="search"
+            placeholder="Pesquisar fornecedor..."
+          >
+
+        </div>
+
+
+        <div class="panel table-panel">
+
+          <div class="table-wrapper">
+
+            <table>
+
+              <thead>
+
+                <tr>
+                  <th>Fornecedor</th>
+                  <th>Telefone</th>
+                  <th>WhatsApp</th>
+                  <th>Documento</th>
+                  <th>Endereço</th>
+                  <th>Ações</th>
+                </tr>
+
+              </thead>
+
+              <tbody id="suppliersTableBody"></tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           NOVA VENDA
+      ================================================== -->
+
+      <section
+        id="page-new-sale"
+        class="page"
+      >
+
+        <div class="page-heading">
+
+          <div>
+            <h2>Nova Venda</h2>
+            <p>
+              Registre uma venda para seu cliente.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="sale-layout">
+
+          <div class="panel">
+
+            <div class="panel-header">
+              <h3>Adicionar produtos</h3>
+            </div>
+
+
+            <div class="form-grid">
+
+              <div class="field field-large">
+
+                <label for="saleProduct">
+                  Produto
+                </label>
+
+                <select id="saleProduct">
+                  <option value="">
+                    Selecione um produto
+                  </option>
+                </select>
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="saleQuantity">
+                  Quantidade
+                </label>
+
+                <input
+                  id="saleQuantity"
+                  type="number"
+                  min="1"
+                  value="1"
+                >
+
+              </div>
+
+
+              <div class="field field-button">
+
+                <button
+                  id="addSaleProductButton"
+                  class="btn btn-primary"
+                  type="button"
+                >
+                  Adicionar
+                </button>
+
+              </div>
+
+            </div>
+
+
+            <div class="cart-wrapper">
+
+              <table class="cart-table">
+
+                <thead>
+
+                  <tr>
+                    <th>Produto</th>
+                    <th>Qtd.</th>
+                    <th>Preço</th>
+                    <th>Total</th>
+                    <th></th>
+                  </tr>
+
+                </thead>
+
+                <tbody id="saleCartBody"></tbody>
+
+              </table>
+
+              <div
+                id="saleCartEmpty"
+                class="empty-state"
+              >
+                Nenhum produto adicionado.
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div class="panel sale-summary">
+
+            <div class="panel-header">
+              <h3>Dados da venda</h3>
+            </div>
+
+
+            <div class="field">
+
+              <label for="saleClient">
+                Cliente
+              </label>
+
+              <select id="saleClient">
+
+                <option value="">
+                  Cliente não informado
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="summary-line">
+              <span>Subtotal</span>
+              <strong id="saleSubtotal">
+                R$ 0,00
+              </strong>
+            </div>
+
+
+            <div class="field">
+
+              <label for="saleDiscount">
+                Desconto
+              </label>
+
+              <input
+                id="saleDiscount"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="summary-line total-line">
+              <span>Total</span>
+              <strong id="saleTotal">
+                R$ 0,00
+              </strong>
+            </div>
+
+
+            <div class="field">
+
+              <label for="salePayment">
+                Forma de pagamento
+              </label>
+
+              <select id="salePayment">
+
+                <option value="Dinheiro">
+                  Dinheiro
+                </option>
+
+                <option value="PIX">
+                  PIX
+                </option>
+
+                <option value="Débito">
+                  Débito
+                </option>
+
+                <option value="Crédito">
+                  Crédito
+                </option>
+
+                <option value="Fiado">
+                  Fiado
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="form-grid">
+
+              <div class="field">
+
+                <label for="saleEntry">
+                  Entrada
+                </label>
+
+                <input
+                  id="saleEntry"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="0"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label for="saleInstallments">
+                  Parcelas
+                </label>
+
+                <input
+                  id="saleInstallments"
+                  type="number"
+                  min="1"
+                  value="1"
+                >
+
+              </div>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="saleFirstDueDate">
+                Primeiro vencimento
+              </label>
+
+              <input
+                id="saleFirstDueDate"
+                type="date"
+              >
+
+            </div>
+
+
+            <div class="summary-line">
+              <span>Saldo a receber</span>
+              <strong id="saleBalance">
+                R$ 0,00
+              </strong>
+            </div>
+
+
+            <div class="field">
+
+              <label for="saleNotes">
+                Observação
+              </label>
+
+              <textarea
+                id="saleNotes"
+                rows="3"
+                placeholder="Observações da venda..."
+              ></textarea>
+
+            </div>
+
+
+            <button
+              id="finalizeSaleButton"
+              class="btn btn-primary btn-full btn-large"
+              type="button"
+            >
+              Finalizar Venda
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           VENDAS
+      ================================================== -->
+
+      <section
+        id="page-sales"
+        class="page"
+      >
+
+        <div class="page-heading">
+
+          <div>
+            <h2>Vendas</h2>
+            <p>
+              Histórico de vendas e recebimentos.
+            </p>
+          </div>
+
+          <button
+            class="btn btn-primary"
+            data-page-button="new-sale"
+            type="button"
+          >
+            + Nova Venda
+          </button>
+
+        </div>
+
+
+        <div class="toolbar">
+
+          <input
+            id="salesSearch"
+            class="search-input"
+            type="search"
+            placeholder="Pesquisar venda ou cliente..."
+          >
+
+        </div>
+
+
+        <div class="panel table-panel">
+
+          <div class="table-wrapper">
+
+            <table>
+
+              <thead>
+
+                <tr>
+                  <th>Venda</th>
+                  <th>Data</th>
+                  <th>Cliente</th>
+                  <th>Total</th>
+                  <th>Pago</th>
+                  <th>Saldo</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+
+              </thead>
+
+              <tbody id="salesTableBody"></tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           ESTOQUE
+      ================================================== -->
+
+      <section
+        id="page-stock"
+        class="page"
+      >
+
+        <div class="page-heading">
+
+          <div>
+            <h2>Estoque</h2>
+            <p>
+              Acompanhe entradas, saídas e ajustes.
+            </p>
+          </div>
+
+          <button
+            id="stockMovementButton"
+            class="btn btn-primary"
+            type="button"
+          >
+            + Movimentar Estoque
+          </button>
+
+        </div>
+
+
+        <div class="panel table-panel">
+
+          <div class="table-wrapper">
+
+            <table>
+
+              <thead>
+
+                <tr>
+                  <th>Data</th>
+                  <th>Produto</th>
+                  <th>Tipo</th>
+                  <th>Quantidade</th>
+                  <th>Observação</th>
+                </tr>
+
+              </thead>
+
+              <tbody id="stockTableBody"></tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           RELATÓRIOS
+      ================================================== -->
+
+      <section
+        id="page-reports"
+        class="page"
+      >
+
+        <div class="page-heading">
+
+          <div>
+            <h2>Relatórios</h2>
+            <p>
+              Consulte os resultados do período.
+            </p>
+          </div>
+
+        </div>
+
+
+        <div class="report-filters">
+
+          <div class="field">
+
+            <label for="reportFrom">
+              De
+            </label>
+
+            <input
+              id="reportFrom"
+              type="date"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="reportTo">
+              Até
+            </label>
+
+            <input
+              id="reportTo"
+              type="date"
+            >
+
+          </div>
+
+
+          <button
+            id="loadReportButton"
+            class="btn btn-primary"
+            type="button"
+          >
+            Gerar Relatório
+          </button>
+
+        </div>
+
+
+        <div class="stats-grid report-stats">
+
+          <div class="stat-card">
+
+            <div>
+              <span>Vendas</span>
+              <strong id="reportSales">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div>
+              <span>Recebido</span>
+              <strong id="reportReceived">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div>
+              <span>Compras</span>
+              <strong id="reportPurchases">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div>
+              <span>A receber</span>
+              <strong id="reportReceivable">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div>
+              <span>A pagar</span>
+              <strong id="reportPayable">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="dashboard-columns">
+
+          <div class="panel">
+
+            <div class="panel-header">
+              <h3>Produtos mais vendidos</h3>
+            </div>
+
+            <div
+              id="topProductsReport"
+              class="report-list"
+            ></div>
+
+          </div>
+
+
+          <div class="panel">
+
+            <div class="panel-header">
+              <h3>Clientes devedores</h3>
+            </div>
+
+            <div
+              id="debtorsReport"
+              class="report-list"
+            ></div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           COMPRAS / CONTAS A PAGAR
+      ================================================== -->
+
+      <section
+        id="page-purchases"
+        class="page"
+      >
+
+        <div class="page-heading">
+
+          <div>
+            <h2>Compras / Contas a Pagar</h2>
+            <p>
+              Registre compras dos fornecedores e acompanhe as parcelas.
+            </p>
+          </div>
+
+          <button
+            id="newPurchaseButton"
+            class="btn btn-primary"
+            type="button"
+          >
+            + Nova Compra
+          </button>
+
+        </div>
+
+
+        <div class="stats-grid">
+
+          <div class="stat-card">
+
+            <div>
+              <span>Total em compras</span>
+              <strong id="purchaseTotal">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div>
+              <span>Total pago</span>
+              <strong id="purchasePaid">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="stat-card">
+
+            <div>
+              <span>A pagar</span>
+              <strong id="purchaseBalance">
+                R$ 0,00
+              </strong>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="panel table-panel">
+
+          <div class="table-wrapper">
+
+            <table>
+
+              <thead>
+
+                <tr>
+                  <th>Data</th>
+                  <th>Fornecedor</th>
+                  <th>Total</th>
+                  <th>Entrada</th>
+                  <th>A pagar</th>
+                  <th>Parcelas</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+
+              </thead>
+
+              <tbody id="purchasesTableBody"></tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+
+        <div class="panel">
+
+          <div class="panel-header">
+
+            <div>
+              <h3>Parcelas a pagar</h3>
+              <p>
+                Controle dos próximos pagamentos aos fornecedores.
+              </p>
+            </div>
+
+          </div>
+
+          <div
+            id="purchaseInstallmentsList"
+            class="dashboard-list"
+          >
+            <div class="empty-state">
+              Nenhuma parcela pendente.
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+
+  <!-- =====================================================
+       MODAL PRODUTO
+  ====================================================== -->
+
+  <div
+    id="productModal"
+    class="modal hidden"
+  >
+
+    <div class="modal-card">
+
+      <div class="modal-header">
+
+        <div>
+          <h3 id="productModalTitle">
+            Novo Produto
+          </h3>
+        </div>
+
+        <button
+          class="modal-close"
+          data-close-modal="productModal"
+          type="button"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <form id="productForm">
+
+        <input
+          id="productId"
+          type="hidden"
+        >
+
+        <div class="form-grid">
+
+          <div class="field">
+
+            <label for="productCode">
+              Código
+            </label>
+
+            <input
+              id="productCode"
+              type="text"
+            >
+
+          </div>
+
+
+          <div class="field field-large">
+
+            <label for="productName">
+              Produto *
+            </label>
+
+            <input
+              id="productName"
+              type="text"
+              required
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="productBrand">
+              Marca
+            </label>
+
+            <input
+              id="productBrand"
+              type="text"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="productSize">
+              Tamanho
+            </label>
+
+            <input
+              id="productSize"
+              type="text"
+              placeholder="Ex.: 100 ml"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="productSupplier">
+              Fornecedor
+            </label>
+
+            <select id="productSupplier">
+
+              <option value="">
+                Não informado
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="productCost">
+              Custo
+            </label>
+
+            <input
+              id="productCost"
+              type="number"
+              min="0"
+              step="0.01"
+              value="0"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="productPrice">
+              Preço de venda
+            </label>
+
+            <input
+              id="productPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              value="0"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="productStock">
+              Estoque
+            </label>
+
+            <input
+              id="productStock"
+              type="number"
+              min="0"
+              value="0"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="productMinStock">
+              Estoque mínimo
+            </label>
+
+            <input
+              id="productMinStock"
+              type="number"
+              min="0"
+              value="0"
+            >
+
+          </div>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            class="btn btn-secondary"
+            data-close-modal="productModal"
+            type="button"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="btn btn-primary"
+            type="submit"
+          >
+            Salvar Produto
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       MODAL CLIENTE
+  ====================================================== -->
+
+  <div
+    id="clientModal"
+    class="modal hidden"
+  >
+
+    <div class="modal-card">
+
+      <div class="modal-header">
+
+        <h3 id="clientModalTitle">
+          Novo Cliente
+        </h3>
+
+        <button
+          class="modal-close"
+          data-close-modal="clientModal"
+          type="button"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <form id="clientForm">
+
+        <input
+          id="clientId"
+          type="hidden"
+        >
+
+        <div class="form-grid">
+
+          <div class="field field-large">
+
+            <label for="clientName">
+              Nome *
+            </label>
+
+            <input
+              id="clientName"
+              type="text"
+              required
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="clientPhone">
+              Telefone
+            </label>
+
+            <input
+              id="clientPhone"
+              type="text"
+            >
+
+          </div>
+
+
+          <div class="field field-large">
+
+            <label for="clientAddress">
+              Endereço
+            </label>
+
+            <input
+              id="clientAddress"
+              type="text"
+            >
+
+          </div>
+
+
+          <div class="field field-full">
+
+            <label for="clientNotes">
+              Observações
+            </label>
+
+            <textarea
+              id="clientNotes"
+              rows="3"
+            ></textarea>
+
+          </div>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            class="btn btn-secondary"
+            data-close-modal="clientModal"
+            type="button"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="btn btn-primary"
+            type="submit"
+          >
+            Salvar Cliente
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       MODAL FORNECEDOR
+  ====================================================== -->
+
+  <div
+    id="supplierModal"
+    class="modal hidden"
+  >
+
+    <div class="modal-card">
+
+      <div class="modal-header">
+
+        <h3 id="supplierModalTitle">
+          Novo Fornecedor
+        </h3>
+
+        <button
+          class="modal-close"
+          data-close-modal="supplierModal"
+          type="button"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <form id="supplierForm">
+
+        <input
+          id="supplierId"
+          type="hidden"
+        >
+
+        <div class="form-grid">
+
+          <div class="field field-large">
+
+            <label for="supplierName">
+              Nome *
+            </label>
+
+            <input
+              id="supplierName"
+              type="text"
+              required
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="supplierPhone">
+              Telefone
+            </label>
+
+            <input
+              id="supplierPhone"
+              type="text"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="supplierWhatsapp">
+              WhatsApp
+            </label>
+
+            <input
+              id="supplierWhatsapp"
+              type="text"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="supplierDocument">
+              CPF / CNPJ
+            </label>
+
+            <input
+              id="supplierDocument"
+              type="text"
+            >
+
+          </div>
+
+
+          <div class="field field-full">
+
+            <label for="supplierAddress">
+              Endereço
+            </label>
+
+            <input
+              id="supplierAddress"
+              type="text"
+            >
+
+          </div>
+
+
+          <div class="field field-full">
+
+            <label for="supplierNotes">
+              Observações
+            </label>
+
+            <textarea
+              id="supplierNotes"
+              rows="3"
+            ></textarea>
+
+          </div>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            class="btn btn-secondary"
+            data-close-modal="supplierModal"
+            type="button"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="btn btn-primary"
+            type="submit"
+          >
+            Salvar Fornecedor
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       MODAL COMPRA
+  ====================================================== -->
+
+  <div
+    id="purchaseModal"
+    class="modal hidden"
+  >
+
+    <div class="modal-card modal-large">
+
+      <div class="modal-header">
+
+        <h3>
+          Nova Compra
+        </h3>
+
+        <button
+          class="modal-close"
+          data-close-modal="purchaseModal"
+          type="button"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <form id="purchaseForm">
+
+        <div class="form-grid">
+
+          <div class="field">
+
+            <label for="purchaseSupplier">
+              Fornecedor *
+            </label>
+
+            <select id="purchaseSupplier" required>
+
+              <option value="">
+                Selecione
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="purchaseDate">
+              Data
+            </label>
+
+            <input
+              id="purchaseDate"
+              type="date"
+            >
+
+          </div>
+
+        </div>
+
+
+        <div class="panel inner-panel">
+
+          <div class="panel-header">
+
+            <h4>Produtos da compra</h4>
+
+          </div>
+
+
+          <div class="form-grid">
+
+            <div class="field field-large">
+
+              <label for="purchaseProduct">
+                Produto
+              </label>
+
+              <select id="purchaseProduct">
+
+                <option value="">
+                  Selecione um produto
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="purchaseQuantity">
+                Quantidade
+              </label>
+
+              <input
+                id="purchaseQuantity"
+                type="number"
+                min="1"
+                value="1"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label for="purchaseCost">
+                Custo unitário
+              </label>
+
+              <input
+                id="purchaseCost"
+                type="number"
+                min="0"
+                step="0.01"
+                value="0"
+              >
+
+            </div>
+
+
+            <div class="field field-button">
+
+              <button
+                id="addPurchaseProductButton"
+                class="btn btn-primary"
+                type="button"
+              >
+                Adicionar
+              </button>
+
+            </div>
+
+          </div>
+
+
+          <div class="table-wrapper">
+
+            <table>
+
+              <thead>
+
+                <tr>
+                  <th>Produto</th>
+                  <th>Qtd.</th>
+                  <th>Custo</th>
+                  <th>Total</th>
+                  <th></th>
+                </tr>
+
+              </thead>
+
+              <tbody id="purchaseCartBody"></tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+
+        <div class="purchase-summary-grid">
+
+          <div class="field">
+
+            <label for="purchaseEntry">
+              Entrada / Pago
+            </label>
+
+            <input
+              id="purchaseEntry"
+              type="number"
+              min="0"
+              step="0.01"
+              value="0"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="purchaseInstallments">
+              Parcelas
+            </label>
+
+            <input
+              id="purchaseInstallments"
+              type="number"
+              min="1"
+              value="1"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="purchasePayment">
+              Forma de pagamento
+            </label>
+
+            <select id="purchasePayment">
+
+              <option value="Dinheiro">
+                Dinheiro
+              </option>
+
+              <option value="PIX">
+                PIX
+              </option>
+
+              <option value="Débito">
+                Débito
+              </option>
+
+              <option value="Crédito">
+                Crédito
+              </option>
+
+              <option value="Fiado">
+                A prazo
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="purchaseFirstDueDate">
+              Primeiro vencimento
+            </label>
+
+            <input
+              id="purchaseFirstDueDate"
+              type="date"
+            >
+
+          </div>
+
+        </div>
+
+
+        <div class="purchase-totals">
+
+          <div>
+            <span>Total</span>
+            <strong id="purchaseModalTotal">
+              R$ 0,00
+            </strong>
+          </div>
+
+          <div>
+            <span>Pago</span>
+            <strong id="purchaseModalPaid">
+              R$ 0,00
+            </strong>
+          </div>
+
+          <div>
+            <span>A pagar</span>
+            <strong id="purchaseModalBalance">
+              R$ 0,00
+            </strong>
+          </div>
+
+        </div>
+
+
+        <div class="field">
+
+          <label for="purchaseNotes">
+            Observações
+          </label>
+
+          <textarea
+            id="purchaseNotes"
+            rows="3"
+          ></textarea>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            class="btn btn-secondary"
+            data-close-modal="purchaseModal"
+            type="button"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="btn btn-primary"
+            type="submit"
+          >
+            Salvar Compra
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       MODAL PAGAMENTO
+  ====================================================== -->
+
+  <div
+    id="paymentModal"
+    class="modal hidden"
+  >
+
+    <div class="modal-card">
+
+      <div class="modal-header">
+
+        <h3 id="paymentModalTitle">
+          Registrar pagamento
+        </h3>
+
+        <button
+          class="modal-close"
+          data-close-modal="paymentModal"
+          type="button"
+        >
+          ×
+        </button>
+
+      </div>
+
+
+      <form id="paymentForm">
+
+        <input
+          id="paymentType"
+          type="hidden"
+        >
+
+        <input
+          id="paymentReferenceId"
+          type="hidden"
+        >
+
+        <input
+          id="paymentInstallmentId"
+          type="hidden"
+        >
+
+
+        <div class="payment-info">
+
+          <div>
+            <span>Valor pendente</span>
+            <strong id="paymentPendingValue">
+              R$ 0,00
+            </strong>
+          </div>
+
+        </div>
+
+
+        <div class="field">
+
+          <label for="paymentAmount">
+            Valor do pagamento *
+          </label>
+
+          <input
+            id="paymentAmount"
+            type="number"
+            min="0.01"
+            step="0.01"
+            required
+          >
+
+        </div>
+
+
+        <div class="field">
+
+          <label for="paymentMethod">
+            Forma de pagamento
+          </label>
+
+          <select id="paymentMethod">
+
+            <option value="Dinheiro">
+              Dinheiro
+            </option>
+
+            <option value="PIX">
+              PIX
+            </option>
+
+            <option value="Débito">
+              Débito
+            </option>
+
+            <option value="Crédito">
+              Crédito
+            </option>
+
           </select>
+
         </div>
-      </div>
-      <div style="margin-top:12px"><label>Observação</label><input name="note" placeholder="Ex.: pagamento da 1ª parcela"></div>
-      <div class="modal-actions">
-        <button type="button" class="secondary" onclick="closeM()">Cancelar</button>
-        <button type="submit">Registrar recebimento</button>
-      </div>
-    </form>
-  `;
-  showM();
 
-  $('paySaleForm').addEventListener('submit', async event => {
-    event.preventDefault();
-    const form = Object.fromEntries(new FormData(event.target));
-    try{
-      const result = await api('/api/sales/' + id + '/pay',{
-        method:'POST',
-        body:{amount:Number(form.amount),payment:form.payment,note:form.note || ''}
-      });
-      closeM();
-      await loadSales();
-      await dash();
-      alert(result.balance > .009 ? `Recebimento registrado. Saldo restante: ${money(result.balance)}` : 'Venda quitada com sucesso.');
-    }catch(error){ alert(error.message); }
-  });
-}
 
-async function payDebt(id){
-  openSalePayment(id);
-}
+        <div class="field">
 
-async function cancelSale(id){
-  if(!confirm('Excluir/cancelar esta venda? O estoque dos produtos será devolvido.')) return;
-  try{
-    await api('/api/sales/' + id,{method:'DELETE',body:{reason:'Venda excluída pelo usuário'}});
-    await loadSales();
-    await loadProducts();
-    await dash();
-    alert('Venda cancelada e estoque restaurado.');
-  }catch(error){ alert(error.message); }
-}
+          <label for="paymentNote">
+            Observação
+          </label>
 
-/* =========================
-   ESTOQUE
-========================= */
+          <textarea
+            id="paymentNote"
+            rows="3"
+          ></textarea>
 
-function renderStock(){
-  if(!$('et')) return;
+        </div>
 
-  $('et').innerHTML = `
-    <table>
-      <thead><tr><th>Produto</th><th>Código</th><th>Estoque</th><th>Mínimo</th><th>Preço</th><th>Situação</th></tr></thead>
-      <tbody>
-        ${products.map(p => `
-          <tr>
-            <td>${esc(p.name)}</td>
-            <td>${esc(p.code || '')}</td>
-            <td>${esc(p.stock)}</td>
-            <td>${esc(p.min_stock)}</td>
-            <td>${money(p.price)}</td>
-            <td>${Number(p.stock) <= Number(p.min_stock) ? '<span class="status open">⚠️ Estoque baixo</span>' : '<span class="status paid">✓ OK</span>'}</td>
-          </tr>
-        `).join('') || '<tr><td colspan="6" class="muted">Nenhum produto cadastrado.</td></tr>'}
-      </tbody>
-    </table>
-  `;
-}
 
-function stockMove(){
-  if(!products.length) return alert('Cadastre um produto primeiro.');
+        <div class="modal-actions">
 
-  $('mb').innerHTML = `
-    <h3>Movimentar estoque</h3>
-    <form id="sf">
-      <label>Produto</label>
-      <select name="product_id">${products.map(p => `<option value="${Number(p.id)}">${esc(p.name)} (${esc(p.stock)})</option>`).join('')}</select>
-      <div class="row" style="margin-top:12px">
-        <div><label>Tipo</label><select name="type"><option>ENTRADA</option><option>SAIDA</option></select></div>
-        <div><label>Quantidade</label><input name="qty" type="number" min="1" required></div>
-      </div>
-      <div style="margin-top:12px"><label>Observação</label><input name="note" placeholder="Ex.: reposição, ajuste, perda..."></div>
-      <div class="modal-actions"><button type="button" class="secondary" onclick="closeM()">Cancelar</button><button type="submit">Salvar</button></div>
-    </form>
-  `;
-  showM();
+          <button
+            class="btn btn-secondary"
+            data-close-modal="paymentModal"
+            type="button"
+          >
+            Cancelar
+          </button>
 
-  $('sf').addEventListener('submit', async event => {
-    event.preventDefault();
-    try{
-      await api('/api/stock',{method:'POST',body:Object.fromEntries(new FormData(event.target))});
-      closeM();
-      await loadProducts();
-    }catch(error){ alert(error.message); }
-  });
-}
+          <button
+            class="btn btn-primary"
+            type="submit"
+          >
+            Registrar Pagamento
+          </button>
 
-/* =========================
-   COMPRAS / FORNECEDORES
-========================= */
+        </div>
 
-async function loadPurchases(){
-  try{
-    purchases = await api('/api/purchases');
-    renderPurchases();
-  }catch(error){
-    console.error('Erro ao carregar compras:',error);
-  }
-}
+      </form>
 
-function renderPurchases(){
-  const q = ($('purchaseSearch')?.value || '').toLowerCase().trim();
-  const list = purchases.filter(p => `${p.supplier || p.fornecedor || ''} ${p.id || ''}`.toLowerCase().includes(q));
-
-  const total = list.reduce((s,p) => s + Number(p.total||0),0);
-  const paid = list.reduce((s,p) => s + Number(p.paid_amount||0),0);
-  const open = list.reduce((s,p) => s + Number(p.balance ?? Number(p.total||0)-Number(p.paid_amount||0)),0);
-  const suppliers = new Set(list.map(p => String(p.supplier || p.fornecedor || '').trim()).filter(Boolean));
-
-  $('pTotal').textContent = money(total);
-  $('pPaid').textContent = money(paid);
-  $('pOpen').textContent = money(open);
-  $('pSuppliers').textContent = suppliers.size;
-
-  $('purchasesTable').innerHTML = `
-    <table>
-      <thead><tr>
-        <th>#</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Entrada</th><th>Pago</th><th>Saldo</th><th>Parcelas</th><th>Forma</th><th>Status</th><th>Ações</th>
-      </tr></thead>
-      <tbody>
-        ${list.map(p => {
-          const balance = Math.max(0,Number(p.balance ?? Number(p.total||0)-Number(p.paid_amount||0)));
-          const status = balance <= .009 ? '<span class="status paid">Paga</span>' : Number(p.paid_amount||0)>0 ? '<span class="status partial">Parcial</span>' : '<span class="status open">Em aberto</span>';
-          return `
-            <tr>
-              <td>#${esc(p.id)}</td>
-              <td>${esc(formatDate(p.date))}</td>
-              <td>${esc(p.supplier || p.fornecedor || 'Fornecedor não informado')}</td>
-              <td>${money(p.total)}</td>
-              <td>${money(p.entry || 0)}</td>
-              <td>${money(p.paid_amount || 0)}</td>
-              <td>${money(balance)}</td>
-              <td>${esc(p.installments || 1)}x</td>
-              <td>${esc(p.payment || '')}</td>
-              <td>${status}</td>
-              <td><div class="actions">
-                <button onclick="viewPurchase(${Number(p.id)})">Detalhes</button>
-                ${balance > .009 ? `<button onclick="openPurchasePayment(${Number(p.id)})">Pagar</button>` : ''}
-                <button class="danger" onclick="deletePurchase(${Number(p.id)})">Excluir</button>
-              </div></td>
-            </tr>
-          `;
-        }).join('') || '<tr><td colspan="11" class="muted">Nenhuma compra encontrada.</td></tr>'}
-      </tbody>
-    </table>
-  `;
-}
-
-function openPurchase(id){
-  const p = purchases.find(x => Number(x.id) === Number(id)) || {};
-
-  $('mb').innerHTML = `
-    <h3>${id ? 'Editar compra' : 'Nova compra'}</h3>
-    <form id="purchaseForm">
-      <div class="formgrid">
-        <div><label>Fornecedor</label><input name="supplier" required value="${esc(p.supplier || p.fornecedor || '')}"></div>
-        <div><label>Data</label><input name="date" type="date" required value="${esc(p.date ? String(p.date).slice(0,10) : todayISO())}"></div>
-        <div><label>Total da compra</label><input name="total" type="number" min="0" step="0.01" required value="${esc(p.total ?? 0)}"></div>
-        <div><label>Entrada</label><input name="entry" type="number" min="0" step="0.01" value="${esc(p.entry ?? 0)}"></div>
-        <div><label>Parcelas</label><input name="installments" type="number" min="1" value="${esc(p.installments ?? 1)}"></div>
-        <div><label>Forma de pagamento</label><select name="payment">
-          ${['Dinheiro','PIX','Débito','Crédito'].map(x => `<option ${x === p.payment ? 'selected' : ''}>${x}</option>`).join('')}
-        </select></div>
-      </div>
-      <div style="margin-top:12px"><label>Observação</label><textarea name="notes">${esc(p.notes || '')}</textarea></div>
-      <div class="modal-actions">
-        <button type="button" class="secondary" onclick="closeM()">Cancelar</button>
-        <button type="submit">Salvar</button>
-      </div>
-    </form>
-  `;
-  showM();
-
-  $('purchaseForm').addEventListener('submit', async event => {
-    event.preventDefault();
-    const form = Object.fromEntries(new FormData(event.target));
-    try{
-      if(id){
-        await api('/api/purchases/' + id,{method:'PUT',body:form});
-      }else{
-        await api('/api/purchases',{method:'POST',body:form});
-      }
-      closeM();
-      await loadPurchases();
-      await dash();
-    }catch(error){ alert(error.message); }
-  });
-}
-
-async function viewPurchase(id){
-  try{
-    const data = await api('/api/purchases/' + id);
-    const p = data.purchase || {};
-    const balance = Number(p.balance || 0);
-
-    $('mb').innerHTML = `
-      <h3>Compra #${esc(p.id)}</h3>
-      <p class="muted">${esc(formatDateTime(p.date))} · ${esc(p.supplier || p.fornecedor || 'Fornecedor não informado')}</p>
-      <div class="summary-box">
-        <div class="summary-item"><span>Total</span><strong>${money(p.total)}</strong></div>
-        <div class="summary-item"><span>Entrada</span><strong>${money(p.entry)}</strong></div>
-        <div class="summary-item"><span>Pago</span><strong>${money(p.paid_amount)}</strong></div>
-        <div class="summary-item"><span>Saldo</span><strong>${money(balance)}</strong></div>
-      </div>
-      <p>${esc(p.notes || '')}</p>
-      <h4>Pagamentos</h4>
-      <div class="table-wrap">
-        <table style="min-width:500px">
-          <thead><tr><th>Data</th><th>Valor</th><th>Forma</th><th>Observação</th></tr></thead>
-          <tbody>
-            ${(data.payments || []).map(pay => `<tr><td>${esc(formatDateTime(pay.paid_at))}</td><td>${money(pay.amount)}</td><td>${esc(pay.payment)}</td><td>${esc(pay.note || '')}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">Nenhum pagamento registrado.</td></tr>'}
-          </tbody>
-        </table>
-      </div>
-      <div class="modal-actions">
-        ${balance > .009 ? `<button onclick="closeM();openPurchasePayment(${Number(p.id)})">Pagar parcela</button>` : ''}
-        <button onclick="closeM();openPurchase(${Number(p.id)})">Editar</button>
-        <button class="secondary" onclick="closeM()">Fechar</button>
-      </div>
-    `;
-    showM();
-  }catch(error){ alert(error.message); }
-}
-
-function openPurchasePayment(id){
-  const purchase = purchases.find(p => Number(p.id) === Number(id));
-  if(!purchase) return;
-
-  const balance = Math.max(0,Number(purchase.balance ?? Number(purchase.total||0)-Number(purchase.paid_amount||0)));
-
-  $('mb').innerHTML = `
-    <h3>Pagar conta #${esc(purchase.id)}</h3>
-    <p class="muted">Fornecedor: ${esc(purchase.supplier || purchase.fornecedor || 'Não informado')}</p>
-    <div class="summary-box">
-      <div class="summary-item"><span>Total</span><strong>${money(purchase.total)}</strong></div>
-      <div class="summary-item"><span>Já pago</span><strong>${money(purchase.paid_amount || 0)}</strong></div>
-      <div class="summary-item"><span>Saldo</span><strong>${money(balance)}</strong></div>
-      <div class="summary-item"><span>Parcelas</span><strong>${esc(purchase.installments || 1)}x</strong></div>
     </div>
-    <form id="purchasePayForm">
-      <div class="row">
-        <div><label>Valor pago</label><input name="amount" type="number" min="0.01" max="${rawMoney(balance)}" step="0.01" value="${rawMoney(balance)}" required></div>
-        <div><label>Forma de pagamento</label><select name="payment"><option>Dinheiro</option><option>PIX</option><option>Débito</option><option>Crédito</option></select></div>
-      </div>
-      <div style="margin-top:12px"><label>Observação</label><input name="note" placeholder="Ex.: pagamento da 2ª parcela"></div>
-      <div class="modal-actions"><button type="button" class="secondary" onclick="closeM()">Cancelar</button><button type="submit">Registrar pagamento</button></div>
-    </form>
-  `;
-  showM();
 
-  $('purchasePayForm').addEventListener('submit', async event => {
-    event.preventDefault();
-    const form = Object.fromEntries(new FormData(event.target));
-    try{
-      const result = await api('/api/purchases/' + id + '/pay',{
-        method:'POST',
-        body:{amount:Number(form.amount),payment:form.payment,note:form.note || ''}
-      });
-      closeM();
-      await loadPurchases();
-      await dash();
-      alert(result.balance > .009 ? `Pagamento registrado. Saldo restante: ${money(result.balance)}` : 'Conta quitada com sucesso.');
-    }catch(error){ alert(error.message); }
-  });
-}
+  </div>
 
-async function deletePurchase(id){
-  if(!confirm('Excluir esta compra?')) return;
-  try{
-    await api('/api/purchases/' + id,{method:'DELETE'});
-    await loadPurchases();
-    await dash();
-  }catch(error){ alert(error.message); }
-}
 
-/* =========================
-   RELATÓRIOS
-========================= */
+  <!-- =====================================================
+       MODAL MOVIMENTAÇÃO DE ESTOQUE
+  ====================================================== -->
 
-async function loadReports(){
-  try{
-    const from = $('rf').value || firstDayISO();
-    const to = $('rt').value || todayISO();
+  <div
+    id="stockModal"
+    class="modal hidden"
+  >
 
-    const r = await api('/api/reports?from=' + encodeURIComponent(from) + '&to=' + encodeURIComponent(to));
-    const revenue = Number(r.totals?.revenue || 0);
-    const received = Number(r.totals?.received || 0);
-    const receivable = Number(r.totals?.receivable || 0);
-    const profit = Number(r.totals?.profit || 0);
+    <div class="modal-card">
 
-    const purchasesTotal = (r.purchases || []).reduce((s,p)=>s+Number(p.total||0),0);
-    const purchasesPaid = (r.purchases || []).reduce((s,p)=>s+Number(p.paid_amount||0),0);
-    const purchasesOpen = (r.purchases || []).reduce((s,p)=>s+Number(p.balance||0),0);
+      <div class="modal-header">
 
-    $('rr').innerHTML = `
-      <div class="grid six">
-        <div class="card"><div class="card-title">💰 Faturamento</div><div class="big">${money(revenue)}</div></div>
-        <div class="card"><div class="card-title">💵 Recebido</div><div class="big">${money(received)}</div></div>
-        <div class="card"><div class="card-title">💳 A receber</div><div class="big">${money(receivable)}</div></div>
-        <div class="card"><div class="card-title">✨ Lucro estimado</div><div class="big">${money(profit)}</div></div>
-        <div class="card"><div class="card-title">🧾 Compras</div><div class="big">${money(purchasesTotal)}</div></div>
-        <div class="card"><div class="card-title">🔔 Contas abertas</div><div class="big">${money(purchasesOpen)}</div></div>
+        <h3>
+          Movimentar Estoque
+        </h3>
+
+        <button
+          class="modal-close"
+          data-close-modal="stockModal"
+          type="button"
+        >
+          ×
+        </button>
+
       </div>
 
-      <h3>Produtos mais vendidos</h3>
-      <div class="table-wrap"><table style="min-width:480px"><thead><tr><th>Produto</th><th>Quantidade</th></tr></thead><tbody>
-        ${(r.top || []).map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.qty)}</td></tr>`).join('') || '<tr><td colspan="2" class="muted">Nenhum item no período.</td></tr>'}
-      </tbody></table></div>
 
-      <h3>Clientes com saldo em aberto</h3>
-      <div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Venda</th><th>Total</th><th>Pago</th><th>Saldo</th><th>Ação</th></tr></thead><tbody>
-        ${(r.debts || []).map(x=>`<tr><td>${esc(x.name || 'Sem cliente')}</td><td>#${esc(x.id)}</td><td>${money(x.total)}</td><td>${money(x.paid_amount)}</td><td>${money(x.balance)}</td><td><button onclick="openSalePayment(${Number(x.id)})">Receber</button></td></tr>`).join('') || '<tr><td colspan="6" class="muted">Nenhum cliente em aberto.</td></tr>'}
-      </tbody></table></div>
+      <form id="stockForm">
 
-      <h3>Compras e fornecedores</h3>
-      <div class="table-wrap"><table><thead><tr><th>#</th><th>Data</th><th>Fornecedor</th><th>Total</th><th>Pago</th><th>Saldo</th><th>Status</th></tr></thead><tbody>
-        ${(r.purchases || []).map(p=>{
-          const bal = Number(p.balance || 0);
-          return `<tr><td>#${esc(p.id)}</td><td>${esc(formatDate(p.date))}</td><td>${esc(p.supplier || p.fornecedor || 'Não informado')}</td><td>${money(p.total)}</td><td>${money(p.paid_amount)}</td><td>${money(bal)}</td><td>${bal > .009 ? '<span class="status open">Em aberto</span>' : '<span class="status paid">Paga</span>'}</td></tr>`;
-        }).join('') || '<tr><td colspan="7" class="muted">Nenhuma compra no período.</td></tr>'}
-      </tbody></table></div>
+        <div class="field">
 
-      <h3>Resumo de pagamentos a fornecedores</h3>
-      <div class="summary-box">
-        <div class="summary-item"><span>Compras</span><strong>${money(purchasesTotal)}</strong></div>
-        <div class="summary-item"><span>Pago</span><strong>${money(purchasesPaid)}</strong></div>
-        <div class="summary-item"><span>Em aberto</span><strong>${money(purchasesOpen)}</strong></div>
-        <div class="summary-item"><span>Período</span><strong>${esc(formatDate(from))} a ${esc(formatDate(to))}</strong></div>
+          <label for="stockProduct">
+            Produto
+          </label>
+
+          <select id="stockProduct" required>
+
+            <option value="">
+              Selecione um produto
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <div class="form-grid">
+
+          <div class="field">
+
+            <label for="stockType">
+              Tipo
+            </label>
+
+            <select id="stockType">
+
+              <option value="Entrada">
+                Entrada
+              </option>
+
+              <option value="Saída">
+                Saída
+              </option>
+
+              <option value="Ajuste">
+                Ajuste
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label for="stockQuantity">
+              Quantidade
+            </label>
+
+            <input
+              id="stockQuantity"
+              type="number"
+              min="1"
+              value="1"
+              required
+            >
+
+          </div>
+
+        </div>
+
+
+        <div class="field">
+
+          <label for="stockNote">
+            Observação
+          </label>
+
+          <textarea
+            id="stockNote"
+            rows="3"
+          ></textarea>
+
+        </div>
+
+
+        <div class="modal-actions">
+
+          <button
+            class="btn btn-secondary"
+            data-close-modal="stockModal"
+            type="button"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="btn btn-primary"
+            type="submit"
+          >
+            Salvar Movimentação
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+       MODAL DETALHES
+  ====================================================== -->
+
+  <div
+    id="detailsModal"
+    class="modal hidden"
+  >
+
+    <div class="modal-card modal-large">
+
+      <div class="modal-header">
+
+        <h3 id="detailsModalTitle">
+          Detalhes
+        </h3>
+
+        <button
+          class="modal-close"
+          data-close-modal="detailsModal"
+          type="button"
+        >
+          ×
+        </button>
+
       </div>
-    `;
-  }catch(error){
-    console.error('Erro nos relatórios:',error);
-    $('rr').innerHTML = `<p style="color:var(--danger)">${esc(error.message)}</p>`;
-  }
-}
 
-/* =========================
-   MODAL
-========================= */
 
-function showM(){ $('modal').classList.add('open'); }
-function closeM(){ $('modal').classList.remove('open'); $('mb').innerHTML = ''; }
+      <div id="detailsModalBody"></div>
 
-$('modal').addEventListener('click',event => {
-  if(event.target === $('modal')) closeM();
-});
+    </div>
 
-document.addEventListener('keydown',event => {
-  if(event.key === 'Escape' && $('modal').classList.contains('open')) closeM();
-});
+  </div>
 
-/* =========================
-   INICIALIZAÇÃO
-========================= */
 
-async function initializeApp(){
-  try{
-    $('rf').value = firstDayISO();
-    $('rt').value = todayISO();
-    $('vdu').value = todayISO();
+  <div
+    id="toast"
+    class="toast"
+  ></div>
 
-    await Promise.all([
-      loadProducts(),
-      loadClients(),
-      loadSales(),
-      loadPurchases()
-    ]);
 
-    renderCart();
-    await dash();
-  }catch(error){
-    console.error('Erro ao inicializar o app:',error);
-  }
-}
-
-(async function boot(){
-  const logged = await authCheck();
-  if(logged) await initializeApp();
-})();
-</script>
+  <script src="/app.js"></script>
 
 </body>
 </html>
