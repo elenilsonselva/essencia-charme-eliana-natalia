@@ -1,5729 +1,2899 @@
 const express = require("express");
-const path = require("path");
-const crypto = require("crypto");
 const cookieParser = require("cookie-parser");
-const multer = require("multer");
-const PDFDocument = require("pdfkit");
+const crypto = require("crypto");
 const { Pool } = require("pg");
 
 const app = express();
 
-const PORT = process.env.PORT || 3000;
-const SESSION_DAYS = 7;
+const PORT = process.env.PORT || 10000;
+const DATABASE_URL = process.env.DATABASE_URL;
 
-const VALID_PAYMENTS = [
-  "Dinheiro",
-  "PIX",
-  "Débito",
-  "Crédito",
-  "Fiado"
-];
-
-/* =========================
-   SESSÃO / CONFIGURAÇÕES
-========================= */
-
-const sessions = new Map();
-
-const ADMIN_USER =
-  process.env.ADMIN_USER || "admin";
-
-const ADMIN_PASSWORD =
-  process.env.ADMIN_PASSWORD ||
-  "troque-esta-senha";
-
-if (!process.env.DATABASE_URL) {
-
-  console.error(
-    "ERRO: configure a variável DATABASE_URL com a URL do PostgreSQL."
-  );
-
+if (!DATABASE_URL) {
+  console.error("ERRO: DATABASE_URL não configurada.");
   process.exit(1);
 }
 
-/* =========================
-   BANCO
-========================= */
-
 const pool = new Pool({
-
-  connectionString:
-    process.env.DATABASE_URL,
-
+  connectionString: DATABASE_URL,
   ssl:
     process.env.NODE_ENV === "production"
       ? { rejectUnauthorized: false }
-      : undefined
-
+      : false,
 });
 
-/* =========================
-   UPLOAD
-========================= */
-
-const upload = multer({
-
-  storage:
-    multer.memoryStorage(),
-
-  limits: {
-    fileSize:
-      4 * 1024 * 1024
-  }
-
-});
-
-/* =========================
-   MIDDLEWARES
-========================= */
-
-app.use(
-  express.json({
-    limit: "6mb"
-  })
-);
-
-app.use(
-  express.urlencoded({
-    extended: true
-  })
-);
-
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(express.static("public"));
 
-app.use(
-  express.static(
-    path.join(__dirname, "public")
-  )
-);
+const sessions = new Map();
 
-/* =========================
-   AUTENTICAÇÃO
-========================= */
+const SESSION_DAYS = 7;
+const SESSION_COOKIE = "ec_new_session";
 
-function requireAuth(req, res, next) {
+const ADMIN_USER = process.env.ADMIN_USER || "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
-  const token =
-    req.cookies.ec_session;
-
-  const session =
-    token &&
-    sessions.get(token);
-
-  if (
-    !session ||
-    session.expires < Date.now()
-  ) {
-
-    if (token) {
-      sessions.delete(token);
-    }
-
-    return res
-      .status(401)
-      .json({
-        error:
-          "Não autenticado"
-      });
-
-  }
-
-  next();
-
+function now() {
+  return new Date();
 }
 
-function createSession() {
-
-  const token =
-    crypto.randomBytes(32)
-      .toString("hex");
-
-  sessions.set(
-    token,
-    {
-      expires:
-        Date.now() +
-        SESSION_DAYS *
-        86400000
-    }
-  );
-
-  return token;
-
+function round2(value) {
+  return Math.round((Number(value) || 0) * 100) / 100;
 }
 
-/* =========================
-   UTILITÁRIOS
-========================= */
-
-const money =
-  value =>
-    Number(value || 0)
-      .toFixed(2);
-
-const now =
-  () =>
-    new Date().toISOString();
+function money(value) {
+  return round2(value).toFixed(2);
+}
 
 function num(value) {
-
-  if (
-    value === null ||
-    value === undefined ||
-    value === ""
-  ) {
+  if (value === null || value === undefined || value === "") {
     return 0;
   }
 
-  if (
-    typeof value === "number"
-  ) {
-
-    return Number.isFinite(value)
-      ? value
-      : 0;
-
+  if (typeof value === "number") {
+    return value;
   }
 
-  let s =
-    String(value)
-      .trim()
-      .replace(/R\$|\s/g, "");
+  let text = String(value).trim();
 
-  s =
-    s
-      .replace(
-        /\.(?=\d{3}(?:,|$))/g,
-        ""
-      )
-      .replace(
-        ",",
-        "."
-      );
+  text = text.replace(/\s/g, "");
 
-  s =
-    s.replace(
-      /[^\d.-]/g,
-      ""
-    );
-
-  const n =
-    Number(s);
-
-  return Number.isFinite(n)
-    ? n
-    : 0;
-
-}
-
-const int =
-  value =>
-    Math.trunc(
-      num(value)
-    );
-
-const round2 =
-  value =>
-    Math.round(
-      num(value) * 100
-    ) / 100;
-
-function photoData(file) {
-
-  if (!file) {
-    return null;
+  if (text.includes(",") && text.includes(".")) {
+    text = text.replace(/\./g, "").replace(",", ".");
+  } else if (text.includes(",")) {
+    text = text.replace(",", ".");
   }
 
-  return (
-    `data:${file.mimetype || "image/jpeg"};base64,` +
-    file.buffer.toString("base64")
-  );
+  const result = Number(text);
 
+  return Number.isFinite(result) ? result : 0;
 }
 
-function normalizePayment(value) {
-
-  const p =
-    String(
-      value || "Dinheiro"
-    ).trim();
-
-  return VALID_PAYMENTS.includes(p)
-    ? p
-    : "Dinheiro";
-
-}
-
-function toDate(value) {
-
-  const d =
-    value
-      ? new Date(value)
-      : new Date();
-
-  return Number.isNaN(
-    d.getTime()
-  )
-    ? new Date()
-    : d;
-
+function int(value) {
+  const result = parseInt(value, 10);
+  return Number.isFinite(result) ? result : 0;
 }
 
 function addMonths(date, months) {
-
-  const d =
-    new Date(date);
-
-  const day =
-    d.getDate();
-
-  d.setDate(1);
-
-  d.setMonth(
-    d.getMonth() + months
-  );
-
-  const last =
-    new Date(
-      d.getFullYear(),
-      d.getMonth() + 1,
-      0
-    ).getDate();
-
-  d.setDate(
-    Math.min(
-      day,
-      last
-    )
-  );
-
-  return d;
-
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + months);
+  return result;
 }
 
-async function addColumn(
-  table,
-  definition
-) {
-
-  await pool.query(
-    `ALTER TABLE ${table}
-     ADD COLUMN IF NOT EXISTS ${definition}`
-  );
-
+function dateOnly(date) {
+  const d = new Date(date);
+  return d.toISOString().slice(0, 10);
 }
 
-/* =========================
-   BANCO — INICIALIZAÇÃO
-========================= */
+function createSession(username) {
+  const token = crypto.randomBytes(32).toString("hex");
+
+  sessions.set(token, {
+    username,
+    expiresAt: Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000,
+  });
+
+  return token;
+}
+
+function requireAuth(req, res, next) {
+  const token = req.cookies[SESSION_COOKIE];
+
+  if (!token) {
+    return res.status(401).json({
+      error: "Não autenticado.",
+    });
+  }
+
+  const session = sessions.get(token);
+
+  if (!session) {
+    return res.status(401).json({
+      error: "Sessão inválida.",
+    });
+  }
+
+  if (session.expiresAt < Date.now()) {
+    sessions.delete(token);
+
+    return res.status(401).json({
+      error: "Sessão expirada.",
+    });
+  }
+
+  req.user = session.username;
+
+  next();
+}
+
+async function query(text, params = []) {
+  return pool.query(text, params);
+}
 
 async function initDb() {
-
-  await pool.query(`
-
+  await query(`
     CREATE TABLE IF NOT EXISTS products (
-
       id SERIAL PRIMARY KEY,
-
-      code TEXT UNIQUE,
-
-      name TEXT NOT NULL,
-
-      brand TEXT DEFAULT '',
-
-      size TEXT DEFAULT '',
-
-      cost NUMERIC(12,2)
-        DEFAULT 0,
-
-      price NUMERIC(12,2)
-        DEFAULT 0,
-
-      stock INTEGER
-        DEFAULT 0,
-
-      min_stock INTEGER
-        DEFAULT 1,
-
+      code VARCHAR(100),
+      name VARCHAR(255) NOT NULL,
+      brand VARCHAR(255),
+      size VARCHAR(100),
+      supplier_id INTEGER,
+      cost NUMERIC(12,2) NOT NULL DEFAULT 0,
+      price NUMERIC(12,2) NOT NULL DEFAULT 0,
+      stock INTEGER NOT NULL DEFAULT 0,
+      min_stock INTEGER NOT NULL DEFAULT 0,
       photo TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-      created_at
-        TIMESTAMPTZ
-        DEFAULT NOW()
-
-    );
-
-
+  await query(`
     CREATE TABLE IF NOT EXISTS clients (
-
       id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      phone VARCHAR(100),
+      address TEXT,
+      notes TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-      name TEXT NOT NULL,
-
-      phone TEXT DEFAULT '',
-
-      address TEXT DEFAULT '',
-
-      notes TEXT DEFAULT '',
-
-      created_at
-        TIMESTAMPTZ
-        DEFAULT NOW()
-
-    );
-
-
-    CREATE TABLE IF NOT EXISTS sales (
-
-      id SERIAL PRIMARY KEY,
-
-      client_id INTEGER
-        REFERENCES clients(id)
-        ON DELETE SET NULL,
-
-      date TIMESTAMPTZ
-        NOT NULL
-        DEFAULT NOW(),
-
-      total NUMERIC(12,2)
-        NOT NULL,
-
-      discount NUMERIC(12,2)
-        DEFAULT 0,
-
-      payment TEXT
-        NOT NULL,
-
-      installments INTEGER
-        DEFAULT 1,
-
-      status TEXT
-        DEFAULT 'paid',
-
-      created_at
-        TIMESTAMPTZ
-        DEFAULT NOW()
-
-    );
-
-
-    CREATE TABLE IF NOT EXISTS sale_items (
-
-      id SERIAL PRIMARY KEY,
-
-      sale_id INTEGER
-        REFERENCES sales(id)
-        ON DELETE CASCADE,
-
-      product_id INTEGER
-        REFERENCES products(id)
-        ON DELETE RESTRICT,
-
-      qty INTEGER
-        NOT NULL,
-
-      price NUMERIC(12,2)
-        NOT NULL,
-
-      cost NUMERIC(12,2)
-        DEFAULT 0
-
-    );
-
-
-    CREATE TABLE IF NOT EXISTS stock_moves (
-
-      id SERIAL PRIMARY KEY,
-
-      product_id INTEGER
-        REFERENCES products(id)
-        ON DELETE CASCADE,
-
-      qty INTEGER
-        NOT NULL,
-
-      type TEXT
-        NOT NULL,
-
-      note TEXT
-        DEFAULT '',
-
-      date TIMESTAMPTZ
-        DEFAULT NOW()
-
-    );
-
-
+  await query(`
     CREATE TABLE IF NOT EXISTS suppliers (
-
       id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      phone VARCHAR(100),
+      whatsapp VARCHAR(100),
+      document VARCHAR(100),
+      address TEXT,
+      notes TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-      name TEXT NOT NULL,
-
-      phone TEXT DEFAULT '',
-
-      notes TEXT DEFAULT '',
-
-      created_at
-        TIMESTAMPTZ
-        DEFAULT NOW()
-
-    );
-
-
-    CREATE TABLE IF NOT EXISTS purchases (
-
+  await query(`
+    CREATE TABLE IF NOT EXISTS sales (
       id SERIAL PRIMARY KEY,
+      client_id INTEGER,
+      sale_date DATE NOT NULL DEFAULT CURRENT_DATE,
+      subtotal NUMERIC(12,2) NOT NULL DEFAULT 0,
+      discount NUMERIC(12,2) NOT NULL DEFAULT 0,
+      total NUMERIC(12,2) NOT NULL DEFAULT 0,
+      entry NUMERIC(12,2) NOT NULL DEFAULT 0,
+      paid_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+      balance NUMERIC(12,2) NOT NULL DEFAULT 0,
+      payment VARCHAR(50),
+      installments INTEGER NOT NULL DEFAULT 1,
+      status VARCHAR(30) NOT NULL DEFAULT 'Pendente',
+      notes TEXT,
+      cancelled_at TIMESTAMP,
+      cancelled_reason TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-      supplier TEXT DEFAULT '',
-
-      date TIMESTAMPTZ
-        NOT NULL
-        DEFAULT NOW(),
-
-      total NUMERIC(12,2)
-        NOT NULL
-        DEFAULT 0,
-
-      entry NUMERIC(12,2)
-        DEFAULT 0,
-
-      paid_amount NUMERIC(12,2)
-        DEFAULT 0,
-
-      balance NUMERIC(12,2)
-        DEFAULT 0,
-
-      installments INTEGER
-        DEFAULT 1,
-
-      payment TEXT
-        DEFAULT 'Dinheiro',
-
-      status TEXT
-        DEFAULT 'open',
-
-      notes TEXT
-        DEFAULT '',
-
-      created_at
-        TIMESTAMPTZ
-        DEFAULT NOW()
-
-    );
-
-
-    CREATE TABLE IF NOT EXISTS purchase_payments (
-
+  await query(`
+    CREATE TABLE IF NOT EXISTS sale_items (
       id SERIAL PRIMARY KEY,
+      sale_id INTEGER NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
+      product_id INTEGER NOT NULL REFERENCES products(id),
+      quantity INTEGER NOT NULL,
+      price NUMERIC(12,2) NOT NULL DEFAULT 0,
+      cost NUMERIC(12,2) NOT NULL DEFAULT 0
+    )
+  `);
 
-      purchase_id INTEGER
-        REFERENCES purchases(id)
-        ON DELETE CASCADE,
-
-      amount NUMERIC(12,2)
-        NOT NULL,
-
-      payment TEXT
-        NOT NULL,
-
-      paid_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
-      note TEXT
-        DEFAULT ''
-
-    );
-
-
+  await query(`
     CREATE TABLE IF NOT EXISTS sale_installments (
-
       id SERIAL PRIMARY KEY,
+      sale_id INTEGER NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
+      installment_no INTEGER NOT NULL,
+      due_date DATE NOT NULL,
+      amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+      paid_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+      status VARCHAR(30) NOT NULL DEFAULT 'Pendente',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-      sale_id INTEGER
-        REFERENCES sales(id)
-        ON DELETE CASCADE,
-
-      installment_no INTEGER
-        NOT NULL,
-
-      due_date DATE
-        NOT NULL,
-
-      amount NUMERIC(12,2)
-        NOT NULL,
-
-      paid_amount NUMERIC(12,2)
-        NOT NULL
-        DEFAULT 0,
-
-      status TEXT
-        NOT NULL
-        DEFAULT 'open',
-
-      created_at
-        TIMESTAMPTZ
-        DEFAULT NOW()
-
-    );
-
-
+  await query(`
     CREATE TABLE IF NOT EXISTS sale_payments (
-
       id SERIAL PRIMARY KEY,
-
-      sale_id INTEGER
-        REFERENCES sales(id)
-        ON DELETE CASCADE,
-
-      installment_id INTEGER
-        REFERENCES sale_installments(id)
-        ON DELETE SET NULL,
-
-      amount NUMERIC(12,2)
-        NOT NULL,
-
-      payment TEXT
-        NOT NULL,
-
-      paid_at TIMESTAMPTZ
-        DEFAULT NOW(),
-
+      sale_id INTEGER NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
+      installment_id INTEGER REFERENCES sale_installments(id) ON DELETE SET NULL,
+      amount NUMERIC(12,2) NOT NULL,
+      payment VARCHAR(50),
+      paid_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       note TEXT
-        DEFAULT ''
-
-    );
-
-
-    CREATE INDEX IF NOT EXISTS
-      idx_sales_date
-      ON sales(date);
-
-
-    CREATE INDEX IF NOT EXISTS
-      idx_sale_items_sale
-      ON sale_items(sale_id);
-
-
-    CREATE INDEX IF NOT EXISTS
-      idx_sale_inst_sale
-      ON sale_installments(sale_id);
-
-
-    CREATE INDEX IF NOT EXISTS
-      idx_sale_payments_sale
-      ON sale_payments(sale_id);
-
-
-    CREATE INDEX IF NOT EXISTS
-      idx_purchase_date
-      ON purchases(date);
-
+    )
   `);
 
-  /* =========================
-     MIGRAÇÕES — VENDAS
-  ========================= */
-
-  await addColumn(
-    "sales",
-    "entry NUMERIC(12,2) DEFAULT 0"
-  );
-
-  await addColumn(
-    "sales",
-    "paid_amount NUMERIC(12,2) DEFAULT 0"
-  );
-
-  await addColumn(
-    "sales",
-    "balance NUMERIC(12,2) DEFAULT 0"
-  );
-
-  await addColumn(
-    "sales",
-    "cancelled_at TIMESTAMPTZ"
-  );
-
-  await addColumn(
-    "sales",
-    "cancelled_reason TEXT DEFAULT ''"
-  );
-
-
-  /* =========================
-     MIGRAÇÕES — COMPRAS
-  ========================= */
-
-  await addColumn(
-    "purchases",
-    "supplier TEXT DEFAULT ''"
-  );
-
-  await addColumn(
-    "purchases",
-    "entry NUMERIC(12,2) DEFAULT 0"
-  );
-
-  await addColumn(
-    "purchases",
-    "paid_amount NUMERIC(12,2) DEFAULT 0"
-  );
-
-  await addColumn(
-    "purchases",
-    "balance NUMERIC(12,2) DEFAULT 0"
-  );
-
-  await addColumn(
-    "purchases",
-    "installments INTEGER DEFAULT 1"
-  );
-
-  await addColumn(
-    "purchases",
-    "payment TEXT DEFAULT 'Dinheiro'"
-  );
-
-  await addColumn(
-    "purchases",
-    "status TEXT DEFAULT 'open'"
-  );
-
-  await addColumn(
-    "purchases",
-    "notes TEXT DEFAULT ''"
-  );
-
-
-  /* =========================
-     CORREÇÃO DAS VENDAS ANTIGAS
-  ========================= */
-
-  await pool.query(`
-
-    UPDATE sales
-
-    SET
-
-      discount =
-        COALESCE(
-          discount,
-          0
-        ),
-
-      entry =
-        CASE
-
-          WHEN
-            COALESCE(entry,0) = 0
-            AND status = 'paid'
-
-          THEN total
-
-          ELSE
-            COALESCE(entry,0)
-
-        END
-
-    WHERE total IS NOT NULL
-
+  await query(`
+    CREATE TABLE IF NOT EXISTS purchases (
+      id SERIAL PRIMARY KEY,
+      supplier_id INTEGER,
+      purchase_date DATE NOT NULL DEFAULT CURRENT_DATE,
+      subtotal NUMERIC(12,2) NOT NULL DEFAULT 0,
+      total NUMERIC(12,2) NOT NULL DEFAULT 0,
+      entry NUMERIC(12,2) NOT NULL DEFAULT 0,
+      paid_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+      balance NUMERIC(12,2) NOT NULL DEFAULT 0,
+      installments INTEGER NOT NULL DEFAULT 1,
+      payment VARCHAR(50),
+      status VARCHAR(30) NOT NULL DEFAULT 'Pendente',
+      notes TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
   `);
 
-
-  await pool.query(`
-
-    UPDATE sales
-
-    SET
-
-      paid_amount =
-        CASE
-
-          WHEN status = 'paid'
-          THEN total
-
-          WHEN
-            COALESCE(paid_amount,0) = 0
-          THEN
-            COALESCE(entry,0)
-
-          ELSE
-            paid_amount
-
-        END,
-
-      balance =
-        GREATEST(
-
-          total -
-
-          CASE
-
-            WHEN status = 'paid'
-            THEN total
-
-            WHEN
-              COALESCE(paid_amount,0) = 0
-
-            THEN
-              COALESCE(entry,0)
-
-            ELSE
-              paid_amount
-
-          END,
-
-          0
-
-        ),
-
-      installments =
-        GREATEST(
-          COALESCE(
-            installments,
-            1
-          ),
-          1
-        )
-
-    WHERE total IS NOT NULL
-
+  await query(`
+    CREATE TABLE IF NOT EXISTS purchase_items (
+      id SERIAL PRIMARY KEY,
+      purchase_id INTEGER NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
+      product_id INTEGER NOT NULL REFERENCES products(id),
+      quantity INTEGER NOT NULL,
+      cost NUMERIC(12,2) NOT NULL DEFAULT 0
+    )
   `);
 
-
-  /* =========================
-     CORREÇÃO DAS COMPRAS ANTIGAS
-  ========================= */
-
-  await pool.query(`
-
-    UPDATE purchases
-
-    SET
-
-      entry =
-        COALESCE(
-          entry,
-          0
-        ),
-
-      paid_amount =
-        CASE
-
-          WHEN
-            status = 'paid'
-            AND COALESCE(
-              paid_amount,
-              0
-            ) = 0
-
-          THEN total
-
-          ELSE
-            COALESCE(
-              paid_amount,
-              0
-            )
-
-        END,
-
-      balance =
-        GREATEST(
-
-          total -
-
-          CASE
-
-            WHEN
-              status = 'paid'
-              AND COALESCE(
-                paid_amount,
-                0
-              ) = 0
-
-            THEN total
-
-            ELSE
-              COALESCE(
-                paid_amount,
-                0
-              )
-
-          END,
-
-          0
-
-        ),
-
-      installments =
-        GREATEST(
-          COALESCE(
-            installments,
-            1
-          ),
-          1
-        ),
-
-      payment =
-        COALESCE(
-          NULLIF(
-            payment,
-            ''
-          ),
-          'Dinheiro'
-        )
-
+  await query(`
+    CREATE TABLE IF NOT EXISTS purchase_installments (
+      id SERIAL PRIMARY KEY,
+      purchase_id INTEGER NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
+      installment_no INTEGER NOT NULL,
+      due_date DATE NOT NULL,
+      amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+      paid_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+      status VARCHAR(30) NOT NULL DEFAULT 'Pendente',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
   `);
 
+  await query(`
+    CREATE TABLE IF NOT EXISTS purchase_payments (
+      id SERIAL PRIMARY KEY,
+      purchase_id INTEGER NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
+      installment_id INTEGER REFERENCES purchase_installments(id) ON DELETE SET NULL,
+      amount NUMERIC(12,2) NOT NULL,
+      payment VARCHAR(50),
+      paid_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      note TEXT
+    )
+  `);
 
-  /* =========================
-     CRIA PARCELA PARA VENDAS ANTIGAS
-     QUE AINDA NÃO POSSUEM PARCELAS
-  ========================= */
+  await query(`
+    CREATE TABLE IF NOT EXISTS stock_moves (
+      id SERIAL PRIMARY KEY,
+      product_id INTEGER NOT NULL REFERENCES products(id),
+      quantity INTEGER NOT NULL,
+      type VARCHAR(30) NOT NULL,
+      note TEXT,
+      reference_id INTEGER,
+      movement_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 
-  const missingInstallments =
-    await pool.query(`
+  await query(`
+    CREATE TABLE IF NOT EXISTS sessions (
+      id SERIAL PRIMARY KEY,
+      token VARCHAR(255) UNIQUE NOT NULL,
+      username VARCHAR(255) NOT NULL,
+      expires_at TIMESTAMP NOT NULL
+    )
+  `);
 
-      SELECT
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_sales_date
+    ON sales(sale_date)
+  `);
 
-        s.id,
-        s.date,
-        s.total,
-        s.entry,
-        s.paid_amount,
-        s.balance,
-        s.status
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_sale_items_sale
+    ON sale_items(sale_id)
+  `);
 
-      FROM sales s
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_sale_installments_sale
+    ON sale_installments(sale_id)
+  `);
 
-      LEFT JOIN
-        sale_installments si
-        ON si.sale_id = s.id
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_purchase_installments_purchase
+    ON purchase_installments(purchase_id)
+  `);
 
-      WHERE
-        si.id IS NULL
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_purchase_items_purchase
+    ON purchase_items(purchase_id)
+  `);
 
-        AND s.status <> 'cancelled'
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_stock_moves_product
+    ON stock_moves(product_id)
+  `);
 
-    `);
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_purchases_date
+    ON purchases(purchase_date)
+  `);
 
-
-  for (
-    const s
-    of missingInstallments.rows
-  ) {
-
-    const paid =
-      num(
-        s.paid_amount
-      );
-
-    const openBalance =
-      num(
-        s.balance
-      );
-
-    const amount =
-      openBalance > 0
-        ? openBalance
-        : num(s.total);
-
-
-    await pool.query(`
-
-      INSERT INTO sale_installments(
-
-        sale_id,
-        installment_no,
-        due_date,
-        amount,
-        paid_amount,
-        status
-
-      )
-
-      VALUES(
-        $1,
-        1,
-        $2,
-        $3,
-        $4,
-        $5
-      )
-
-    `, [
-
-      s.id,
-
-      toDate(
-        s.date
-      )
-        .toISOString()
-        .slice(
-          0,
-          10
-        ),
-
-      amount,
-
-      openBalance > 0
-        ? 0
-        : amount,
-
-      openBalance > 0
-        ? "open"
-        : "paid"
-
-    ]);
-
-
-    if (
-      openBalance <= 0 &&
-      paid < num(s.total)
-    ) {
-
-      await pool.query(`
-
-        UPDATE sales
-
-        SET
-
-          paid_amount = total,
-
-          balance = 0,
-
-          status = 'paid'
-
-        WHERE id=$1
-
-      `, [s.id]);
-
-    }
-
-  }
-
+  console.log("Banco de dados inicializado.");
 }
 
-/* =========================
-   LOGIN
-========================= */
+/* =========================================================
+   AUTH
+========================================================= */
 
-app.post(
-  "/api/login",
-  (req, res) => {
+app.post("/api/login", (req, res) => {
+  const username = String(req.body.username || "").trim();
+  const password = String(req.body.password || "");
 
-    const {
-      username,
-      password
-    } = req.body || {};
-
-
-    if (
-      username === ADMIN_USER &&
-      password === ADMIN_PASSWORD
-    ) {
-
-      const token =
-        createSession();
-
-
-      res.cookie(
-        "ec_session",
-        token,
-        {
-
-          httpOnly: true,
-
-          secure:
-            process.env.NODE_ENV ===
-            "production",
-
-          sameSite: "lax",
-
-          maxAge:
-            SESSION_DAYS *
-            86400000
-
-        }
-      );
-
-
-      return res.json({
-
-        ok: true,
-
-        username:
-          ADMIN_USER
-
-      });
-
-    }
-
-
-    res
-      .status(401)
-      .json({
-
-        error:
-          "Usuário ou senha inválidos"
-
-      });
-
+  if (
+    username !== ADMIN_USER ||
+    password !== ADMIN_PASSWORD
+  ) {
+    return res.status(401).json({
+      error: "Usuário ou senha inválidos.",
+    });
   }
-);
 
+  const token = createSession(username);
 
-/* =========================
-   LOGOUT
-========================= */
+  res.cookie(SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: SESSION_DAYS * 24 * 60 * 60 * 1000,
+  });
 
-app.post(
-  "/api/logout",
-  (req, res) => {
+  res.json({
+    ok: true,
+    username,
+  });
+});
 
-    const token =
-      req.cookies.ec_session;
+app.post("/api/logout", (req, res) => {
+  const token = req.cookies[SESSION_COOKIE];
 
-    if (token) {
+  if (token) {
+    sessions.delete(token);
+  }
+
+  res.clearCookie(SESSION_COOKIE);
+
+  res.json({
+    ok: true,
+  });
+});
+
+app.get("/api/me", (req, res) => {
+  const token = req.cookies[SESSION_COOKIE];
+
+  if (!token) {
+    return res.json({
+      authenticated: false,
+    });
+  }
+
+  const session = sessions.get(token);
+
+  if (!session || session.expiresAt < Date.now()) {
+    if (session) {
       sessions.delete(token);
     }
 
-    res.clearCookie(
-      "ec_session"
+    return res.json({
+      authenticated: false,
+    });
+  }
+
+  res.json({
+    authenticated: true,
+    username: session.username,
+  });
+});
+
+/* =========================================================
+   HEALTH
+========================================================= */
+
+app.get("/api/health", async (req, res) => {
+  try {
+    await query("SELECT 1");
+
+    res.json({
+      ok: true,
+      database: true,
+    });
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      database: false,
+      error: error.message,
+    });
+  }
+});
+
+/* =========================================================
+   SUPPLIERS
+========================================================= */
+
+app.get("/api/suppliers", requireAuth, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT *
+      FROM suppliers
+      ORDER BY name
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao buscar fornecedores.",
+    });
+  }
+});
+
+app.post("/api/suppliers", requireAuth, async (req, res) => {
+  try {
+    const {
+      name,
+      phone,
+      whatsapp,
+      document,
+      address,
+      notes,
+    } = req.body;
+
+    if (!String(name || "").trim()) {
+      return res.status(400).json({
+        error: "Informe o nome do fornecedor.",
+      });
+    }
+
+    const result = await query(
+      `
+      INSERT INTO suppliers
+      (name, phone, whatsapp, document, address, notes)
+      VALUES ($1,$2,$3,$4,$5,$6)
+      RETURNING *
+      `,
+      [
+        String(name).trim(),
+        phone || null,
+        whatsapp || null,
+        document || null,
+        address || null,
+        notes || null,
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao cadastrar fornecedor.",
+    });
+  }
+});
+
+app.put("/api/suppliers/:id", requireAuth, async (req, res) => {
+  try {
+    const id = int(req.params.id);
+
+    const {
+      name,
+      phone,
+      whatsapp,
+      document,
+      address,
+      notes,
+    } = req.body;
+
+    const result = await query(
+      `
+      UPDATE suppliers
+      SET
+        name=$1,
+        phone=$2,
+        whatsapp=$3,
+        document=$4,
+        address=$5,
+        notes=$6
+      WHERE id=$7
+      RETURNING *
+      `,
+      [
+        String(name || "").trim(),
+        phone || null,
+        whatsapp || null,
+        document || null,
+        address || null,
+        notes || null,
+        id,
+      ]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        error: "Fornecedor não encontrado.",
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao atualizar fornecedor.",
+    });
+  }
+});
+
+app.delete("/api/suppliers/:id", requireAuth, async (req, res) => {
+  try {
+    const id = int(req.params.id);
+
+    const products = await query(
+      `
+      SELECT COUNT(*)::int AS total
+      FROM products
+      WHERE supplier_id=$1
+      `,
+      [id]
+    );
+
+    const purchases = await query(
+      `
+      SELECT COUNT(*)::int AS total
+      FROM purchases
+      WHERE supplier_id=$1
+      `,
+      [id]
+    );
+
+    if (
+      products.rows[0].total > 0 ||
+      purchases.rows[0].total > 0
+    ) {
+      return res.status(400).json({
+        error:
+          "Este fornecedor possui produtos ou compras vinculados e não pode ser excluído.",
+      });
+    }
+
+    await query(
+      `DELETE FROM suppliers WHERE id=$1`,
+      [id]
     );
 
     res.json({
-      ok: true
+      ok: true,
     });
-
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao excluir fornecedor.",
+    });
   }
-);
+});
 
+/* =========================================================
+   PRODUCTS
+========================================================= */
 
-/* =========================
-   ME
-========================= */
+app.get("/api/products", requireAuth, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT
+        p.*,
+        s.name AS supplier_name
+      FROM products p
+      LEFT JOIN suppliers s
+        ON s.id = p.supplier_id
+      ORDER BY p.name
+    `);
 
-app.get(
-  "/api/me",
-  (req, res) => {
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao buscar produtos.",
+    });
+  }
+});
 
-    const token =
-      req.cookies.ec_session;
+app.post("/api/products", requireAuth, async (req, res) => {
+  try {
+    const {
+      code,
+      name,
+      brand,
+      size,
+      supplier_id,
+      cost,
+      price,
+      stock,
+      min_stock,
+      photo,
+    } = req.body;
 
-    const session =
-      token &&
-      sessions.get(token);
+    if (!String(name || "").trim()) {
+      return res.status(400).json({
+        error: "Informe o nome do produto.",
+      });
+    }
 
-    const authenticated =
-      !!(
-        session &&
-        session.expires >
-        Date.now()
-      );
+    const result = await query(
+      `
+      INSERT INTO products
+      (
+        code,
+        name,
+        brand,
+        size,
+        supplier_id,
+        cost,
+        price,
+        stock,
+        min_stock,
+        photo
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      RETURNING *
+      `,
+      [
+        code || null,
+        String(name).trim(),
+        brand || null,
+        size || null,
+        supplier_id ? int(supplier_id) : null,
+        num(cost),
+        num(price),
+        int(stock),
+        int(min_stock),
+        photo || null,
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao cadastrar produto.",
+    });
+  }
+});
+
+app.put("/api/products/:id", requireAuth, async (req, res) => {
+  try {
+    const id = int(req.params.id);
+
+    const {
+      code,
+      name,
+      brand,
+      size,
+      supplier_id,
+      cost,
+      price,
+      stock,
+      min_stock,
+      photo,
+    } = req.body;
+
+    if (!String(name || "").trim()) {
+      return res.status(400).json({
+        error: "Informe o nome do produto.",
+      });
+    }
+
+    const result = await query(
+      `
+      UPDATE products
+      SET
+        code=$1,
+        name=$2,
+        brand=$3,
+        size=$4,
+        supplier_id=$5,
+        cost=$6,
+        price=$7,
+        stock=$8,
+        min_stock=$9,
+        photo=$10
+      WHERE id=$11
+      RETURNING *
+      `,
+      [
+        code || null,
+        String(name).trim(),
+        brand || null,
+        size || null,
+        supplier_id ? int(supplier_id) : null,
+        num(cost),
+        num(price),
+        int(stock),
+        int(min_stock),
+        photo || null,
+        id,
+      ]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        error: "Produto não encontrado.",
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao atualizar produto.",
+    });
+  }
+});
+
+app.delete("/api/products/:id", requireAuth, async (req, res) => {
+  try {
+    const id = int(req.params.id);
+
+    const used = await query(
+      `
+      SELECT
+        (SELECT COUNT(*) FROM sale_items WHERE product_id=$1) AS sales,
+        (SELECT COUNT(*) FROM purchase_items WHERE product_id=$1) AS purchases,
+        (SELECT COUNT(*) FROM stock_moves WHERE product_id=$1) AS stock_moves
+      `,
+      [id]
+    );
+
+    const row = used.rows[0];
+
+    if (
+      Number(row.sales) > 0 ||
+      Number(row.purchases) > 0 ||
+      Number(row.stock_moves) > 0
+    ) {
+      return res.status(400).json({
+        error:
+          "Este produto já possui movimentações e não pode ser excluído.",
+      });
+    }
+
+    await query(
+      `DELETE FROM products WHERE id=$1`,
+      [id]
+    );
 
     res.json({
-
-      authenticated,
-
-      username:
-        authenticated
-          ? ADMIN_USER
-          : null
-
+      ok: true,
     });
-
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao excluir produto.",
+    });
   }
-);
+});
 
+/* =========================================================
+   CLIENTS
+========================================================= */
 
-/* =========================
-   HEALTH
-========================= */
+app.get("/api/clients", requireAuth, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT *
+      FROM clients
+      ORDER BY name
+    `);
 
-app.get(
-  "/api/health",
-  async (req, res) => {
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao buscar clientes.",
+    });
+  }
+});
 
-    try {
+app.post("/api/clients", requireAuth, async (req, res) => {
+  try {
+    const {
+      name,
+      phone,
+      address,
+      notes,
+    } = req.body;
 
-      await pool.query(
-        "SELECT 1"
+    if (!String(name || "").trim()) {
+      return res.status(400).json({
+        error: "Informe o nome do cliente.",
+      });
+    }
+
+    const result = await query(
+      `
+      INSERT INTO clients
+      (name, phone, address, notes)
+      VALUES ($1,$2,$3,$4)
+      RETURNING *
+      `,
+      [
+        String(name).trim(),
+        phone || null,
+        address || null,
+        notes || null,
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao cadastrar cliente.",
+    });
+  }
+});
+
+app.put("/api/clients/:id", requireAuth, async (req, res) => {
+  try {
+    const id = int(req.params.id);
+
+    const {
+      name,
+      phone,
+      address,
+      notes,
+    } = req.body;
+
+    const result = await query(
+      `
+      UPDATE clients
+      SET
+        name=$1,
+        phone=$2,
+        address=$3,
+        notes=$4
+      WHERE id=$5
+      RETURNING *
+      `,
+      [
+        String(name || "").trim(),
+        phone || null,
+        address || null,
+        notes || null,
+        id,
+      ]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        error: "Cliente não encontrado.",
+      });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao atualizar cliente.",
+    });
+  }
+});
+
+app.delete("/api/clients/:id", requireAuth, async (req, res) => {
+  try {
+    const id = int(req.params.id);
+
+    const sales = await query(
+      `
+      SELECT COUNT(*)::int AS total
+      FROM sales
+      WHERE client_id=$1
+      `,
+      [id]
+    );
+
+    if (sales.rows[0].total > 0) {
+      return res.status(400).json({
+        error:
+          "Este cliente possui vendas vinculadas e não pode ser excluído.",
+      });
+    }
+
+    await query(
+      `DELETE FROM clients WHERE id=$1`,
+      [id]
+    );
+
+    res.json({
+      ok: true,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao excluir cliente.",
+    });
+  }
+});
+
+/* =========================================================
+   STOCK
+========================================================= */
+
+app.post("/api/stock", requireAuth, async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const productId = int(req.body.product_id);
+    const quantity = int(req.body.quantity);
+    const type = String(req.body.type || "").trim();
+    const note = req.body.note || null;
+
+    if (!productId || !quantity || quantity === 0) {
+      throw new Error("Produto e quantidade são obrigatórios.");
+    }
+
+    const allowed = [
+      "Entrada",
+      "Saída",
+      "Ajuste",
+    ];
+
+    if (!allowed.includes(type)) {
+      throw new Error("Tipo de movimentação inválido.");
+    }
+
+    const productResult = await client.query(
+      `
+      SELECT *
+      FROM products
+      WHERE id=$1
+      FOR UPDATE
+      `,
+      [productId]
+    );
+
+    if (!productResult.rows.length) {
+      throw new Error("Produto não encontrado.");
+    }
+
+    let delta = quantity;
+
+    if (type === "Saída") {
+      delta = -Math.abs(quantity);
+    }
+
+    if (type === "Entrada") {
+      delta = Math.abs(quantity);
+    }
+
+    const newStock =
+      int(productResult.rows[0].stock) + delta;
+
+    if (newStock < 0) {
+      throw new Error(
+        "Estoque insuficiente para esta movimentação."
       );
-
-      res.json({
-
-        ok: true,
-
-        app:
-          "Essência & Charme"
-
-      });
-
-    } catch (error) {
-
-      res
-        .status(500)
-        .json({
-
-          ok: false,
-
-          error:
-            error.message
-
-        });
-
     }
 
+    await client.query(
+      `
+      UPDATE products
+      SET stock=$1
+      WHERE id=$2
+      `,
+      [newStock, productId]
+    );
+
+    await client.query(
+      `
+      INSERT INTO stock_moves
+      (product_id, quantity, type, note)
+      VALUES ($1,$2,$3,$4)
+      `,
+      [
+        productId,
+        delta,
+        type,
+        note,
+      ]
+    );
+
+    await client.query("COMMIT");
+
+    res.json({
+      ok: true,
+      stock: newStock,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    console.error(error);
+
+    res.status(400).json({
+      error: error.message,
+    });
+  } finally {
+    client.release();
   }
-);
+});
 
+app.get("/api/stock/moves", requireAuth, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT
+        sm.*,
+        p.name AS product_name
+      FROM stock_moves sm
+      JOIN products p
+        ON p.id = sm.product_id
+      ORDER BY sm.movement_date DESC, sm.id DESC
+    `);
 
-/* =========================
-   DASHBOARD
-========================= */
-
-app.get(
-  "/api/dashboard",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const daily =
-        await pool.query(`
-
-          SELECT
-
-            COALESCE(
-              SUM(total),
-              0
-            ) total,
-
-            COUNT(*)::int
-            count
-
-          FROM sales
-
-          WHERE
-            date::date =
-            CURRENT_DATE
-
-            AND status <>
-            'cancelled'
-
-        `);
-
-
-      const monthly =
-        await pool.query(`
-
-          SELECT
-
-            COALESCE(
-              SUM(total),
-              0
-            ) total
-
-          FROM sales
-
-          WHERE
-
-            date >=
-              date_trunc(
-                'month',
-                CURRENT_DATE
-              )
-
-            AND status <>
-              'cancelled'
-
-        `);
-
-
-      const low =
-        await pool.query(`
-
-          SELECT
-            COUNT(*)::int c
-
-          FROM products
-
-          WHERE
-            stock <= min_stock
-
-        `);
-
-
-      const receivable =
-        await pool.query(`
-
-          SELECT
-
-            COALESCE(
-              SUM(balance),
-              0
-            ) v,
-
-            COUNT(*)::int c
-
-          FROM sales
-
-          WHERE
-
-            status = 'open'
-
-            AND balance > 0
-
-        `);
-
-
-      const payable =
-        await pool.query(`
-
-          SELECT
-
-            COALESCE(
-              SUM(balance),
-              0
-            ) v,
-
-            COUNT(*)::int c
-
-          FROM purchases
-
-          WHERE
-
-            status = 'open'
-
-            AND balance > 0
-
-        `);
-
-
-      res.json({
-
-        today:
-          daily.rows[0],
-
-        month:
-          monthly.rows[0],
-
-        low:
-          low.rows[0].c,
-
-        debt:
-          receivable.rows[0],
-
-        receivables:
-          receivable.rows[0],
-
-        payables:
-          payable.rows[0]
-
-      });
-
-    } catch (error) {
-
-      res
-        .status(500)
-        .json({
-
-          error:
-            "Erro ao carregar dashboard.",
-
-          detail:
-            error.message
-
-        });
-
-    }
-
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Erro ao buscar movimentações.",
+    });
   }
-);
+});
 
+/* =========================================================
+   SALES
+========================================================= */
 
-/* =========================
-   PRODUTOS
-========================= */
-
-app.get(
-  "/api/products",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const result =
-        await pool.query(`
-
-          SELECT *
-
-          FROM products
-
-          ORDER BY name
-
-        `);
-
-
-      res.json(
-        result.rows
-      );
-
-    } catch (error) {
-
-      res
-        .status(500)
-        .json({
-          error:
-            error.message
-        });
-
-    }
-
-  }
-);
-
-
-app.post(
-  "/api/products",
-  upload.single("photo"),
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const data =
-        req.body;
-
-
-      const result =
-        await pool.query(`
-
-          INSERT INTO products(
-
-            code,
-            name,
-            brand,
-            size,
-            cost,
-            price,
-            stock,
-            min_stock,
-            photo
-
-          )
-
-          VALUES(
-            $1,$2,$3,$4,$5,
-            $6,$7,$8,$9
-          )
-
-          RETURNING id
-
-        `, [
-
-          data.code || null,
-
-          data.name,
-
-          data.brand || "",
-
-          data.size || "",
-
-          round2(
-            data.cost
-          ),
-
-          round2(
-            data.price
-          ),
-
-          int(
-            data.stock
-          ),
-
-          Math.max(
-            int(data.min_stock) ||
-            1,
-            0
-          ),
-
-          photoData(
-            req.file
-          )
-
-        ]);
-
-
-      res.json({
-
-        id:
-          result.rows[0].id
-
-      });
-
-    } catch (error) {
-
-      res
-        .status(400)
-        .json({
-          error:
-            error.message
-        });
-
-    }
-
-  }
-);
-
-
-app.put(
-  "/api/products/:id",
-  upload.single("photo"),
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const old =
-        await pool.query(`
-
-          SELECT photo
-
-          FROM products
-
-          WHERE id=$1
-
-        `, [
-          req.params.id
-        ]);
-
-
-      if (!old.rows.length) {
-
-        return res
-          .status(404)
-          .json({
-
-            error:
-              "Produto não encontrado"
-
-          });
-
-      }
-
-
-      const data =
-        req.body;
-
-
-      await pool.query(`
-
-        UPDATE products
-
-        SET
-
-          code=$1,
-
-          name=$2,
-
-          brand=$3,
-
-          size=$4,
-
-          cost=$5,
-
-          price=$6,
-
-          stock=$7,
-
-          min_stock=$8,
-
-          photo=$9
-
-        WHERE id=$10
-
-      `, [
-
-        data.code || null,
-
-        data.name,
-
-        data.brand || "",
-
-        data.size || "",
-
-        round2(
-          data.cost
-        ),
-
-        round2(
-          data.price
-        ),
-
-        int(
-          data.stock
-        ),
-
-        Math.max(
-          int(data.min_stock) ||
-          1,
-          0
-        ),
-
-        photoData(
-          req.file
-        ) ||
-        old.rows[0].photo,
-
-        req.params.id
-
-      ]);
-
-
-      res.json({
-        ok: true
-      });
-
-    } catch (error) {
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            error.message
-
-        });
-
-    }
-
-  }
-);
-
-
-app.delete(
-  "/api/products/:id",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      await pool.query(`
-
-        DELETE FROM products
-
-        WHERE id=$1
-
-      `, [
-        req.params.id
-      ]);
-
-
-      res.json({
-        ok: true
-      });
-
-    } catch (error) {
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            "Não foi possível excluir. Verifique se o produto já foi vendido."
-
-        });
-
-    }
-
-  }
-);
-
-
-/* =========================
-   CLIENTES
-========================= */
-
-app.get(
-  "/api/clients",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const result =
-        await pool.query(`
-
-          SELECT *
-
-          FROM clients
-
-          ORDER BY name
-
-        `);
-
-
-      res.json(
-        result.rows
-      );
-
-    } catch (error) {
-
-      res
-        .status(500)
-        .json({
-          error:
-            error.message
-        });
-
-    }
-
-  }
-);
-
-
-app.post(
-  "/api/clients",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const d =
-        req.body || {};
-
-
-      if (!d.name) {
-
-        return res
-          .status(400)
-          .json({
-
-            error:
-              "Informe o nome do cliente"
-
-          });
-
-      }
-
-
-      const result =
-        await pool.query(`
-
-          INSERT INTO clients(
-
-            name,
-            phone,
-            address,
-            notes
-
-          )
-
-          VALUES(
-            $1,$2,$3,$4
-          )
-
-          RETURNING id
-
-        `, [
-
-          d.name,
-
-          d.phone || "",
-
-          d.address || "",
-
-          d.notes || ""
-
-        ]);
-
-
-      res.json({
-
-        id:
-          result.rows[0].id
-
-      });
-
-    } catch (error) {
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            error.message
-
-        });
-
-    }
-
-  }
-);
-
-
-app.put(
-  "/api/clients/:id",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const d =
-        req.body || {};
-
-
-      await pool.query(`
-
-        UPDATE clients
-
-        SET
-
-          name=$1,
-
-          phone=$2,
-
-          address=$3,
-
-          notes=$4
-
-        WHERE id=$5
-
-      `, [
-
-        d.name,
-
-        d.phone || "",
-
-        d.address || "",
-
-        d.notes || "",
-
-        req.params.id
-
-      ]);
-
-
-      res.json({
-        ok: true
-      });
-
-    } catch (error) {
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            error.message
-
-        });
-
-    }
-
-  }
-);
-
-
-app.delete(
-  "/api/clients/:id",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      await pool.query(`
-
-        DELETE FROM clients
-
-        WHERE id=$1
-
-      `, [
-        req.params.id
-      ]);
-
-
-      res.json({
-        ok: true
-      });
-
-    } catch (error) {
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            "Não foi possível excluir este cliente."
-
-        });
-
-    }
-
-  }
-);
-
-
-/* =========================
-   FORNECEDORES
-========================= */
-
-app.get(
-  "/api/suppliers",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const r =
-        await pool.query(`
-
-          SELECT *
-
-          FROM suppliers
-
-          ORDER BY name
-
-        `);
-
-
-      res.json(
-        r.rows
-      );
-
-    } catch (error) {
-
-      res
-        .status(500)
-        .json({
-
-          error:
-            error.message
-
-        });
-
-    }
-
-  }
-);
-
-
-app.post(
-  "/api/suppliers",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const d =
-        req.body || {};
-
-
-      if (!d.name) {
-
-        return res
-          .status(400)
-          .json({
-
-            error:
-              "Informe o nome do fornecedor"
-
-          });
-
-      }
-
-
-      const r =
-        await pool.query(`
-
-          INSERT INTO suppliers(
-
-            name,
-            phone,
-            notes
-
-          )
-
-          VALUES(
-            $1,$2,$3
-          )
-
-          RETURNING id
-
-        `, [
-
-          d.name,
-
-          d.phone || "",
-
-          d.notes || ""
-
-        ]);
-
-
-      res.json({
-
-        id:
-          r.rows[0].id
-
-      });
-
-    } catch (error) {
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            error.message
-
-        });
-
-    }
-
-  }
-);
-
-
-/* =========================
-   VENDAS — LISTA
-========================= */
-
-app.get(
-  "/api/sales",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const result =
-        await pool.query(`
-
-          SELECT
-
-            s.*,
-
-            c.name client,
-
-            COALESCE(
-              s.entry,
-              0
-            ) AS entry,
-
-            COALESCE(
-              s.paid_amount,
-              0
-            ) AS paid_amount,
-
-            GREATEST(
-
-              COALESCE(
-                s.total,
-                0
-              )
-              -
-              COALESCE(
-                s.paid_amount,
-                0
-              ),
-
-              0
-
-            ) AS balance
-
-          FROM sales s
-
-          LEFT JOIN clients c
-            ON c.id = s.client_id
-
-          ORDER BY
-            s.id DESC
-
-          LIMIT 500
-
-        `);
-
-
-      res.json(
-        result.rows
-      );
-
-    } catch (error) {
-
-      res
-        .status(500)
-        .json({
-
-          error:
-            error.message
-
-        });
-
-    }
-
-  }
-);
-
-
-/* =========================
-   DETALHE DA VENDA
-========================= */
-
-app.get(
-  "/api/sales/:id",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const sale =
-        (
-          await pool.query(`
-
-            SELECT
-
-              s.*,
-
-              c.name client,
-
-              c.phone
-
-            FROM sales s
-
-            LEFT JOIN clients c
-              ON c.id =
-                s.client_id
-
-            WHERE s.id=$1
-
-          `, [
-            req.params.id
-          ])
-        )
-        .rows[0];
-
-
-      if (!sale) {
-
-        return res
-          .status(404)
-          .json({
-
-            error:
-              "Venda não encontrada"
-
-          });
-
-      }
-
-
-      const items =
-        (
-          await pool.query(`
-
-            SELECT
-
-              si.*,
-
-              p.name,
-
-              p.brand,
-
-              p.size
-
-            FROM sale_items si
-
-            JOIN products p
-              ON p.id =
-                si.product_id
-
-            WHERE
-              si.sale_id=$1
-
-            ORDER BY si.id
-
-          `, [
-            req.params.id
-          ])
-        )
-        .rows;
-
-
-      const installments =
-        (
-          await pool.query(`
-
-            SELECT *
-
-            FROM sale_installments
-
-            WHERE
-              sale_id=$1
-
-            ORDER BY
-              installment_no
-
-          `, [
-            req.params.id
-          ])
-        )
-        .rows;
-
-
-      const payments =
-        (
-          await pool.query(`
-
-            SELECT *
-
-            FROM sale_payments
-
-            WHERE
-              sale_id=$1
-
-            ORDER BY
-              paid_at,
-              id
-
-          `, [
-            req.params.id
-          ])
-        )
-        .rows;
-
-
-      res.json({
-
-        sale,
-
-        items,
-
-        installments,
-
-        payments
-
-      });
-
-    } catch (error) {
-
-      res
-        .status(500)
-        .json({
-
-          error:
-            error.message
-
-        });
-
-    }
-
-  }
-);
-
-
-/* =========================
-   CRIA PARCELAS
-========================= */
-
-async function createInstallments(
-
+async function createSaleInstallments(
   client,
   saleId,
   balance,
-  count,
+  installments,
   firstDueDate
-
 ) {
+  const count = Math.max(1, int(installments));
+  const total = round2(balance);
 
-  const totalCents =
-    Math.round(
-      round2(balance) *
-      100
-    );
-
-  const n =
-    Math.max(
-      1,
-      int(count) || 1
-    );
-
-  const base =
-    Math.floor(
-      totalCents / n
-    );
-
-  const remainder =
-    totalCents -
-    base * n;
-
-  const start =
-    toDate(
-      firstDueDate
-    );
-
-
-  for (
-    let i = 1;
-    i <= n;
-    i++
-  ) {
-
-    const cents =
-      base +
-      (
-        i <= remainder
-          ? 1
-          : 0
-      );
-
-
-    if (
-      cents <= 0
-    ) {
-      continue;
-    }
-
-
-    const due =
-      addMonths(
-        start,
-        i - 1
-      )
-        .toISOString()
-        .slice(
-          0,
-          10
-        );
-
-
-    await client.query(`
-
-      INSERT INTO sale_installments(
-
-        sale_id,
-
-        installment_no,
-
-        due_date,
-
-        amount,
-
-        paid_amount,
-
-        status
-
-      )
-
-      VALUES(
-        $1,
-        $2,
-        $3,
-        $4,
-        0,
-        'open'
-      )
-
-    `, [
-
-      saleId,
-
-      i,
-
-      due,
-
-      cents / 100
-
-    ]);
-
+  if (total <= 0) {
+    return;
   }
 
+  const baseAmount = round2(total / count);
+
+  let accumulated = 0;
+
+  for (let i = 1; i <= count; i++) {
+    let amount = baseAmount;
+
+    if (i === count) {
+      amount = round2(total - accumulated);
+    }
+
+    accumulated = round2(accumulated + amount);
+
+    const dueDate = new Date(firstDueDate);
+
+    dueDate.setMonth(
+      dueDate.getMonth() + (i - 1)
+    );
+
+    await client.query(
+      `
+      INSERT INTO sale_installments
+      (
+        sale_id,
+        installment_no,
+        due_date,
+        amount,
+        paid_amount,
+        status
+      )
+      VALUES ($1,$2,$3,$4,0,'Pendente')
+      `,
+      [
+        saleId,
+        i,
+        dateOnly(dueDate),
+        amount,
+      ]
+    );
+  }
 }
 
-
-/* =========================
-   NOVA VENDA
-========================= */
-
-app.post(
-  "/api/sales",
-  requireAuth,
-  async (req, res) => {
-
-    const d =
-      req.body || {};
-
-    const clientId =
-      d.client_id ||
-      null;
-
-    const items =
-      d.items;
-
-    const payment =
-      normalizePayment(
-        d.payment
-      );
-
-    const discount =
-      Math.max(
-        0,
-        round2(
-          d.discount
-        )
-      );
-
-    const installments =
-      Math.max(
-        1,
-        int(
-          d.installments
-        ) || 1
-      );
-
-    const entry =
-      Math.max(
-        0,
-        round2(
-          d.entry
-        )
-      );
-
-
-    if (
-      !Array.isArray(
-        items
-      ) ||
-      !items.length
-    ) {
-
-      return res
-        .status(400)
-        .json({
-
-          error:
-            "Venda sem produtos"
-
-        });
-
-    }
-
-
-    if (
-      payment === "Fiado" &&
-      !clientId
-    ) {
-
-      return res
-        .status(400)
-        .json({
-
-          error:
-            "Selecione o cliente para venda fiada"
-
-        });
-
-    }
-
-
-    const connection =
-      await pool.connect();
-
-
-    try {
-
-      await connection.query(
-        "BEGIN"
-      );
-
-
-      let subtotal =
-        0;
-
-      const checked =
-        [];
-
-
-      for (
-        const item
-        of items
-      ) {
-
-        const product =
-          (
-            await connection.query(`
-
-              SELECT *
-
-              FROM products
-
-              WHERE id=$1
-
-              FOR UPDATE
-
-            `, [
-              item.product_id
-            ])
-          )
-          .rows[0];
-
-
-        if (!product) {
-
-          throw new Error(
-            "Produto não encontrado"
-          );
-
-        }
-
-
-        const qty =
-          int(
-            item.qty
-          );
-
-
-        if (
-          qty < 1
-        ) {
-
-          throw new Error(
-            "Quantidade inválida"
-          );
-
-        }
-
-
-        if (
-          Number(
-            product.stock
-          ) < qty
-        ) {
-
-          throw new Error(
-            `Estoque insuficiente: ${product.name}`
-          );
-
-        }
-
-
-        subtotal +=
-          Number(
-            product.price
-          ) *
-          qty;
-
-
-        checked.push({
-
-          product,
-
-          qty
-
-        });
-
-      }
-
-
-      const total =
-        Math.max(
-
-          0,
-
-          round2(
-            subtotal -
-            discount
-          )
-
-        );
-
-
-      if (
-        entry > total
-      ) {
-
-        throw new Error(
-          "A entrada não pode ser maior que o total da venda"
-        );
-
-      }
-
-
-      const balance =
-        round2(
-          total -
-          entry
-        );
-
-
-      const status =
-        balance <= 0
-          ? "paid"
-          : "open";
-
-
-      const sale =
-        (
-          await connection.query(`
-
-            INSERT INTO sales(
-
-              client_id,
-
-              total,
-
-              discount,
-
-              payment,
-
-              installments,
-
-              status,
-
-              entry,
-
-              paid_amount,
-
-              balance
-
-            )
-
-            VALUES(
-
-              $1,
-              $2,
-              $3,
-              $4,
-              $5,
-              $6,
-              $7,
-              $7,
-              $8
-
-            )
-
-            RETURNING id
-
-          `, [
-
-            clientId,
-
-            total,
-
-            discount,
-
-            payment,
-
-            installments,
-
-            status,
-
-            entry,
-
-            balance
-
-          ])
-        )
-        .rows[0];
-
-
-      for (
-        const {
-          product,
-          qty
-        } of checked
-      ) {
-
-        await connection.query(`
-
-          INSERT INTO sale_items(
-
-            sale_id,
-
-            product_id,
-
-            qty,
-
-            price,
-
-            cost
-
-          )
-
-          VALUES(
-            $1,
-            $2,
-            $3,
-            $4,
-            $5
-          )
-
-        `, [
-
-          sale.id,
-
-          product.id,
-
-          qty,
-
-          product.price,
-
-          product.cost
-
-        ]);
-
-
-        await connection.query(`
-
-          UPDATE products
-
-          SET stock =
-            stock - $1
-
-          WHERE id=$2
-
-        `, [
-
-          qty,
-
-          product.id
-
-        ]);
-
-
-        await connection.query(`
-
-          INSERT INTO stock_moves(
-
-            product_id,
-
-            qty,
-
-            type,
-
-            note
-
-          )
-
-          VALUES(
-
-            $1,
-
-            $2,
-
-            'SAIDA',
-
-            $3
-
-          )
-
-        `, [
-
-          product.id,
-
-          -qty,
-
-          `Venda #${sale.id}`
-
-        ]);
-
-      }
-
-
-      if (
-        balance > 0
-      ) {
-
-        await createInstallments(
-
-          connection,
-
-          sale.id,
-
-          balance,
-
-          installments,
-
-          d.first_due_date ||
-          now()
-
-        );
-
-      }
-
-
-      if (
-        entry > 0
-      ) {
-
-        await connection.query(`
-
-          INSERT INTO sale_payments(
-
-            sale_id,
-
-            installment_id,
-
-            amount,
-
-            payment,
-
-            note
-
-          )
-
-          VALUES(
-
-            $1,
-
-            NULL,
-
-            $2,
-
-            $3,
-
-            $4
-
-          )
-
-        `, [
-
-          sale.id,
-
-          entry,
-
-          payment,
-
-          "Entrada"
-
-        ]);
-
-      }
-
-
-      await connection.query(
-        "COMMIT"
-      );
-
-
-      res.json({
-
-        id:
-          sale.id,
-
-        total,
-
-        entry,
-
-        paid_amount:
-          entry,
-
-        balance,
-
-        status
-
-      });
-
-    } catch (error) {
-
-      await connection.query(
-        "ROLLBACK"
-      );
-
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            error.message
-
-        });
-
-    } finally {
-
-      connection.release();
-
-    }
-
+app.get("/api/sales", requireAuth, async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT
+        s.*,
+        c.name AS client_name
+      FROM sales s
+      LEFT JOIN clients c
+        ON c.id = s.client_id
+      ORDER BY s.id DESC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: "Erro ao buscar vendas.",
+    });
   }
-);
+});
 
+app.get("/api/sales/:id", requireAuth, async (req, res) => {
+  try {
+    const id = int(req.params.id);
 
-/* =========================
-   PARCELAS
-========================= */
+    const sale = await query(
+      `
+      SELECT
+        s.*,
+        c.name AS client_name,
+        c.phone AS client_phone
+      FROM sales s
+      LEFT JOIN clients c
+        ON c.id=s.client_id
+      WHERE s.id=$1
+      `,
+      [id]
+    );
+
+    if (!sale.rows.length) {
+      return res.status(404).json({
+        error: "Venda não encontrada.",
+      });
+    }
+
+    const items = await query(
+      `
+      SELECT
+        si.*,
+        p.name AS product_name,
+        p.code AS product_code
+      FROM sale_items si
+      JOIN products p
+        ON p.id=si.product_id
+      WHERE si.sale_id=$1
+      ORDER BY si.id
+      `,
+      [id]
+    );
+
+    const installments = await query(
+      `
+      SELECT *
+      FROM sale_installments
+      WHERE sale_id=$1
+      ORDER BY installment_no
+      `,
+      [id]
+    );
+
+    const payments = await query(
+      `
+      SELECT *
+      FROM sale_payments
+      WHERE sale_id=$1
+      ORDER BY paid_at DESC, id DESC
+      `,
+      [id]
+    );
+
+    res.json({
+      sale: sale.rows[0],
+      items: items.rows,
+      installments: installments.rows,
+      payments: payments.rows,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      error: "Erro ao buscar detalhes da venda.",
+    });
+  }
+});
+
+app.post("/api/sales", requireAuth, async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const {
+      client_id,
+      discount,
+      payment,
+      installments,
+      entry,
+      first_due_date,
+      notes,
+      items,
+    } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      throw new Error(
+        "Adicione pelo menos um produto à venda."
+      );
+    }
+
+    let subtotal = 0;
+
+    const preparedItems = [];
+
+    for (const item of items) {
+      const productId = int(item.product_id);
+      const quantity = int(item.quantity);
+
+      if (!productId || quantity <= 0) {
+        throw new Error(
+          "Produto ou quantidade inválida."
+        );
+      }
+
+      const productResult = await client.query(
+        `
+        SELECT *
+        FROM products
+        WHERE id=$1
+        FOR UPDATE
+        `,
+        [productId]
+      );
+
+      if (!productResult.rows.length) {
+        throw new Error(
+          "Produto não encontrado."
+        );
+      }
+
+      const product = productResult.rows[0];
+
+      if (int(product.stock) < quantity) {
+        throw new Error(
+          `Estoque insuficiente para ${product.name}.`
+        );
+      }
+
+      const price = round2(
+        item.price !== undefined
+          ? num(item.price)
+          : num(product.price)
+      );
+
+      const cost = round2(product.cost);
+
+      const lineTotal = round2(
+        price * quantity
+      );
+
+      subtotal = round2(
+        subtotal + lineTotal
+      );
+
+      preparedItems.push({
+        productId,
+        quantity,
+        price,
+        cost,
+      });
+    }
+
+    const discountValue = Math.max(
+      0,
+      num(discount)
+    );
+
+    const total = Math.max(
+      0,
+      round2(subtotal - discountValue)
+    );
+
+    const entryValue = Math.max(
+      0,
+      Math.min(num(entry), total)
+    );
+
+    const balance = round2(
+      total - entryValue
+    );
+
+    let status = "Pendente";
+
+    if (balance <= 0) {
+      status = "Pago";
+    } else if (entryValue > 0) {
+      status = "Parcial";
+    }
+
+    const saleResult = await client.query(
+      `
+      INSERT INTO sales
+      (
+        client_id,
+        subtotal,
+        discount,
+        total,
+        entry,
+        paid_amount,
+        balance,
+        payment,
+        installments,
+        status,
+        notes
+      )
+      VALUES
+      ($1,$2,$3,$4,$5,$5,$6,$7,$8,$9,$10)
+      RETURNING *
+      `,
+      [
+        client_id ? int(client_id) : null,
+        subtotal,
+        discountValue,
+        total,
+        entryValue,
+        balance,
+        payment || null,
+        Math.max(1, int(installments)),
+        status,
+        notes || null,
+      ]
+    );
+
+    const sale = saleResult.rows[0];
+
+    for (const item of preparedItems) {
+      await client.query(
+        `
+        INSERT INTO sale_items
+        (
+          sale_id,
+          product_id,
+          quantity,
+          price,
+          cost
+        )
+        VALUES ($1,$2,$3,$4,$5)
+        `,
+        [
+          sale.id,
+          item.productId,
+          item.quantity,
+          item.price,
+          item.cost,
+        ]
+      );
+
+      await client.query(
+        `
+        UPDATE products
+        SET stock = stock - $1
+        WHERE id=$2
+        `,
+        [
+          item.quantity,
+          item.productId,
+        ]
+      );
+
+      await client.query(
+        `
+        INSERT INTO stock_moves
+        (
+          product_id,
+          quantity,
+          type,
+          note,
+          reference_id
+        )
+        VALUES ($1,$2,'Saída',$3,$4)
+        `,
+        [
+          item.productId,
+          -item.quantity,
+          `Venda #${sale.id}`,
+          sale.id,
+        ]
+      );
+    }
+
+    if (entryValue > 0) {
+      await client.query(
+        `
+        INSERT INTO sale_payments
+        (
+          sale_id,
+          installment_id,
+          amount,
+          payment,
+          note
+        )
+        VALUES ($1,NULL,$2,$3,'Entrada da venda')
+        `,
+        [
+          sale.id,
+          entryValue,
+          payment || null,
+        ]
+      );
+    }
+
+    if (balance > 0) {
+      await createSaleInstallments(
+        client,
+        sale.id,
+        balance,
+        installments,
+        first_due_date || dateOnly(addMonths(now(), 1))
+      );
+    }
+
+    await client.query("COMMIT");
+
+    res.status(201).json({
+      ok: true,
+      sale_id: sale.id,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    console.error(error);
+
+    res.status(400).json({
+      error: error.message,
+    });
+  } finally {
+    client.release();
+  }
+});
 
 app.get(
   "/api/sales/:id/installments",
   requireAuth,
   async (req, res) => {
-
     try {
+      const id = int(req.params.id);
 
-      const r =
-        await pool.query(`
-
-          SELECT *
-
-          FROM sale_installments
-
-          WHERE
-            sale_id=$1
-
-          ORDER BY
-            installment_no
-
-        `, [
-          req.params.id
-        ]);
-
-
-      res.json(
-        r.rows
+      const result = await query(
+        `
+        SELECT *
+        FROM sale_installments
+        WHERE sale_id=$1
+        ORDER BY installment_no
+        `,
+        [id]
       );
 
+      res.json(result.rows);
     } catch (error) {
+      console.error(error);
 
-      res
-        .status(500)
-        .json({
-
-          error:
-            error.message
-
-        });
-
+      res.status(500).json({
+        error: "Erro ao buscar parcelas.",
+      });
     }
-
   }
 );
-
-
-/* =========================
-   PAGAMENTOS
-========================= */
 
 app.get(
   "/api/sales/:id/payments",
   requireAuth,
   async (req, res) => {
-
     try {
+      const id = int(req.params.id);
 
-      const r =
-        await pool.query(`
-
-          SELECT *
-
-          FROM sale_payments
-
-          WHERE
-            sale_id=$1
-
-          ORDER BY
-            paid_at,
-            id
-
-        `, [
-          req.params.id
-        ]);
-
-
-      res.json(
-        r.rows
+      const result = await query(
+        `
+        SELECT *
+        FROM sale_payments
+        WHERE sale_id=$1
+        ORDER BY paid_at DESC, id DESC
+        `,
+        [id]
       );
 
+      res.json(result.rows);
     } catch (error) {
+      console.error(error);
 
-      res
-        .status(500)
-        .json({
-
-          error:
-            error.message
-
-        });
-
+      res.status(500).json({
+        error: "Erro ao buscar pagamentos.",
+      });
     }
-
   }
 );
-
-
-/* =========================
-   RECEBIMENTO PARCIAL
-========================= */
 
 app.post(
   "/api/sales/:id/pay",
   requireAuth,
   async (req, res) => {
-
-    const amount =
-      round2(
-        req.body.amount ??
-        req.body.value ??
-        0
-      );
-
-    const payment =
-      normalizePayment(
-        req.body.payment
-      );
-
-
-    if (
-      amount <= 0
-    ) {
-
-      return res
-        .status(400)
-        .json({
-
-          error:
-            "Informe um valor de pagamento válido"
-
-        });
-
-    }
-
-
-    const connection =
-      await pool.connect();
-
+    const client = await pool.connect();
 
     try {
+      await client.query("BEGIN");
 
-      await connection.query(
-        "BEGIN"
+      const saleId = int(req.params.id);
+      const amount = num(req.body.amount);
+      const payment = req.body.payment || null;
+      const installmentId = req.body.installment_id
+        ? int(req.body.installment_id)
+        : null;
+      const note = req.body.note || null;
+
+      if (amount <= 0) {
+        throw new Error(
+          "Informe um valor de pagamento válido."
+        );
+      }
+
+      const saleResult = await client.query(
+        `
+        SELECT *
+        FROM sales
+        WHERE id=$1
+        FOR UPDATE
+        `,
+        [saleId]
       );
 
+      if (!saleResult.rows.length) {
+        throw new Error(
+          "Venda não encontrada."
+        );
+      }
 
-      const sale =
-        (
-          await connection.query(`
+      const sale = saleResult.rows[0];
 
+      if (num(sale.balance) <= 0) {
+        throw new Error(
+          "Esta venda já está totalmente paga."
+        );
+      }
+
+      const paymentAmount = Math.min(
+        amount,
+        num(sale.balance)
+      );
+
+      let targetInstallment = null;
+
+      if (installmentId) {
+        const installmentResult =
+          await client.query(
+            `
             SELECT *
-
-            FROM sales
-
-            WHERE id=$1
-
-            FOR UPDATE
-
-          `, [
-            req.params.id
-          ])
-        )
-        .rows[0];
-
-
-      if (!sale) {
-
-        throw new Error(
-          "Venda não encontrada"
-        );
-
-      }
-
-
-      if (
-        sale.status ===
-        "cancelled"
-      ) {
-
-        throw new Error(
-          "Venda cancelada"
-        );
-
-      }
-
-
-      const currentBalance =
-        round2(
-
-          Number(
-            sale.total
-          ) -
-
-          Number(
-            sale.paid_amount ||
-            0
-          )
-
-        );
-
-
-      if (
-        currentBalance <= 0
-      ) {
-
-        throw new Error(
-          "Venda já está quitada"
-        );
-
-      }
-
-
-      if (
-        amount >
-        currentBalance +
-        0.01
-      ) {
-
-        throw new Error(
-
-          `Pagamento maior que o saldo. Saldo: R$ ${money(currentBalance).replace(".", ",")}`
-
-        );
-
-      }
-
-
-      let remaining =
-        amount;
-
-
-      const insts =
-        (
-          await connection.query(`
-
-            SELECT *
-
             FROM sale_installments
-
-            WHERE
-
-              sale_id=$1
-
-              AND status <> 'paid'
-
-            ORDER BY
-              installment_no
-
+            WHERE id=$1
+              AND sale_id=$2
             FOR UPDATE
+            `,
+            [
+              installmentId,
+              saleId,
+            ]
+          );
 
-          `, [
-            req.params.id
-          ])
-        )
-        .rows;
+        if (!installmentResult.rows.length) {
+          throw new Error(
+            "Parcela não encontrada."
+          );
+        }
 
+        targetInstallment =
+          installmentResult.rows[0];
+      } else {
+        const installmentResult =
+          await client.query(
+            `
+            SELECT *
+            FROM sale_installments
+            WHERE sale_id=$1
+              AND paid_amount < amount
+            ORDER BY installment_no
+            LIMIT 1
+            FOR UPDATE
+            `,
+            [saleId]
+          );
 
-      if (
-        !insts.length
-      ) {
-
-        await connection.query(`
-
-          INSERT INTO sale_installments(
-
-            sale_id,
-
-            installment_no,
-
-            due_date,
-
-            amount,
-
-            paid_amount,
-
-            status
-
-          )
-
-          VALUES(
-
-            $1,
-
-            1,
-
-            CURRENT_DATE,
-
-            $2,
-
-            0,
-
-            'open'
-
-          )
-
-        `, [
-
-          req.params.id,
-
-          currentBalance
-
-        ]);
-
-
-        insts.push(
-
-          (
-            await connection.query(`
-
-              SELECT *
-
-              FROM sale_installments
-
-              WHERE
-                sale_id=$1
-
-              ORDER BY
-                installment_no DESC
-
-              LIMIT 1
-
-            `, [
-              req.params.id
-            ])
-          )
-          .rows[0]
-
-        );
-
+        if (installmentResult.rows.length) {
+          targetInstallment =
+            installmentResult.rows[0];
+        }
       }
 
+      await client.query(
+        `
+        INSERT INTO sale_payments
+        (
+          sale_id,
+          installment_id,
+          amount,
+          payment,
+          note
+        )
+        VALUES ($1,$2,$3,$4,$5)
+        `,
+        [
+          saleId,
+          targetInstallment
+            ? targetInstallment.id
+            : null,
+          paymentAmount,
+          payment,
+          note,
+        ]
+      );
 
-      for (
-        const inst
-        of insts
-      ) {
-
-        if (
-          remaining <=
-          0.009
-        ) {
-          break;
-        }
-
-
-        const openInst =
-          round2(
-
-            Number(
-              inst.amount
-            ) -
-
-            Number(
-              inst.paid_amount ||
-              0
-            )
-
-          );
-
-
-        if (
-          openInst <= 0
-        ) {
-          continue;
-        }
-
-
-        const applied =
-          Math.min(
-            remaining,
-            openInst
-          );
-
-
-        const newPaid =
-          round2(
-
-            Number(
-              inst.paid_amount ||
-              0
-            ) +
-            applied
-
-          );
-
+      if (targetInstallment) {
+        const newPaid = round2(
+          num(targetInstallment.paid_amount) +
+            paymentAmount
+        );
 
         const newStatus =
-          newPaid +
-          0.009 >=
-          Number(
-            inst.amount
-          )
-            ? "paid"
-            : "partial";
+          newPaid >= num(targetInstallment.amount)
+            ? "Pago"
+            : newPaid > 0
+            ? "Parcial"
+            : "Pendente";
 
-
-        await connection.query(`
-
+        await client.query(
+          `
           UPDATE sale_installments
-
           SET
-
             paid_amount=$1,
-
             status=$2
-
           WHERE id=$3
-
-        `, [
-
-          newPaid,
-
-          newStatus,
-
-          inst.id
-
-        ]);
-
-
-        await connection.query(`
-
-          INSERT INTO sale_payments(
-
-            sale_id,
-
-            installment_id,
-
-            amount,
-
-            payment,
-
-            note
-
-          )
-
-          VALUES(
-
-            $1,
-
-            $2,
-
-            $3,
-
-            $4,
-
-            $5
-
-          )
-
-        `, [
-
-          req.params.id,
-
-          inst.id,
-
-          applied,
-
-          payment,
-
-          req.body.note ||
-          "Pagamento parcial"
-
-        ]);
-
-
-        remaining =
-          round2(
-            remaining -
-            applied
-          );
-
+          `,
+          [
+            Math.min(
+              newPaid,
+              num(targetInstallment.amount)
+            ),
+            newStatus,
+            targetInstallment.id,
+          ]
+        );
       }
 
+      const newPaidAmount = Math.min(
+        num(sale.paid_amount) +
+          paymentAmount,
+        num(sale.total)
+      );
 
-      const newPaidTotal =
+      const newBalance = Math.max(
+        0,
         round2(
-
-          Number(
-            sale.paid_amount ||
-            0
-          ) +
-          amount
-
-        );
-
-
-      const newBalance =
-        Math.max(
-
-          0,
-
-          round2(
-
-            Number(
-              sale.total
-            ) -
-            newPaidTotal
-
-          )
-
-        );
-
+          num(sale.total) -
+            newPaidAmount
+        )
+      );
 
       const newStatus =
-        newBalance <=
-        0.009
-          ? "paid"
-          : "open";
+        newBalance <= 0
+          ? "Pago"
+          : newPaidAmount > 0
+          ? "Parcial"
+          : "Pendente";
 
-
-      await connection.query(`
-
+      await client.query(
+        `
         UPDATE sales
-
         SET
-
           paid_amount=$1,
-
           balance=$2,
-
           status=$3
-
         WHERE id=$4
-
-      `, [
-
-        newPaidTotal,
-
-        newBalance,
-
-        newStatus,
-
-        req.params.id
-
-      ]);
-
-
-      await connection.query(
-        "COMMIT"
+        `,
+        [
+          newPaidAmount,
+          newBalance,
+          newStatus,
+          saleId,
+        ]
       );
 
+      await client.query("COMMIT");
 
       res.json({
-
-        ok:
-          true,
-
-        paid_amount:
-          newPaidTotal,
-
-        balance:
-          newBalance,
-
-        status:
-          newStatus
-
+        ok: true,
+        paid_amount: newPaidAmount,
+        balance: newBalance,
+        status: newStatus,
       });
-
     } catch (error) {
+      await client.query("ROLLBACK");
 
-      await connection.query(
-        "ROLLBACK"
-      );
+      console.error(error);
 
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            error.message
-
-        });
-
+      res.status(400).json({
+        error: error.message,
+      });
     } finally {
-
-      connection.release();
-
+      client.release();
     }
-
   }
 );
-
-
-/* =========================
-   CANCELAR / EXCLUIR VENDA
-   RESTAURA ESTOQUE
-========================= */
 
 app.delete(
   "/api/sales/:id",
   requireAuth,
   async (req, res) => {
-
-    const connection =
-      await pool.connect();
-
+    const client = await pool.connect();
 
     try {
+      await client.query("BEGIN");
 
-      await connection.query(
-        "BEGIN"
+      const saleId = int(req.params.id);
+
+      const saleResult = await client.query(
+        `
+        SELECT *
+        FROM sales
+        WHERE id=$1
+        FOR UPDATE
+        `,
+        [saleId]
       );
 
-
-      const sale =
-        (
-          await connection.query(`
-
-            SELECT *
-
-            FROM sales
-
-            WHERE id=$1
-
-            FOR UPDATE
-
-          `, [
-            req.params.id
-          ])
-        )
-        .rows[0];
-
-
-      if (!sale) {
-
+      if (!saleResult.rows.length) {
         throw new Error(
-          "Venda não encontrada"
+          "Venda não encontrada."
         );
-
       }
 
+      const sale = saleResult.rows[0];
 
-      if (
-        sale.status ===
-        "cancelled"
-      ) {
-
+      if (sale.cancelled_at) {
         throw new Error(
-          "Venda já está cancelada"
+          "Esta venda já foi cancelada."
         );
-
       }
 
+      const itemsResult = await client.query(
+        `
+        SELECT *
+        FROM sale_items
+        WHERE sale_id=$1
+        `,
+        [saleId]
+      );
 
-      const items =
-        (
-          await connection.query(`
-
-            SELECT *
-
-            FROM sale_items
-
-            WHERE sale_id=$1
-
-          `, [
-            sale.id
-          ])
-        )
-        .rows;
-
-
-      for (
-        const item
-        of items
-      ) {
-
-        await connection.query(`
-
+      for (const item of itemsResult.rows) {
+        await client.query(
+          `
           UPDATE products
-
-          SET stock =
-            stock + $1
-
+          SET stock=stock+$1
           WHERE id=$2
+          `,
+          [
+            int(item.quantity),
+            int(item.product_id),
+          ]
+        );
 
-        `, [
-
-          item.qty,
-
-          item.product_id
-
-        ]);
-
-
-        await connection.query(`
-
-          INSERT INTO stock_moves(
-
+        await client.query(
+          `
+          INSERT INTO stock_moves
+          (
             product_id,
-
-            qty,
-
+            quantity,
             type,
-
-            note
-
+            note,
+            reference_id
           )
-
-          VALUES(
-
-            $1,
-
-            $2,
-
-            'ENTRADA',
-
-            $3
-
-          )
-
-        `, [
-
-          item.product_id,
-
-          item.qty,
-
-          `Estorno da venda #${sale.id}`
-
-        ]);
-
+          VALUES
+          ($1,$2,'Entrada',$3,$4)
+          `,
+          [
+            int(item.product_id),
+            int(item.quantity),
+            `Cancelamento da venda #${saleId}`,
+            saleId,
+          ]
+        );
       }
 
-
-      await connection.query(`
-
+      await client.query(
+        `
         UPDATE sales
-
         SET
-
-          status='cancelled',
-
-          cancelled_at=NOW(),
-
-          cancelled_reason=$1,
-
-          balance=0
-
+          status='Cancelada',
+          cancelled_at=CURRENT_TIMESTAMP,
+          cancelled_reason=$1
         WHERE id=$2
-
-      `, [
-
-        req.body.reason ||
-        "Venda excluída/cancelada",
-
-        sale.id
-
-      ]);
-
-
-      await connection.query(
-        "COMMIT"
+        `,
+        [
+          req.body.reason ||
+            "Venda cancelada.",
+          saleId,
+        ]
       );
 
+      await client.query("COMMIT");
 
       res.json({
-        ok: true
+        ok: true,
       });
-
     } catch (error) {
+      await client.query("ROLLBACK");
 
-      await connection.query(
-        "ROLLBACK"
-      );
+      console.error(error);
 
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            error.message
-
-        });
-
-    } finally {
-
-      connection.release();
-
-    }
-
-  }
-);
-
-
-/* =========================
-   ESTOQUE
-========================= */
-
-app.post(
-  "/api/stock",
-  requireAuth,
-  async (req, res) => {
-
-    const productId =
-      req.body.product_id;
-
-    const quantity =
-      int(
-        req.body.qty
-      );
-
-    const type =
-      req.body.type;
-
-
-    if (
-      quantity < 1
-    ) {
-
-      return res
-        .status(400)
-        .json({
-
-          error:
-            "Quantidade inválida"
-
-        });
-
-    }
-
-
-    if (
-      ![
-        "ENTRADA",
-        "SAIDA"
-      ].includes(type)
-    ) {
-
-      return res
-        .status(400)
-        .json({
-
-          error:
-            "Tipo de movimentação inválido"
-
-        });
-
-    }
-
-
-    const connection =
-      await pool.connect();
-
-
-    try {
-
-      await connection.query(
-        "BEGIN"
-      );
-
-
-      const product =
-        (
-          await connection.query(`
-
-            SELECT stock
-
-            FROM products
-
-            WHERE id=$1
-
-            FOR UPDATE
-
-          `, [
-            productId
-          ])
-        )
-        .rows[0];
-
-
-      if (!product) {
-
-        throw new Error(
-          "Produto não encontrado"
-        );
-
-      }
-
-
-      if (
-        type === "SAIDA" &&
-        Number(
-          product.stock
-        ) < quantity
-      ) {
-
-        throw new Error(
-          "Estoque insuficiente"
-        );
-
-      }
-
-
-      const delta =
-        type === "ENTRADA"
-          ? quantity
-          : -quantity;
-
-
-      await connection.query(`
-
-        UPDATE products
-
-        SET stock =
-          stock + $1
-
-        WHERE id=$2
-
-      `, [
-
-        delta,
-
-        productId
-
-      ]);
-
-
-      await connection.query(`
-
-        INSERT INTO stock_moves(
-
-          product_id,
-
-          qty,
-
-          type,
-
-          note
-
-        )
-
-        VALUES(
-          $1,
-          $2,
-          $3,
-          $4
-        )
-
-      `, [
-
-        productId,
-
-        delta,
-
-        type,
-
-        req.body.note ||
-        "Ajuste"
-
-      ]);
-
-
-      await connection.query(
-        "COMMIT"
-      );
-
-
-      res.json({
-        ok: true
+      res.status(400).json({
+        error: error.message,
       });
-
-    } catch (error) {
-
-      await connection.query(
-        "ROLLBACK"
-      );
-
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            error.message
-
-        });
-
     } finally {
-
-      connection.release();
-
+      client.release();
     }
-
   }
 );
 
+/* =========================================================
+   PURCHASES
+========================================================= */
 
-app.get(
-  "/api/stock/moves",
-  requireAuth,
-  async (req, res) => {
+async function createPurchaseInstallments(
+  client,
+  purchaseId,
+  balance,
+  installments,
+  firstDueDate
+) {
+  const count = Math.max(1, int(installments));
+  const total = round2(balance);
 
-    try {
+  if (total <= 0) {
+    return;
+  }
 
-      const r =
-        await pool.query(`
+  const baseAmount = round2(
+    total / count
+  );
 
-          SELECT
+  let accumulated = 0;
 
-            sm.*,
+  for (let i = 1; i <= count; i++) {
+    let amount = baseAmount;
 
-            p.name product
-
-          FROM stock_moves sm
-
-          JOIN products p
-            ON p.id =
-              sm.product_id
-
-          ORDER BY
-            sm.id DESC
-
-          LIMIT 500
-
-        `);
-
-
-      res.json(
-        r.rows
+    if (i === count) {
+      amount = round2(
+        total - accumulated
       );
-
-    } catch (error) {
-
-      res
-        .status(500)
-        .json({
-
-          error:
-            error.message
-
-        });
-
     }
 
+    accumulated = round2(
+      accumulated + amount
+    );
+
+    const dueDate = new Date(firstDueDate);
+
+    dueDate.setMonth(
+      dueDate.getMonth() + (i - 1)
+    );
+
+    await client.query(
+      `
+      INSERT INTO purchase_installments
+      (
+        purchase_id,
+        installment_no,
+        due_date,
+        amount,
+        paid_amount,
+        status
+      )
+      VALUES ($1,$2,$3,$4,0,'Pendente')
+      `,
+      [
+        purchaseId,
+        i,
+        dateOnly(dueDate),
+        amount,
+      ]
+    );
   }
-);
-
-
-/* =========================
-   COMPRAS / CONTAS A PAGAR
-========================= */
+}
 
 app.get(
   "/api/purchases",
   requireAuth,
   async (req, res) => {
-
     try {
+      const result = await query(`
+        SELECT
+          p.*,
+          s.name AS supplier_name
+        FROM purchases p
+        LEFT JOIN suppliers s
+          ON s.id=p.supplier_id
+        ORDER BY p.id DESC
+      `);
 
-      const r =
-        await pool.query(`
-
-          SELECT
-
-            p.*,
-
-            COALESCE(
-
-              NULLIF(
-                p.supplier,
-                ''
-              ),
-
-              'Fornecedor não informado'
-
-            ) AS fornecedor,
-
-            GREATEST(
-
-              COALESCE(
-                p.total,
-                0
-              )
-
-              -
-
-              COALESCE(
-                p.paid_amount,
-                0
-              ),
-
-              0
-
-            ) AS balance
-
-          FROM purchases p
-
-          ORDER BY
-            p.date DESC,
-            p.id DESC
-
-        `);
-
-
-      res.json(
-        r.rows
-      );
-
+      res.json(result.rows);
     } catch (error) {
+      console.error(error);
 
-      res
-        .status(500)
-        .json({
-
-          error:
-            error.message
-
-        });
-
+      res.status(500).json({
+        error: "Erro ao buscar compras.",
+      });
     }
-
   }
 );
-
-
-/* =========================
-   DETALHE DA COMPRA
-========================= */
 
 app.get(
   "/api/purchases/:id",
   requireAuth,
   async (req, res) => {
+    try {
+      const id = int(req.params.id);
+
+      const purchase = await query(
+        `
+        SELECT
+          p.*,
+          s.name AS supplier_name
+        FROM purchases p
+        LEFT JOIN suppliers s
+          ON s.id=p.supplier_id
+        WHERE p.id=$1
+        `,
+        [id]
+      );
+
+      if (!purchase.rows.length) {
+        return res.status(404).json({
+          error: "Compra não encontrada.",
+        });
+      }
+
+      const items = await query(
+        `
+        SELECT
+          pi.*,
+          p.name AS product_name
+        FROM purchase_items pi
+        JOIN products p
+          ON p.id=pi.product_id
+        WHERE pi.purchase_id=$1
+        ORDER BY pi.id
+        `,
+        [id]
+      );
+
+      const installments = await query(
+        `
+        SELECT *
+        FROM purchase_installments
+        WHERE purchase_id=$1
+        ORDER BY installment_no
+        `,
+        [id]
+      );
+
+      const payments = await query(
+        `
+        SELECT *
+        FROM purchase_payments
+        WHERE purchase_id=$1
+        ORDER BY paid_at DESC, id DESC
+        `,
+        [id]
+      );
+
+      res.json({
+        purchase: purchase.rows[0],
+        items: items.rows,
+        installments: installments.rows,
+        payments: payments.rows,
+      });
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        error: "Erro ao buscar detalhes da compra.",
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/purchases",
+  requireAuth,
+  async (req, res) => {
+    const client = await pool.connect();
 
     try {
+      await client.query("BEGIN");
+
+      const {
+        supplier_id,
+        purchase_date,
+        payment,
+        installments,
+        entry,
+        first_due_date,
+        notes,
+        items,
+      } = req.body;
+
+      if (
+        !Array.isArray(items) ||
+        items.length === 0
+      ) {
+        throw new Error(
+          "Adicione pelo menos um produto à compra."
+        );
+      }
+
+      let subtotal = 0;
+
+      const preparedItems = [];
+
+      for (const item of items) {
+        const productId = int(
+          item.product_id
+        );
+
+        const quantity = int(
+          item.quantity
+        );
+
+        const cost = num(item.cost);
+
+        if (
+          !productId ||
+          quantity <= 0 ||
+          cost < 0
+        ) {
+          throw new Error(
+            "Produto, quantidade ou custo inválido."
+          );
+        }
+
+        const productResult =
+          await client.query(
+            `
+            SELECT *
+            FROM products
+            WHERE id=$1
+            FOR UPDATE
+            `,
+            [productId]
+          );
+
+        if (!productResult.rows.length) {
+          throw new Error(
+            "Produto não encontrado."
+          );
+        }
+
+        subtotal = round2(
+          subtotal +
+            cost * quantity
+        );
+
+        preparedItems.push({
+          productId,
+          quantity,
+          cost,
+        });
+      }
+
+      const total = subtotal;
+
+      const entryValue = Math.max(
+        0,
+        Math.min(num(entry), total)
+      );
+
+      const balance = round2(
+        total - entryValue
+      );
+
+      let status = "Pendente";
+
+      if (balance <= 0) {
+        status = "Pago";
+      } else if (entryValue > 0) {
+        status = "Parcial";
+      }
+
+      const purchaseResult =
+        await client.query(
+          `
+          INSERT INTO purchases
+          (
+            supplier_id,
+            purchase_date,
+            subtotal,
+            total,
+            entry,
+            paid_amount,
+            balance,
+            installments,
+            payment,
+            status,
+            notes
+          )
+          VALUES
+          ($1,$2,$3,$3,$4,$4,$5,$6,$7,$8,$9)
+          RETURNING *
+          `,
+          [
+            supplier_id
+              ? int(supplier_id)
+              : null,
+            purchase_date ||
+              dateOnly(now()),
+            subtotal,
+            entryValue,
+            balance,
+            Math.max(
+              1,
+              int(installments)
+            ),
+            payment || null,
+            status,
+            notes || null,
+          ]
+        );
 
       const purchase =
-        (
-          await pool.query(`
-
-            SELECT
-
-              *,
-
-              GREATEST(
-
-                total -
-                COALESCE(
-                  paid_amount,
-                  0
-                ),
-
-                0
-
-              ) AS balance
-
-            FROM purchases
-
-            WHERE id=$1
-
-          `, [
-            req.params.id
-          ])
-        )
-        .rows[0];
-
-
-      if (!purchase) {
-
-        return res
-          .status(404)
-          .json({
-
-            error:
-              "Compra não encontrada"
-
-          });
-
-      }
-
-
-      const payments =
-        (
-          await pool.query(`
-
-            SELECT *
-
-            FROM purchase_payments
-
-            WHERE
-              purchase_id=$1
-
-            ORDER BY
-              paid_at,
-              id
-
-          `, [
-            req.params.id
-          ])
-        )
-        .rows;
-
-
-      res.json({
-
-        purchase,
-
-        payments
-
-      });
-
-    } catch (error) {
-
-      res
-        .status(500)
-        .json({
-
-          error:
-            error.message
-
-        });
-
-    }
-
-  }
-);
-
-
-/* =========================
-   NOVA COMPRA
-========================= */
-
-app.post(
-  "/api/purchases",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const d =
-        req.body || {};
-
-
-      const total =
-        Math.max(
-          0,
-          round2(
-            d.total
-          )
-        );
-
-
-      const entry =
-        Math.max(
-          0,
-          round2(
-            d.entry
-          )
-        );
-
-
-      if (
-        total <= 0
-      ) {
-
-        return res
-          .status(400)
-          .json({
-
-            error:
-              "Informe o valor da compra"
-
-          });
-
-      }
-
-
-      if (
-        entry > total
-      ) {
-
-        return res
-          .status(400)
-          .json({
-
-            error:
-              "A entrada não pode ser maior que o total da compra"
-
-          });
-
-      }
-
-
-      const balance =
-        round2(
-          total -
-          entry
-        );
-
-
-      const status =
-        balance <= 0
-          ? "paid"
-          : "open";
-
-
-      const result =
-        await pool.query(`
-
-          INSERT INTO purchases(
-
-            supplier,
-
-            date,
-
-            total,
-
-            entry,
-
-            paid_amount,
-
-            balance,
-
-            installments,
-
-            payment,
-
-            status,
-
-            notes
-
-          )
-
-          VALUES(
-
-            $1,
-
-            $2,
-
-            $3,
-
-            $4,
-
-            $4,
-
-            $5,
-
-            $6,
-
-            $7,
-
-            $8,
-
-            $9
-
-          )
-
-          RETURNING id
-
-        `, [
-
-          d.supplier ||
-          d.fornecedor ||
-          "",
-
-          d.date
-            ? toDate(
-                d.date
-              )
-            : new Date(),
-
-          total,
-
-          entry,
-
-          balance,
-
-          Math.max(
-            1,
-            int(
-              d.installments
-            ) || 1
-          ),
-
-          normalizePayment(
-            d.payment
-          ),
-
-          status,
-
-          d.notes ||
-          ""
-
-        ]);
-
-
-      if (
-        entry > 0
-      ) {
-
-        await pool.query(`
-
-          INSERT INTO purchase_payments(
-
+        purchaseResult.rows[0];
+
+      for (const item of preparedItems) {
+        await client.query(
+          `
+          INSERT INTO purchase_items
+          (
             purchase_id,
-
-            amount,
-
-            payment,
-
-            note
-
+            product_id,
+            quantity,
+            cost
           )
-
-          VALUES(
-
-            $1,
-
-            $2,
-
-            $3,
-
-            'Entrada'
-
-          )
-
-        `, [
-
-          result.rows[0].id,
-
-          entry,
-
-          normalizePayment(
-            d.payment
-          )
-
-        ]);
-
-      }
-
-
-      res.json({
-
-        id:
-          result.rows[0].id,
-
-        total,
-
-        entry,
-
-        paid_amount:
-          entry,
-
-        balance,
-
-        status
-
-      });
-
-    } catch (error) {
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            error.message
-
-        });
-
-    }
-
-  }
-);
-
-
-/* =========================
-   ALTERAR COMPRA
-========================= */
-
-app.put(
-  "/api/purchases/:id",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const old =
-        (
-          await pool.query(`
-
-            SELECT *
-
-            FROM purchases
-
-            WHERE id=$1
-
-          `, [
-            req.params.id
-          ])
-        )
-        .rows[0];
-
-
-      if (!old) {
-
-        return res
-          .status(404)
-          .json({
-
-            error:
-              "Compra não encontrada"
-
-          });
-
-      }
-
-
-      const d =
-        req.body || {};
-
-
-      const total =
-        Math.max(
-
-          0,
-
-          round2(
-            d.total ??
-            old.total
-          )
-
+          VALUES ($1,$2,$3,$4)
+          `,
+          [
+            purchase.id,
+            item.productId,
+            item.quantity,
+            item.cost,
+          ]
         );
 
+        await client.query(
+          `
+          UPDATE products
+          SET
+            stock=stock+$1,
+            cost=$2
+          WHERE id=$3
+          `,
+          [
+            item.quantity,
+            item.cost,
+            item.productId,
+          ]
+        );
 
-      const supplier =
-        d.supplier ??
-        d.fornecedor ??
-        old.supplier ??
-        "";
+        await client.query(
+          `
+          INSERT INTO stock_moves
+          (
+            product_id,
+            quantity,
+            type,
+            note,
+            reference_id
+          )
+          VALUES
+          ($1,$2,'Entrada',$3,$4)
+          `,
+          [
+            item.productId,
+            item.quantity,
+            `Compra #${purchase.id}`,
+            purchase.id,
+          ]
+        );
+      }
 
+      if (entryValue > 0) {
+        await client.query(
+          `
+          INSERT INTO purchase_payments
+          (
+            purchase_id,
+            installment_id,
+            amount,
+            payment,
+            note
+          )
+          VALUES ($1,NULL,$2,$3,'Entrada da compra')
+          `,
+          [
+            purchase.id,
+            entryValue,
+            payment || null,
+          ]
+        );
+      }
 
-      await pool.query(`
-
-        UPDATE purchases
-
-        SET
-
-          supplier=$1,
-
-          date=$2,
-
-          total=$3,
-
-          installments=$4,
-
-          payment=$5,
-
-          notes=$6,
-
-          balance =
-            GREATEST(
-
-              $3 -
-              COALESCE(
-                paid_amount,
-                0
-              ),
-
-              0
-
-            ),
-
-          status =
-            CASE
-
-              WHEN
-                GREATEST(
-
-                  $3 -
-                  COALESCE(
-                    paid_amount,
-                    0
-                  ),
-
-                  0
-
-                ) <= 0
-
-              THEN
-                'paid'
-
-              ELSE
-                'open'
-
-            END
-
-        WHERE id=$7
-
-      `, [
-
-        supplier,
-
-        d.date
-          ? toDate(
-              d.date
+      if (balance > 0) {
+        await createPurchaseInstallments(
+          client,
+          purchase.id,
+          balance,
+          installments,
+          first_due_date ||
+            dateOnly(
+              addMonths(now(), 1)
             )
-          : old.date,
+        );
+      }
 
-        total,
+      await client.query("COMMIT");
 
-        Math.max(
-
-          1,
-
-          int(
-            d.installments
-          ) ||
-          int(
-            old.installments
-          ) ||
-          1
-
-        ),
-
-        normalizePayment(
-          d.payment ||
-          old.payment
-        ),
-
-        (
-          d.notes ??
-          old.notes ??
-          ""
-        ),
-
-        req.params.id
-
-      ]);
-
-
-      res.json({
-        ok: true
+      res.status(201).json({
+        ok: true,
+        purchase_id: purchase.id,
       });
-
     } catch (error) {
+      await client.query("ROLLBACK");
 
-      res
-        .status(400)
-        .json({
+      console.error(error);
 
-          error:
-            error.message
-
-        });
-
+      res.status(400).json({
+        error: error.message,
+      });
+    } finally {
+      client.release();
     }
-
   }
 );
 
-
-/* =========================
-   EXCLUIR COMPRA
-========================= */
-
-app.delete(
-  "/api/purchases/:id",
+app.get(
+  "/api/purchases/:id/installments",
   requireAuth,
   async (req, res) => {
-
     try {
+      const id = int(req.params.id);
 
-      await pool.query(`
+      const result = await query(
+        `
+        SELECT *
+        FROM purchase_installments
+        WHERE purchase_id=$1
+        ORDER BY installment_no
+        `,
+        [id]
+      );
 
-        DELETE FROM purchases
-
-        WHERE id=$1
-
-      `, [
-        req.params.id
-      ]);
-
-
-      res.json({
-        ok: true
-      });
-
+      res.json(result.rows);
     } catch (error) {
+      console.error(error);
 
-      res
-        .status(400)
-        .json({
-
-          error:
-            error.message
-
-        });
-
+      res.status(500).json({
+        error: "Erro ao buscar parcelas.",
+      });
     }
-
   }
 );
-
-
-/* =========================
-   PAGAMENTO DE COMPRA
-========================= */
 
 app.post(
   "/api/purchases/:id/pay",
   requireAuth,
   async (req, res) => {
-
-    const amount =
-      round2(
-
-        req.body.amount ??
-        req.body.value ??
-        0
-
-      );
-
-
-    const payment =
-      normalizePayment(
-        req.body.payment
-      );
-
-
-    if (
-      amount <= 0
-    ) {
-
-      return res
-        .status(400)
-        .json({
-
-          error:
-            "Informe um valor válido"
-
-        });
-
-    }
-
-
-    const connection =
-      await pool.connect();
-
+    const client = await pool.connect();
 
     try {
+      await client.query("BEGIN");
 
-      await connection.query(
-        "BEGIN"
+      const purchaseId = int(
+        req.params.id
       );
 
+      const amount = num(
+        req.body.amount
+      );
+
+      const payment =
+        req.body.payment || null;
+
+      const installmentId =
+        req.body.installment_id
+          ? int(req.body.installment_id)
+          : null;
+
+      const note =
+        req.body.note || null;
+
+      if (amount <= 0) {
+        throw new Error(
+          "Informe um valor de pagamento válido."
+        );
+      }
+
+      const purchaseResult =
+        await client.query(
+          `
+          SELECT *
+          FROM purchases
+          WHERE id=$1
+          FOR UPDATE
+          `,
+          [purchaseId]
+        );
+
+      if (!purchaseResult.rows.length) {
+        throw new Error(
+          "Compra não encontrada."
+        );
+      }
 
       const purchase =
-        (
-          await connection.query(`
+        purchaseResult.rows[0];
 
+      if (num(purchase.balance) <= 0) {
+        throw new Error(
+          "Esta compra já está totalmente paga."
+        );
+      }
+
+      let targetInstallment = null;
+
+      if (installmentId) {
+        const installmentResult =
+          await client.query(
+            `
             SELECT *
-
-            FROM purchases
-
+            FROM purchase_installments
             WHERE id=$1
-
+              AND purchase_id=$2
             FOR UPDATE
+            `,
+            [
+              installmentId,
+              purchaseId,
+            ]
+          );
 
-          `, [
-            req.params.id
-          ])
+        if (!installmentResult.rows.length) {
+          throw new Error(
+            "Parcela não encontrada."
+          );
+        }
+
+        targetInstallment =
+          installmentResult.rows[0];
+      } else {
+        const installmentResult =
+          await client.query(
+            `
+            SELECT *
+            FROM purchase_installments
+            WHERE purchase_id=$1
+              AND paid_amount < amount
+            ORDER BY installment_no
+            LIMIT 1
+            FOR UPDATE
+            `,
+            [purchaseId]
+          );
+
+        if (
+          installmentResult.rows.length
+        ) {
+          targetInstallment =
+            installmentResult.rows[0];
+        }
+      }
+
+      const paymentAmount =
+        Math.min(
+          amount,
+          num(purchase.balance)
+        );
+
+      await client.query(
+        `
+        INSERT INTO purchase_payments
+        (
+          purchase_id,
+          installment_id,
+          amount,
+          payment,
+          note
         )
-        .rows[0];
+        VALUES ($1,$2,$3,$4,$5)
+        `,
+        [
+          purchaseId,
+          targetInstallment
+            ? targetInstallment.id
+            : null,
+          paymentAmount,
+          payment,
+          note,
+        ]
+      );
 
-
-      if (!purchase) {
-
-        throw new Error(
-          "Compra não encontrada"
+      if (targetInstallment) {
+        const newPaid = round2(
+          num(
+            targetInstallment.paid_amount
+          ) + paymentAmount
         );
 
-      }
-
-
-      const balance =
-        round2(
-
-          Number(
-            purchase.total
-          ) -
-
-          Number(
-            purchase.paid_amount ||
-            0
+        const newStatus =
+          newPaid >=
+          num(
+            targetInstallment.amount
           )
+            ? "Pago"
+            : newPaid > 0
+            ? "Parcial"
+            : "Pendente";
 
+        await client.query(
+          `
+          UPDATE purchase_installments
+          SET
+            paid_amount=$1,
+            status=$2
+          WHERE id=$3
+          `,
+          [
+            Math.min(
+              newPaid,
+              num(
+                targetInstallment.amount
+              )
+            ),
+            newStatus,
+            targetInstallment.id,
+          ]
         );
-
-
-      if (
-        balance <= 0
-      ) {
-
-        throw new Error(
-          "Compra já está quitada"
-        );
-
       }
 
-
-      if (
-        amount >
-        balance +
-        0.01
-      ) {
-
-        throw new Error(
-
-          `Pagamento maior que o saldo. Saldo: R$ ${money(balance).replace(".", ",")}`
-
+      const newPaidAmount =
+        Math.min(
+          num(purchase.paid_amount) +
+            paymentAmount,
+          num(purchase.total)
         );
-
-      }
-
-
-      const paid =
-        round2(
-
-          Number(
-            purchase.paid_amount ||
-            0
-          ) +
-
-          amount
-
-        );
-
 
       const newBalance =
         Math.max(
-
           0,
-
           round2(
-
-            Number(
-              purchase.total
-            ) -
-            paid
-
+            num(purchase.total) -
+              newPaidAmount
           )
-
         );
 
+      const newStatus =
+        newBalance <= 0
+          ? "Pago"
+          : newPaidAmount > 0
+          ? "Parcial"
+          : "Pendente";
 
-      const status =
-        newBalance <=
-        0.009
-          ? "paid"
-          : "open";
-
-
-      await connection.query(`
-
-        INSERT INTO purchase_payments(
-
-          purchase_id,
-
-          amount,
-
-          payment,
-
-          note
-
-        )
-
-        VALUES(
-
-          $1,
-
-          $2,
-
-          $3,
-
-          $4
-
-        )
-
-      `, [
-
-        purchase.id,
-
-        amount,
-
-        payment,
-
-        req.body.note ||
-        "Pagamento"
-
-      ]);
-
-
-      await connection.query(`
-
+      await client.query(
+        `
         UPDATE purchases
-
         SET
-
           paid_amount=$1,
-
           balance=$2,
-
           status=$3
-
         WHERE id=$4
-
-      `, [
-
-        paid,
-
-        newBalance,
-
-        status,
-
-        purchase.id
-
-      ]);
-
-
-      await connection.query(
-        "COMMIT"
+        `,
+        [
+          newPaidAmount,
+          newBalance,
+          newStatus,
+          purchaseId,
+        ]
       );
 
+      await client.query("COMMIT");
 
       res.json({
-
-        ok:
-          true,
-
+        ok: true,
         paid_amount:
-          paid,
-
-        balance:
-          newBalance,
-
-        status
-
+          newPaidAmount,
+        balance: newBalance,
+        status: newStatus,
       });
-
     } catch (error) {
+      await client.query("ROLLBACK");
 
-      await connection.query(
-        "ROLLBACK"
-      );
+      console.error(error);
 
-
-      res
-        .status(400)
-        .json({
-
-          error:
-            error.message
-
-        });
-
+      res.status(400).json({
+        error: error.message,
+      });
     } finally {
-
-      connection.release();
-
+      client.release();
     }
-
   }
 );
 
+/* =========================================================
+   DASHBOARD
+========================================================= */
 
-/* =========================
-   RELATÓRIOS
-========================= */
+app.get(
+  "/api/dashboard",
+  requireAuth,
+  async (req, res) => {
+    try {
+      const today = dateOnly(now());
+
+      const monthStart = new Date();
+      monthStart.setDate(1);
+
+      const monthStartText =
+        dateOnly(monthStart);
+
+      const salesToday = await query(
+        `
+        SELECT COALESCE(SUM(total),0) AS total
+        FROM sales
+        WHERE sale_date=$1
+          AND status <> 'Cancelada'
+        `,
+        [today]
+      );
+
+      const salesMonth = await query(
+        `
+        SELECT COALESCE(SUM(total),0) AS total
+        FROM sales
+        WHERE sale_date >= $1
+          AND status <> 'Cancelada'
+        `,
+        [monthStartText]
+      );
+
+      const receivables = await query(
+        `
+        SELECT COALESCE(SUM(balance),0) AS total
+        FROM sales
+        WHERE status <> 'Cancelada'
+          AND balance > 0
+        `
+      );
+
+      const payables = await query(
+        `
+        SELECT COALESCE(SUM(balance),0) AS total
+        FROM purchases
+        WHERE balance > 0
+        `
+      );
+
+      const lowStock = await query(
+        `
+        SELECT COUNT(*)::int AS total
+        FROM products
+        WHERE stock <= min_stock
+        `
+      );
+
+      const receivedMonth = await query(
+        `
+        SELECT COALESCE(SUM(amount),0) AS total
+        FROM sale_payments
+        WHERE paid_at >= $1::date
+        `,
+        [monthStartText]
+      );
+
+      const nextReceivables =
+        await query(`
+          SELECT
+            si.id,
+            si.sale_id,
+            si.installment_no,
+            si.due_date,
+            si.amount,
+            si.paid_amount,
+            si.status,
+            c.name AS client_name
+          FROM sale_installments si
+          JOIN sales s
+            ON s.id=si.sale_id
+          LEFT JOIN clients c
+            ON c.id=s.client_id
+          WHERE si.paid_amount < si.amount
+          ORDER BY si.due_date
+          LIMIT 10
+        `);
+
+      const nextPayables =
+        await query(`
+          SELECT
+            pi.id,
+            pi.purchase_id,
+            pi.installment_no,
+            pi.due_date,
+            pi.amount,
+            pi.paid_amount,
+            pi.status,
+            s.name AS supplier_name
+          FROM purchase_installments pi
+          JOIN purchases p
+            ON p.id=pi.purchase_id
+          LEFT JOIN suppliers s
+            ON s.id=p.supplier_id
+          WHERE pi.paid_amount < pi.amount
+          ORDER BY pi.due_date
+          LIMIT 10
+        `);
+
+      res.json({
+        sales_today: num(
+          salesToday.rows[0].total
+        ),
+        sales_month: num(
+          salesMonth.rows[0].total
+        ),
+        receivables: num(
+          receivables.rows[0].total
+        ),
+        payables: num(
+          payables.rows[0].total
+        ),
+        low_stock: int(
+          lowStock.rows[0].total
+        ),
+        received_month: num(
+          receivedMonth.rows[0].total
+        ),
+        next_receivables:
+          nextReceivables.rows,
+        next_payables:
+          nextPayables.rows,
+      });
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        error: "Erro ao carregar dashboard.",
+      });
+    }
+  }
+);
+
+/* =========================================================
+   REPORTS
+========================================================= */
 
 app.get(
   "/api/reports",
   requireAuth,
   async (req, res) => {
-
     try {
-
       const from =
         req.query.from ||
-        "1900-01-01";
-
+        dateOnly(
+          new Date(
+            new Date().getFullYear(),
+            new Date().getMonth(),
+            1
+          )
+        );
 
       const to =
-        (
-          req.query.to ||
-          new Date()
-            .toISOString()
-            .slice(
-              0,
-              10
-            )
-        ) +
-        " 23:59:59.999";
-
-
-      const sales =
-        (
-          await pool.query(`
-
-            SELECT
-
-              s.*,
-
-              c.name client,
-
-              COALESCE(
-                s.entry,
-                0
-              ) entry,
-
-              COALESCE(
-                s.paid_amount,
-                0
-              ) paid_amount,
-
-              GREATEST(
-
-                s.total -
-
-                COALESCE(
-                  s.paid_amount,
-                  0
-                ),
-
-                0
-
-              ) balance
-
-            FROM sales s
-
-            LEFT JOIN clients c
-              ON c.id =
-                s.client_id
-
-            WHERE
-
-              s.date
-              BETWEEN $1
-              AND $2
-
-            ORDER BY
-              s.id DESC
-
-          `, [
-            from,
-            to
-          ])
-        )
-        .rows;
-
-
-      const totals =
-        (
-          await pool.query(`
-
-            SELECT
-
-              COALESCE(
-
-                SUM(total)
-                FILTER (
-                  WHERE
-                    status <>
-                    'cancelled'
-                ),
-
-                0
-
-              ) revenue,
-
-
-              COALESCE(
-
-                SUM(paid_amount)
-                FILTER (
-                  WHERE
-                    status <>
-                    'cancelled'
-                ),
-
-                0
-
-              ) received,
-
-
-              COALESCE(
-
-                SUM(balance)
-                FILTER (
-                  WHERE
-                    status =
-                    'open'
-                ),
-
-                0
-
-              ) receivable,
-
-
-              COALESCE(
-
-                SUM(
-
-                  CASE
-
-                    WHEN
-                      status =
-                      'paid'
-
-                    THEN (
-
-                      SELECT
-                        COALESCE(
-
-                          SUM(
-
-                            (
-                              si.price -
-                              si.cost
-                            ) *
-                            si.qty
-
-                          ),
-
-                          0
-
-                        )
-
-                      FROM sale_items si
-
-                      WHERE
-                        si.sale_id =
-                        s.id
-
-                    )
-
-                    ELSE
-                      0
-
-                  END
-
-                ),
-
-                0
-
-              ) profit
-
-            FROM sales s
-
-            WHERE
-
-              s.date
-              BETWEEN $1
-              AND $2
-
-          `, [
-            from,
-            to
-          ])
-        )
-        .rows[0];
-
-
-      const top =
-        (
-          await pool.query(`
-
-            SELECT
-
-              p.name,
-
-              SUM(
-                si.qty
-              )::int qty
-
-            FROM sale_items si
-
-            JOIN products p
-              ON p.id =
-                si.product_id
-
-            JOIN sales s
-              ON s.id =
-                si.sale_id
-
-            WHERE
-
-              s.date
-              BETWEEN $1
-              AND $2
-
-              AND s.status <>
-                'cancelled'
-
-            GROUP BY
-
-              p.id,
-
-              p.name
-
-            ORDER BY
-              qty DESC
-
-            LIMIT 10
-
-          `, [
-            from,
-            to
-          ])
-        )
-        .rows;
-
-
-      const debts =
-        (
-          await pool.query(`
-
-            SELECT
-
-              s.id,
-
-              s.date,
-
-              s.total,
-
-              s.entry,
-
-              s.paid_amount,
-
-              s.balance,
-
-              c.name,
-
-              c.phone,
-
-              s.installments,
-
-              s.payment
-
-            FROM sales s
-
-            LEFT JOIN clients c
-              ON c.id =
-                s.client_id
-
-            WHERE
-
-              s.status =
-                'open'
-
-              AND s.balance > 0
-
-            ORDER BY
-              s.id DESC
-
-          `)
-        )
-        .rows;
-
-
-      const purchases =
-        (
-          await pool.query(`
-
-            SELECT
-
-              p.*,
-
-              COALESCE(
-
-                NULLIF(
-                  p.supplier,
-                  ''
-                ),
-
-                'Fornecedor não informado'
-
-              ) fornecedor,
-
-              GREATEST(
-
-                p.total -
-
-                COALESCE(
-                  p.paid_amount,
-                  0
-                ),
-
-                0
-
-              ) balance
-
-            FROM purchases p
-
-            WHERE
-
-              p.date
-              BETWEEN $1
-              AND $2
-
-            ORDER BY
-              p.id DESC
-
-          `, [
-            from,
-            to
-          ])
-        )
-        .rows;
-
-
-      const payable =
-        (
-          await pool.query(`
-
-            SELECT
-
-              COALESCE(
-                SUM(balance),
-                0
-              ) total,
-
-              COUNT(*)::int
-              count
-
-            FROM purchases
-
-            WHERE
-
-              status =
-                'open'
-
-              AND balance > 0
-
-          `)
-        )
-        .rows[0];
-
+        req.query.to ||
+        dateOnly(now());
+
+      const sales = await query(
+        `
+        SELECT
+          COUNT(*)::int AS quantity,
+          COALESCE(SUM(total),0) AS total
+        FROM sales
+        WHERE sale_date BETWEEN $1 AND $2
+          AND status <> 'Cancelada'
+        `,
+        [from, to]
+      );
+
+      const received = await query(
+        `
+        SELECT
+          COALESCE(SUM(amount),0) AS total
+        FROM sale_payments
+        WHERE paid_at::date BETWEEN $1 AND $2
+        `,
+        [from, to]
+      );
+
+      const purchases = await query(
+        `
+        SELECT
+          COUNT(*)::int AS quantity,
+          COALESCE(SUM(total),0) AS total
+        FROM purchases
+        WHERE purchase_date BETWEEN $1 AND $2
+        `,
+        [from, to]
+      );
+
+      const receivable = await query(`
+        SELECT
+          COALESCE(SUM(balance),0) AS total
+        FROM sales
+        WHERE status <> 'Cancelada'
+          AND balance > 0
+      `);
+
+      const payable = await query(`
+        SELECT
+          COALESCE(SUM(balance),0) AS total
+        FROM purchases
+        WHERE balance > 0
+      `);
+
+      const topProducts = await query(
+        `
+        SELECT
+          p.name,
+          SUM(si.quantity)::int AS quantity,
+          COALESCE(
+            SUM(si.quantity * si.price),
+            0
+          ) AS total
+        FROM sale_items si
+        JOIN sales s
+          ON s.id=si.sale_id
+        JOIN products p
+          ON p.id=si.product_id
+        WHERE s.sale_date BETWEEN $1 AND $2
+          AND s.status <> 'Cancelada'
+        GROUP BY p.id,p.name
+        ORDER BY quantity DESC
+        LIMIT 10
+        `,
+        [from, to]
+      );
+
+      const debtors = await query(`
+        SELECT
+          c.name,
+          COUNT(s.id)::int AS sales_count,
+          COALESCE(SUM(s.balance),0) AS balance
+        FROM sales s
+        LEFT JOIN clients c
+          ON c.id=s.client_id
+        WHERE s.status <> 'Cancelada'
+          AND s.balance > 0
+        GROUP BY c.id,c.name
+        ORDER BY balance DESC
+        LIMIT 20
+      `);
 
       res.json({
-
-        sales,
-
-        totals,
-
-        top,
-
-        debts,
-
-        purchases,
-
-        payable,
-
-        payables:
-          payable
-
+        period: {
+          from,
+          to,
+        },
+        sales: sales.rows[0],
+        received: received.rows[0],
+        purchases: purchases.rows[0],
+        receivable:
+          receivable.rows[0],
+        payable:
+          payable.rows[0],
+        top_products:
+          topProducts.rows,
+        debtors:
+          debtors.rows,
       });
-
     } catch (error) {
+      console.error(error);
 
-      res
-        .status(500)
-        .json({
-
-          error:
-            error.message
-
-        });
-
+      res.status(500).json({
+        error: "Erro ao gerar relatório.",
+      });
     }
-
   }
 );
 
-
-/* =========================
-   COMPROVANTE PDF
-========================= */
-
-app.get(
-  "/api/sales/:id/pdf",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const sale =
-        (
-          await pool.query(`
-
-            SELECT
-
-              s.*,
-
-              c.name client,
-
-              c.phone
-
-            FROM sales s
-
-            LEFT JOIN clients c
-              ON c.id =
-                s.client_id
-
-            WHERE
-              s.id=$1
-
-          `, [
-            req.params.id
-          ])
-        )
-        .rows[0];
-
-
-      if (!sale) {
-
-        return res
-          .status(404)
-          .end();
-
-      }
-
-
-      const items =
-        (
-          await pool.query(`
-
-            SELECT
-
-              si.*,
-
-              p.name,
-
-              p.brand,
-
-              p.size
-
-            FROM sale_items si
-
-            JOIN products p
-              ON p.id =
-                si.product_id
-
-            WHERE
-              si.sale_id=$1
-
-          `, [
-            sale.id
-          ])
-        )
-        .rows;
-
-
-      const doc =
-        new PDFDocument({
-
-          size:
-            "A5",
-
-          margin:
-            35
-
-        });
-
-
-      res.setHeader(
-        "Content-Type",
-        "application/pdf"
-      );
-
-
-      res.setHeader(
-
-        "Content-Disposition",
-
-        `inline; filename="comprovante-${sale.id}.pdf"`
-
-      );
-
-
-      doc.pipe(res);
-
-
-      doc
-        .fontSize(19)
-        .fillColor("#8f4e5d")
-        .text(
-          "Essência & Charme",
-          {
-            align:
-              "center"
-          }
-        );
-
-
-      doc
-        .fontSize(10)
-        .fillColor("#777")
-        .text(
-          "Comprovante de venda",
-          {
-            align:
-              "center"
-          }
-        );
-
-
-      doc.moveDown();
-
-
-      doc
-        .strokeColor("#d8b3bc")
-        .moveTo(
-          35,
-          doc.y
-        )
-        .lineTo(
-          385,
-          doc.y
-        )
-        .stroke();
-
-
-      doc.moveDown();
-
-
-      doc
-        .fontSize(10)
-        .fillColor("#403338")
-        .text(
-          `Venda #${sale.id}`
-        );
-
-
-      doc.text(
-        new Date(
-          sale.date
-        ).toLocaleString(
-          "pt-BR"
-        )
-      );
-
-
-      doc.text(
-        `Cliente: ${
-          sale.client ||
-          "Consumidor"
-        }`
-      );
-
-
-      if (sale.phone) {
-
-        doc.text(
-          `Telefone: ${sale.phone}`
-        );
-
-      }
-
-
-      doc.moveDown();
-
-
-      items.forEach(
-        item => {
-
-          const value =
-            Number(
-              item.qty
-            ) *
-            Number(
-              item.price
-            );
-
-
-          const name =
-            item.name +
-            (
-              item.size
-                ? ` - ${item.size}`
-                : ""
-            );
-
-
-          doc
-            .fontSize(10)
-            .fillColor("#403338")
-            .text(
-
-              `${item.qty}x ${name}`,
-
-              {
-                continued:
-                  true
-              }
-
-            );
-
-
-          doc.text(
-
-            `R$ ${money(value).replace(".", ",")}`,
-
-            {
-              align:
-                "right"
-            }
-
-          );
-
-        }
-      );
-
-
-      doc.moveDown();
-
-
-      doc
-        .strokeColor("#eadfe0")
-        .moveTo(
-          35,
-          doc.y
-        )
-        .lineTo(
-          385,
-          doc.y
-        )
-        .stroke();
-
-
-      doc.moveDown();
-
-
-      if (
-        Number(
-          sale.discount
-        ) > 0
-      ) {
-
-        doc
-          .fontSize(10)
-          .text(
-
-            `Desconto: R$ ${money(sale.discount).replace(".", ",")}`
-
-          );
-
-      }
-
-
-      doc.text(
-
-        `Entrada: R$ ${money(sale.entry).replace(".", ",")}`
-
-      );
-
-
-      doc
-        .fontSize(15)
-        .fillColor("#8f4e5d")
-        .text(
-
-          `TOTAL: R$ ${money(sale.total).replace(".", ",")}`
-
-        );
-
-
-      doc
-        .fontSize(10)
-        .fillColor("#403338")
-        .text(
-
-          `Pago: R$ ${money(sale.paid_amount).replace(".", ",")}`
-
-        );
-
-
-      doc.text(
-
-        `Saldo: R$ ${money(
-
-          Math.max(
-
-            0,
-
-            Number(
-              sale.total
-            ) -
-            Number(
-              sale.paid_amount ||
-              0
-            )
-
-          )
-
-        ).replace(".", ",")}`
-
-      );
-
-
-      doc.text(
-
-        `Pagamento: ${
-          sale.payment
-        }${
-          sale.installments > 1
-            ? ` - ${sale.installments}x`
-            : ""
-        }`
-
-      );
-
-
-      doc.moveDown(2);
-
-
-      doc
-        .fontSize(11)
-        .fillColor("#8f4e5d")
-        .text(
-
-          "Obrigada pela preferência!",
-
-          {
-            align:
-              "center"
-          }
-
-        );
-
-
-      doc
-        .fontSize(8)
-        .fillColor("#999")
-        .text(
-
-          "Essência & Charme",
-
-          {
-            align:
-              "center"
-          }
-
-        );
-
-
-      doc.end();
-
-    } catch (error) {
-
-      res
-        .status(500)
-        .end();
-
-    }
-
-  }
-);
-
-
-/* =========================
-   PÁGINA PRINCIPAL
-========================= */
-
-app.use(
-  (req, res, next) => {
-
-    if (
-      req.method === "GET" &&
-      !req.path.startsWith(
-        "/api/"
-      )
-    ) {
-
-      return res.sendFile(
-
-        path.join(
-          __dirname,
-          "public",
-          "index.html"
-        )
-
-      );
-
-    }
-
-    next();
-
-  }
-);
-
-
-/* =========================
-   TRATAMENTO DE ERRO
-========================= */
+/* =========================================================
+   SPA FALLBACK
+========================================================= */
+
+app.get("*", (req, res) => {
+  res.sendFile(
+    require("path").join(
+      __dirname,
+      "public",
+      "index.html"
+    )
+  );
+});
+
+/* =========================================================
+   ERROR HANDLER
+========================================================= */
 
 app.use(
   (
-    err,
+    error,
     req,
     res,
     next
   ) => {
+    console.error(error);
 
-    console.error(err);
-
-    if (
-      res.headersSent
-    ) {
-
-      return next(err);
-
+    if (res.headersSent) {
+      return next(error);
     }
 
-    res
-      .status(500)
-      .json({
-
-        error:
-          "Erro interno do servidor"
-
-      });
-
+    res.status(500).json({
+      error:
+        error.message ||
+        "Erro interno do servidor.",
+    });
   }
 );
 
-
-/* =========================
-   INICIAR
-========================= */
+/* =========================================================
+   START
+========================================================= */
 
 initDb()
+  .then(() => {
+    app.listen(
+      PORT,
+      "0.0.0.0",
+      () => {
+        console.log(
+          `Servidor iniciado na porta ${PORT}`
+        );
+      }
+    );
+  })
+  .catch((error) => {
+    console.error(
+      "Erro ao inicializar banco:",
+      error
+    );
 
-  .then(
-    () => {
-
-      app.listen(
-
-        PORT,
-
-        "0.0.0.0",
-
-        () => {
-
-          console.log(
-            `🌸 Essência & Charme online na porta ${PORT}`
-          );
-
-        }
-
-      );
-
-    }
-  )
-
-  .catch(
-    error => {
-
-      console.error(
-
-        "Erro ao iniciar o sistema:",
-
-        error
-
-      );
-
-      process.exit(1);
-
-    }
-  );
+    process.exit(1);
+  });
