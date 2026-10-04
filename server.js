@@ -1728,6 +1728,7 @@ app.get(
   "/api/sales/:id/pdf",
   requireAuth,
   asyncHandler(async (req, res) => {
+
     const saleId =
       integer(req.params.id);
 
@@ -1860,6 +1861,10 @@ app.get(
         .stroke();
     }
 
+    /* =====================================================
+       CABEÇALHO
+    ===================================================== */
+
     doc
       .fontSize(20)
       .font("Helvetica-Bold")
@@ -1882,17 +1887,30 @@ app.get(
 
     doc.moveDown(1);
 
+    /* =====================================================
+       TÍTULO DA VENDA
+       VENDA - NOME DO CLIENTE
+    ===================================================== */
+
+    const clientName =
+      sale.client_name ||
+      "Consumidor";
+
     doc
       .fontSize(15)
       .font("Helvetica-Bold")
       .text(
-        `VENDA #${sale.id}`,
+        `VENDA - ${clientName}`,
         {
           align: "center",
         }
       );
 
     doc.moveDown(0.5);
+
+    /* =====================================================
+       DATA E STATUS
+    ===================================================== */
 
     doc
       .fontSize(10)
@@ -1913,6 +1931,10 @@ app.get(
     line();
 
     doc.moveDown(0.7);
+
+    /* =====================================================
+       CLIENTE
+    ===================================================== */
 
     doc
       .fontSize(12)
@@ -1946,6 +1968,10 @@ app.get(
     line();
 
     doc.moveDown(0.7);
+
+    /* =====================================================
+       ITENS DA VENDA
+    ===================================================== */
 
     doc
       .fontSize(12)
@@ -2015,6 +2041,7 @@ app.get(
       const item
       of itemsResult.rows
     ) {
+
       const startY =
         doc.y;
 
@@ -2087,6 +2114,10 @@ app.get(
 
     doc.moveDown(0.6);
 
+    /* =====================================================
+       TOTAIS
+    ===================================================== */
+
     doc
       .fontSize(10)
       .font("Helvetica");
@@ -2158,48 +2189,103 @@ app.get(
       );
     }
 
+    /* =====================================================
+       PARCELAS
+       ALINHADAS À ESQUERDA
+       CADA PARCELA DENTRO DE UMA LINHA
+    ===================================================== */
+
     if (
       installmentsResult.rows.length
     ) {
+
       doc.moveDown(0.8);
 
       doc
         .fontSize(12)
         .font("Helvetica-Bold")
-        .text("PARCELAS");
+        .text(
+          "PARCELAS",
+          {
+            align: "left",
+          }
+        );
 
-      doc.moveDown(0.3);
+      doc.moveDown(0.4);
 
       for (
         const installment
         of installmentsResult.rows
       ) {
+
+        const installmentText =
+          `${installment.installment_no}ª parcela — vencimento ${dateBR(
+            installment.due_date
+          )} — valor ${brl(
+            installment.amount
+          )} — pago ${brl(
+            installment.paid_amount
+          )} — ${
+            installment.status || ""
+          }`;
+
+        const rowY =
+          doc.y;
+
+        /*
+         * Caixa da parcela
+         */
+
+        const rowHeight = 22;
+
+        doc
+          .rect(
+            doc.page.margins.left,
+            rowY - 2,
+            pageWidth,
+            rowHeight
+          )
+          .stroke();
+
+        /*
+         * Texto dentro da linha
+         */
+
         doc
           .fontSize(9)
           .font("Helvetica")
           .text(
-            `${installment.installment_no}ª parcela — vencimento ${dateBR(
-              installment.due_date
-            )} — valor ${brl(
-              installment.amount
-            )} — pago ${brl(
-              installment.paid_amount
-            )} — ${
-              installment.status
-            }`
+            installmentText,
+            doc.page.margins.left + 8,
+            rowY + 5,
+            {
+              width:
+                pageWidth - 16,
+              align: "left",
+            }
           );
+
+        doc.y =
+          rowY + rowHeight + 3;
       }
     }
+
+    /* =====================================================
+       PAGAMENTOS REALIZADOS
+    ===================================================== */
 
     if (
       paymentsResult.rows.length
     ) {
+
       doc.moveDown(0.8);
 
       doc
         .fontSize(12)
         .font("Helvetica-Bold")
-        .text("PAGAMENTOS REALIZADOS");
+        .text(
+          "PAGAMENTOS REALIZADOS"
+        );
 
       doc.moveDown(0.3);
 
@@ -2207,6 +2293,7 @@ app.get(
         const payment
         of paymentsResult.rows
       ) {
+
         doc
           .fontSize(9)
           .font("Helvetica")
@@ -2228,13 +2315,20 @@ app.get(
       }
     }
 
+    /* =====================================================
+       OBSERVAÇÕES
+    ===================================================== */
+
     if (sale.notes) {
+
       doc.moveDown(0.8);
 
       doc
         .fontSize(12)
         .font("Helvetica-Bold")
-        .text("OBSERVAÇÕES");
+        .text(
+          "OBSERVAÇÕES"
+        );
 
       doc
         .fontSize(9)
@@ -2244,6 +2338,10 @@ app.get(
         );
     }
 
+    /* =====================================================
+       RODAPÉ
+    ===================================================== */
+
     doc.moveDown(1);
 
     line();
@@ -2251,10 +2349,20 @@ app.get(
     doc.moveDown(0.6);
 
     doc
-      .fontSize(9)
+      .fontSize(10)
       .font("Helvetica")
       .text(
         "Obrigado pela preferência!",
+        {
+          align: "center",
+        }
+      );
+
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .text(
+        "Eliana Natália",
         {
           align: "center",
         }
