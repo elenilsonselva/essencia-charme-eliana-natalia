@@ -3806,7 +3806,6 @@ async function loadReports() {
         purchases,
 
       products
-
     });
   }
 }
@@ -4153,4 +4152,3 @@ document.addEventListener(
 
   }
 );
-
