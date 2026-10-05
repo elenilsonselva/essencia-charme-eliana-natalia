@@ -2340,11 +2340,221 @@
 
   </div>
 
-  <script src="/app.js"></script>
+ <script src="/app.js"></script>
 
-  <script>
-    lucide.createIcons();
-  </script>
+<script>
+
+  lucide.createIcons();
+
+
+  /* =========================================================
+     VERSÍCULO DO DIA
+  ========================================================= */
+
+  const dailyBibleVerses = [
+
+    {
+      text: "O Senhor é o meu pastor; nada me faltará.",
+      reference: "Salmos 23:1"
+    },
+
+    {
+      text: "Confia no Senhor de todo o teu coração.",
+      reference: "Provérbios 3:5"
+    },
+
+    {
+      text: "Posso todas as coisas naquele que me fortalece.",
+      reference: "Filipenses 4:13"
+    },
+
+    {
+      text: "Não temas, porque eu sou contigo.",
+      reference: "Isaías 41:10"
+    },
+
+    {
+      text: "Deus é o nosso refúgio e fortaleza.",
+      reference: "Salmos 46:1"
+    },
+
+    {
+      text: "Buscai primeiro o Reino de Deus.",
+      reference: "Mateus 6:33"
+    },
+
+    {
+      text: "Entrega o teu caminho ao Senhor.",
+      reference: "Salmos 37:5"
+    },
+
+    {
+      text: "Sê forte e corajoso; não temas.",
+      reference: "Josué 1:9"
+    },
+
+    {
+      text: "O Senhor é a minha luz e a minha salvação.",
+      reference: "Salmos 27:1"
+    },
+
+    {
+      text: "Deixo-vos a paz, a minha paz vos dou.",
+      reference: "João 14:27"
+    },
+
+    {
+      text: "Porque andamos por fé, e não por vista.",
+      reference: "2 Coríntios 5:7"
+    },
+
+    {
+      text: "Provai e vede que o Senhor é bom.",
+      reference: "Salmos 34:8"
+    },
+
+    {
+      text: "Tudo quanto fizerdes, fazei-o de todo o coração.",
+      reference: "Colossenses 3:23"
+    },
+
+    {
+      text: "Confia ao Senhor as tuas obras.",
+      reference: "Provérbios 16:3"
+    },
+
+    {
+      text: "Vinde a mim, todos os que estais cansados.",
+      reference: "Mateus 11:28"
+    },
+
+    {
+      text: "Aquele que habita no esconderijo do Altíssimo.",
+      reference: "Salmos 91:1"
+    },
+
+    {
+      text: "Alegrai-vos na esperança, sede pacientes na tribulação.",
+      reference: "Romanos 12:12"
+    },
+
+    {
+      text: "Não nos cansemos de fazer o bem.",
+      reference: "Gálatas 6:9"
+    },
+
+    {
+      text: "Este é o dia que fez o Senhor.",
+      reference: "Salmos 118:24"
+    },
+
+    {
+      text: "Todas as vossas coisas sejam feitas com amor.",
+      reference: "1 Coríntios 16:14"
+    },
+
+    {
+      text: "Lança o teu cuidado sobre o Senhor.",
+      reference: "Salmos 55:22"
+    },
+
+    {
+      text: "A fé é o firme fundamento das coisas que se esperam.",
+      reference: "Hebreus 11:1"
+    },
+
+    {
+      text: "O Senhor é a minha força e o meu escudo.",
+      reference: "Salmos 28:7"
+    },
+
+    {
+      text: "Os que esperam no Senhor renovarão as suas forças.",
+      reference: "Isaías 40:31"
+    },
+
+    {
+      text: "No mundo tereis aflições, mas tende bom ânimo.",
+      reference: "João 16:33"
+    },
+
+    {
+      text: "Os que semeiam em lágrimas segarão com alegria.",
+      reference: "Salmos 126:5"
+    },
+
+    {
+      text: "O Senhor firma os passos do homem bom.",
+      reference: "Salmos 37:23"
+    },
+
+    {
+      text: "O meu socorro vem do Senhor.",
+      reference: "Salmos 121:2"
+    },
+
+    {
+      text: "A minha graça te basta.",
+      reference: "2 Coríntios 12:9"
+    },
+
+    {
+      text: "Em tudo dai graças.",
+      reference: "1 Tessalonicenses 5:18"
+    }
+
+  ];
+
+
+  function loadDailyBibleVerse() {
+
+    const verseElement =
+      document.getElementById("dailyBibleVerse");
+
+    const referenceElement =
+      document.getElementById("dailyBibleReference");
+
+    if (!verseElement || !referenceElement) {
+      return;
+    }
+
+
+    const today = new Date();
+
+    const startOfYear =
+      Date.UTC(today.getFullYear(), 0, 1);
+
+    const currentDay =
+      Date.UTC(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+      );
+
+    const dayOfYear =
+      Math.floor(
+        (currentDay - startOfYear) / 86400000
+      );
+
+
+    const verse =
+      dailyBibleVerses[
+        dayOfYear % dailyBibleVerses.length
+      ];
+
+
+    verseElement.textContent =
+      `“${verse.text}”`;
+
+    referenceElement.textContent =
+      ` — ${verse.reference}`;
+
+  }
+
+
+  loadDailyBibleVerse();
+
+</script>
 
 </body>
 </html>
