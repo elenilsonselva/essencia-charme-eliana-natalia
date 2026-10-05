@@ -5,7 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Essência & Charme</title>
+
   <link rel="stylesheet" href="/style.css">
+
+  <!-- Ícones Lucide -->
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+
 </head>
 
 <body>
@@ -31,6 +37,7 @@
 
     <div class="form-group">
       <label for="loginUsername">Usuário</label>
+
       <input
         type="text"
         id="loginUsername"
@@ -41,6 +48,7 @@
 
     <div class="form-group">
       <label for="loginPassword">Senha</label>
+
       <input
         type="password"
         id="loginPassword"
@@ -82,9 +90,11 @@
 
       <div>
         <div class="brand-name">Essência & Charme</div>
+
         <div class="brand-subtitle">
           Perfumes, cosméticos & estilo
         </div>
+
         <div class="brand-author">
           by Eliana Natália
         </div>
@@ -102,7 +112,10 @@
         class="nav-item active"
         data-page="dashboard"
       >
-        <span>⌂</span>
+        <span class="nav-icon">
+          <i data-lucide="layout-dashboard"></i>
+        </span>
+
         <span>Dashboard</span>
       </button>
 
@@ -114,25 +127,36 @@
         class="nav-item"
         data-page="products"
       >
-        <span>▣</span>
+        <span class="nav-icon">
+          <i data-lucide="package"></i>
+        </span>
+
         <span>Produtos</span>
       </button>
+
 
       <button
         type="button"
         class="nav-item"
         data-page="clients"
       >
-        <span>♙</span>
+        <span class="nav-icon">
+          <i data-lucide="users"></i>
+        </span>
+
         <span>Clientes</span>
       </button>
+
 
       <button
         type="button"
         class="nav-item"
         data-page="suppliers"
       >
-        <span>▤</span>
+        <span class="nav-icon">
+          <i data-lucide="building-2"></i>
+        </span>
+
         <span>Fornecedores</span>
       </button>
 
@@ -144,34 +168,49 @@
         class="nav-item"
         data-page="sale"
       >
-        <span>＋</span>
+        <span class="nav-icon">
+          <i data-lucide="shopping-cart"></i>
+        </span>
+
         <span>Nova Venda</span>
       </button>
+
 
       <button
         type="button"
         class="nav-item"
         data-page="sales"
       >
-        <span>▤</span>
+        <span class="nav-icon">
+          <i data-lucide="receipt"></i>
+        </span>
+
         <span>Vendas</span>
       </button>
+
 
       <button
         type="button"
         class="nav-item"
         data-page="purchases"
       >
-        <span>▥</span>
+        <span class="nav-icon">
+          <i data-lucide="shopping-bag"></i>
+        </span>
+
         <span>Compras</span>
       </button>
+
 
       <button
         type="button"
         class="nav-item"
         data-page="stock"
       >
-        <span>▦</span>
+        <span class="nav-icon">
+          <i data-lucide="boxes"></i>
+        </span>
+
         <span>Estoque</span>
       </button>
 
@@ -183,7 +222,10 @@
         class="nav-item"
         data-page="reports"
       >
-        <span>▥</span>
+        <span class="nav-icon">
+          <i data-lucide="chart-column"></i>
+        </span>
+
         <span>Relatórios</span>
       </button>
 
@@ -228,6 +270,8 @@
     <div class="page-content">
 
 
+      <!-- DASHBOARD -->
+
       <section
         id="page-dashboard"
         class="page active"
@@ -235,8 +279,12 @@
 
         <div class="page-header">
 
-          <h2>Dashboard</h2>
-<p>Visão geral da Essência & Charme</p>
+          <div>
+            <h2>Dashboard</h2>
+
+            <p>
+              Visão geral da Essência & Charme
+            </p>
           </div>
 
         </div>
@@ -245,7 +293,10 @@
         <div class="dashboard-grid">
 
           <div class="stat-card">
-            <div class="stat-label">Vendas</div>
+
+            <div class="stat-label">
+              Vendas
+            </div>
 
             <div
               id="dashboardSales"
@@ -257,11 +308,15 @@
             <div class="stat-detail">
               Total de vendas
             </div>
+
           </div>
 
 
           <div class="stat-card">
-            <div class="stat-label">A receber</div>
+
+            <div class="stat-label">
+              A receber
+            </div>
 
             <div
               id="dashboardReceivable"
@@ -273,11 +328,15 @@
             <div class="stat-detail">
               Valores pendentes
             </div>
+
           </div>
 
 
           <div class="stat-card">
-            <div class="stat-label">Compras</div>
+
+            <div class="stat-label">
+              Compras
+            </div>
 
             <div
               id="dashboardPurchases"
@@ -289,11 +348,15 @@
             <div class="stat-detail">
               Total de compras
             </div>
+
           </div>
 
 
           <div class="stat-card">
-            <div class="stat-label">A pagar</div>
+
+            <div class="stat-label">
+              A pagar
+            </div>
 
             <div
               id="dashboardPayable"
@@ -305,6 +368,7 @@
             <div class="stat-detail">
               Contas pendentes
             </div>
+
           </div>
 
         </div>
@@ -365,6 +429,7 @@
             <div class="dashboard-grid">
 
               <div class="stat-card">
+
                 <div class="stat-label">
                   Produtos cadastrados
                 </div>
@@ -375,10 +440,12 @@
                 >
                   0
                 </div>
+
               </div>
 
 
               <div class="stat-card">
+
                 <div class="stat-label">
                   Clientes
                 </div>
@@ -389,10 +456,12 @@
                 >
                   0
                 </div>
+
               </div>
 
 
               <div class="stat-card">
+
                 <div class="stat-label">
                   Estoque baixo
                 </div>
@@ -403,6 +472,7 @@
                 >
                   0
                 </div>
+
               </div>
 
             </div>
@@ -413,6 +483,8 @@
 
       </section>
 
+
+      <!-- PRODUTOS -->
 
       <section
         id="page-products"
@@ -474,6 +546,8 @@
       </section>
 
 
+      <!-- CLIENTES -->
+
       <section
         id="page-clients"
         class="page"
@@ -530,6 +604,8 @@
       </section>
 
 
+      <!-- FORNECEDORES -->
+
       <section
         id="page-suppliers"
         class="page"
@@ -585,6 +661,8 @@
 
       </section>
 
+
+      <!-- NOVA VENDA -->
 
       <section
         id="page-sale"
@@ -876,6 +954,8 @@
       </section>
 
 
+      <!-- VENDAS -->
+
       <section
         id="page-sales"
         class="page"
@@ -928,6 +1008,8 @@
 
       </section>
 
+
+      <!-- ESTOQUE -->
 
       <section
         id="page-stock"
@@ -987,6 +1069,8 @@
 
       </section>
 
+
+      <!-- RELATÓRIOS -->
 
       <section
         id="page-reports"
@@ -1075,6 +1159,8 @@
 
       </section>
 
+
+      <!-- COMPRAS -->
 
       <section
         id="page-purchases"
@@ -1237,11 +1323,15 @@
         </div>
 
         <div class="form-group">
-          <label for="productSupplier">Fornecedor</label>
+
+          <label for="productSupplier">
+            Fornecedor
+          </label>
 
           <select id="productSupplier">
             <option value="">Selecione</option>
           </select>
+
         </div>
 
         <div class="form-group">
@@ -1250,7 +1340,10 @@
         </div>
 
         <div class="form-group">
-          <label for="productCost">Custo</label>
+
+          <label for="productCost">
+            Custo
+          </label>
 
           <input
             type="number"
@@ -1258,10 +1351,14 @@
             min="0"
             step="0.01"
           >
+
         </div>
 
         <div class="form-group">
-          <label for="productPrice">Preço de venda</label>
+
+          <label for="productPrice">
+            Preço de venda
+          </label>
 
           <input
             type="number"
@@ -1270,10 +1367,14 @@
             step="0.01"
             required
           >
+
         </div>
 
         <div class="form-group">
-          <label for="productStock">Estoque</label>
+
+          <label for="productStock">
+            Estoque
+          </label>
 
           <input
             type="number"
@@ -1281,9 +1382,11 @@
             min="0"
             step="1"
           >
+
         </div>
 
         <div class="form-group">
+
           <label for="productMinStock">
             Estoque mínimo
           </label>
@@ -1294,6 +1397,7 @@
             min="0"
             step="1"
           >
+
         </div>
 
       </div>
@@ -1361,33 +1465,53 @@
       >
 
       <div class="form-group">
-        <label for="clientName">Nome</label>
+
+        <label for="clientName">
+          Nome
+        </label>
 
         <input
           id="clientName"
           required
         >
+
       </div>
 
 
       <div class="form-grid">
 
         <div class="form-group">
-          <label for="clientPhone">Telefone</label>
+
+          <label for="clientPhone">
+            Telefone
+          </label>
+
           <input id="clientPhone">
+
         </div>
 
+
         <div class="form-group">
-          <label for="clientAddress">Endereço</label>
+
+          <label for="clientAddress">
+            Endereço
+          </label>
+
           <input id="clientAddress">
+
         </div>
 
       </div>
 
 
       <div class="form-group">
-        <label for="clientNotes">Observações</label>
+
+        <label for="clientNotes">
+          Observações
+        </label>
+
         <textarea id="clientNotes"></textarea>
+
       </div>
 
     </div>
@@ -1453,52 +1577,75 @@
       >
 
       <div class="form-group">
-        <label for="supplierName">Nome</label>
+
+        <label for="supplierName">
+          Nome
+        </label>
 
         <input
           id="supplierName"
           required
         >
+
       </div>
 
 
       <div class="form-grid">
 
         <div class="form-group">
-          <label for="supplierPhone">Telefone</label>
+
+          <label for="supplierPhone">
+            Telefone
+          </label>
+
           <input id="supplierPhone">
+
         </div>
 
+
         <div class="form-group">
-          <label for="supplierWhatsapp">WhatsApp</label>
+
+          <label for="supplierWhatsapp">
+            WhatsApp
+          </label>
+
           <input id="supplierWhatsapp">
+
         </div>
 
+
         <div class="form-group">
+
           <label for="supplierDocument">
             CPF/CNPJ
           </label>
 
           <input id="supplierDocument">
+
         </div>
 
+
         <div class="form-group">
+
           <label for="supplierAddress">
             Endereço
           </label>
 
           <input id="supplierAddress">
+
         </div>
 
       </div>
 
 
       <div class="form-group">
+
         <label for="supplierNotes">
           Observações
         </label>
 
         <textarea id="supplierNotes"></textarea>
+
       </div>
 
     </div>
@@ -2177,6 +2324,10 @@
   </div>
 
   <script src="/app.js"></script>
+
+  <script>
+    lucide.createIcons();
+  </script>
 
 </body>
 </html>
