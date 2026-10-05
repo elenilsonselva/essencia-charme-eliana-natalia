@@ -3527,21 +3527,31 @@ app.get(
 
     line();
 
+       doc.moveDown(1);
+
+    line();
+
     doc.moveDown(0.6);
 
     doc
-      .fontSize(9)
+      .fontSize(10)
       .font("Helvetica")
       .text(
-        "Documento de controle interno — Essência & Charme.",
+        "Obrigado pela preferência!",
         {
           align: "center",
         }
       );
 
-    doc.end();
-  })
-);
+    doc
+      .fontSize(10)
+      .font("Helvetica-Bold")
+      .text(
+        "Eliana Natália",
+        {
+          align: "center",
+        }
+      );
 
 /* =========================================================
    CRIAÇÃO DE COMPRA
