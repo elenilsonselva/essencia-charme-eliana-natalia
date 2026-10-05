@@ -1216,20 +1216,79 @@ app.get(
         [saleId]
       );
 
-    /* =====================================================
+      /* =====================================================
        PARCELAS
     ===================================================== */
 
-    const installmentsResult =
-      await pool.query(
-        `
-        SELECT *
-        FROM sale_installments
-        WHERE sale_id = $1
-        ORDER BY installment_no
-        `,
-        [saleId]
-      );
+    if (
+      installmentsResult.rows.length
+    ) {
+
+      doc.moveDown(0.8);
+
+      doc
+        .fontSize(12)
+        .font("Helvetica-Bold")
+        .text(
+          "PARCELAS",
+          {
+            align: "left",
+          }
+        );
+
+      doc.moveDown(0.4);
+
+      for (
+        const installment
+        of installmentsResult.rows
+      ) {
+
+        const installmentText =
+          `${installment.installment_no}ª parcela — vencimento ${dateBR(
+            installment.due_date
+          )} — valor ${brl(
+            installment.amount
+          )} — pago ${brl(
+            installment.paid_amount
+          )} — ${
+            installment.status || ""
+          }`;
+
+        const rowY =
+          doc.y;
+
+        const rowHeight =
+          22;
+
+        doc
+          .rect(
+            doc.page.margins.left,
+            rowY - 2,
+            pageWidth,
+            rowHeight
+          )
+          .stroke();
+
+        doc
+          .fontSize(9)
+          .font("Helvetica")
+          .text(
+            installmentText,
+            doc.page.margins.left + 8,
+            rowY + 5,
+            {
+              width:
+                pageWidth - 16,
+              align: "left",
+            }
+          );
+
+        doc.y =
+          rowY +
+          rowHeight +
+          3;
+      }
+    }
 
     /* =====================================================
        PAGAMENTOS
