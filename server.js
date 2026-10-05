@@ -3103,14 +3103,11 @@ app.get(
 
     doc.moveDown(0.5);
 
-    doc
+        doc
       .fontSize(10)
       .font("Helvetica")
       .text(
-        `Data: ${dateBR(purchase.date)}`
-      )
-      .text(
-        `Status: ${purchase.status || ""}`
+        `Data: ${dateBR(purchase.date)}    Status: ${purchase.status || "Em aberto"}`
       );
 
     doc.moveDown(0.7);
