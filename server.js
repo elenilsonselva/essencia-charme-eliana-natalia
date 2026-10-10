@@ -1193,7 +1193,43 @@ app.get(
 
     const sale =
       saleResult.rows[0];
+/* =====================================================
+   ITENS
+===================================================== */
 
+const itemsResult =
+  await pool.query(
+    `
+    SELECT
+      si.*,
+      p.name AS product_name,
+      p.code AS product_code,
+      p.brand AS product_brand,
+      p.size AS product_size
+    FROM sale_items si
+    JOIN products p
+      ON p.id = si.product_id
+    WHERE si.sale_id = $1
+    ORDER BY si.id
+    `,
+    [saleId]
+  );
+
+
+/* =====================================================
+   PARCELAS
+===================================================== */
+
+const installmentsResult =
+  await pool.query(
+    `
+    SELECT *
+    FROM sale_installments
+    WHERE sale_id = $1
+    ORDER BY installment_no
+    `,
+    [saleId]
+  );
     /* =====================================================
        ITENS
     ===================================================== */
