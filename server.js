@@ -94,6 +94,82 @@ function sendError(res, error, fallback = "Ocorreu um erro.") {
   });
 }
 
+function brl(value) {
+  return Number(value || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
+function dateBR(value) {
+  if (!value) return "";
+  const text = String(value).slice(0, 10);
+  const parts = text.split("-");
+  if (parts.length !== 3) return text;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function safeFileName(value) {
+  return String(value || "")
+    .replace(/[<>:"/\\|?*]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* =========================================================
+   UTILITÁRIOS PIX (EMV QRCPS)
+========================================================= */
+
+function crc16(payload) {
+  let crc = 0xffff;
+  for (let i = 0; i < payload.length; i++) {
+    crc ^= payload.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      if (crc & 0x8000) {
+        crc = (crc << 1) ^ 0x1021;
+      } else {
+        crc = crc << 1;
+      }
+      crc &= 0xffff;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, "0");
+}
+
+function pixField(id, value) {
+  const text = String(value);
+  return id + text.length.toString().padStart(2, "0") + text;
+}
+
+function createPixPayload(pixKey, merchantName, merchantCity, amount, txid = "***") {
+  const key = String(pixKey || "").trim();
+  const name = String(merchantName || "RECEBEDOR").trim().slice(0, 25);
+  const city = String(merchantCity || "CIDADE").trim().slice(0, 15);
+  
+  const merchantAccount =
+    pixField("00", "BR.GOV.BCB.PIX") +
+    pixField("01", key);
+
+  let payload =
+    pixField("00", "01") +
+    pixField("26", merchantAccount) +
+    pixField("52", "0000") +
+    pixField("53", "986");
+
+  if (amount && Number(amount) > 0) {
+    payload += pixField("54", Number(amount).toFixed(2));
+  }
+
+  payload +=
+    pixField("58", "BR") +
+    pixField("59", name) +
+    pixField("60", city) +
+    pixField("62", pixField("05", txid)) +
+    "6304";
+
+  return payload + crc16(payload);
+}
+
 /* =========================================================
    BANCO DE DADOS
 ========================================================= */
@@ -463,409 +539,3 @@ app.delete(
 
 app.get(
   "/api/clients",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const result = await pool.query(`SELECT * FROM clients ORDER BY name ASC, id ASC`);
-    res.json(result.rows);
-  })
-);
-
-app.post(
-  "/api/clients",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const { name, phone, address, notes } = req.body;
-
-    if (!String(name || "").trim()) {
-      return res.status(400).json({ error: "Informe o nome do cliente." });
-    }
-
-    const result = await pool.query(
-      `INSERT INTO clients (name, phone, address, notes) VALUES ($1,$2,$3,$4) RETURNING *`,
-      [
-        String(name).trim(),
-        String(phone || "").trim() || null,
-        String(address || "").trim() || null,
-        String(notes || "").trim() || null,
-      ]
-    );
-
-    res.status(201).json(result.rows[0]);
-  })
-);
-
-app.put(
-  "/api/clients/:id",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const id = integer(req.params.id);
-    const { name, phone, address, notes } = req.body;
-
-    if (!String(name || "").trim()) {
-      return res.status(400).json({ error: "Informe o nome do cliente." });
-    }
-
-    const result = await pool.query(
-      `UPDATE clients SET name = $1, phone = $2, address = $3, notes = $4 WHERE id = $5 RETURNING *`,
-      [
-        String(name).trim(),
-        String(phone || "").trim() || null,
-        String(address || "").trim() || null,
-        String(notes || "").trim() || null,
-        id,
-      ]
-    );
-
-    if (!result.rows.length) {
-      return res.status(404).json({ error: "Cliente não encontrado." });
-    }
-
-    res.json(result.rows[0]);
-  })
-);
-
-app.delete(
-  "/api/clients/:id",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const id = integer(req.params.id);
-    const result = await pool.query(`DELETE FROM clients WHERE id = $1 RETURNING id`, [id]);
-
-    if (!result.rows.length) {
-      return res.status(404).json({ error: "Cliente não encontrado." });
-    }
-
-    res.json({ ok: true });
-  })
-);
-
-/* =========================================================
-   FORNECEDORES
-========================================================= */
-
-app.get(
-  "/api/suppliers",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const result = await pool.query(`SELECT * FROM suppliers ORDER BY name ASC, id ASC`);
-    res.json(result.rows);
-  })
-);
-
-app.post(
-  "/api/suppliers",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const { name, phone, whatsapp, document, address, notes } = req.body;
-
-    if (!String(name || "").trim()) {
-      return res.status(400).json({ error: "Informe o nome do fornecedor." });
-    }
-
-    const result = await pool.query(
-      `INSERT INTO suppliers (name, phone, whatsapp, document, address, notes) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [
-        String(name).trim(),
-        String(phone || "").trim() || null,
-        String(whatsapp || "").trim() || null,
-        String(document || "").trim() || null,
-        String(address || "").trim() || null,
-        String(notes || "").trim() || null,
-      ]
-    );
-
-    res.status(201).json(result.rows[0]);
-  })
-);
-
-app.put(
-  "/api/suppliers/:id",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const id = integer(req.params.id);
-    const { name, phone, whatsapp, document, address, notes } = req.body;
-
-    if (!String(name || "").trim()) {
-      return res.status(400).json({ error: "Informe o nome do fornecedor." });
-    }
-
-    const result = await pool.query(
-      `UPDATE suppliers SET name = $1, phone = $2, whatsapp = $3, document = $4, address = $5, notes = $6 WHERE id = $7 RETURNING *`,
-      [
-        String(name).trim(),
-        String(phone || "").trim() || null,
-        String(whatsapp || "").trim() || null,
-        String(document || "").trim() || null,
-        String(address || "").trim() || null,
-        String(notes || "").trim() || null,
-        id,
-      ]
-    );
-
-    if (!result.rows.length) {
-      return res.status(404).json({ error: "Fornecedor não encontrado." });
-    }
-
-    res.json(result.rows[0]);
-  })
-);
-
-app.delete(
-  "/api/suppliers/:id",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const id = integer(req.params.id);
-    const result = await pool.query(`DELETE FROM suppliers WHERE id = $1 RETURNING id`, [id]);
-
-    if (!result.rows.length) {
-      return res.status(404).json({ error: "Fornecedor não encontrado." });
-    }
-
-    res.json({ ok: true });
-  })
-);
-
-/* =========================================================
-   ESTOQUE
-========================================================= */
-
-app.get(
-  "/api/stock",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const result = await pool.query(`
-      SELECT p.id, p.code, p.name, p.brand, p.size, p.cost, p.price, p.stock, p.min_stock,
-      CASE WHEN p.stock <= p.min_stock THEN true ELSE false END AS low_stock
-      FROM products p ORDER BY p.name ASC
-    `);
-    res.json(result.rows);
-  })
-);
-
-app.get(
-  "/api/stock/moves",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const result = await pool.query(`
-      SELECT sm.*, p.name AS product_name, p.code AS product_code
-      FROM stock_moves sm JOIN products p ON p.id = sm.product_id
-      ORDER BY sm.created_at DESC, sm.id DESC
-    `);
-    res.json(result.rows);
-  })
-);
-
-app.post(
-  "/api/stock/move",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const { product_id, quantity, type, note } = req.body;
-    const productId = integer(product_id);
-    const qty = integer(quantity);
-    const moveType = String(type || "").toLowerCase();
-
-    if (!productId) {
-      return res.status(400).json({ error: "Selecione um produto." });
-    }
-    if (!qty || qty <= 0) {
-      return res.status(400).json({ error: "Informe uma quantidade válida." });
-    }
-    if (moveType !== "entrada" && moveType !== "saida") {
-      return res.status(400).json({ error: "Tipo de movimentação inválido." });
-    }
-
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-
-      const productResult = await client.query(
-        `SELECT id, stock FROM products WHERE id = $1 FOR UPDATE`,
-        [productId]
-      );
-
-      if (!productResult.rows.length) {
-        throw new Error("Produto não encontrado.");
-      }
-
-      const currentStock = integer(productResult.rows[0].stock);
-
-      if (moveType === "saida" && currentStock < qty) {
-        throw new Error("Estoque insuficiente para essa saída.");
-      }
-
-      const newStock = moveType === "entrada" ? currentStock + qty : currentStock - qty;
-
-      await client.query(
-        `UPDATE products SET stock = $1, updated_at = NOW() WHERE id = $2`,
-        [newStock, productId]
-      );
-
-      const result = await client.query(
-        `INSERT INTO stock_moves (product_id, quantity, type, note, reference_type, reference_id)
-         VALUES ($1, $2, $3, $4, 'manual', NULL) RETURNING *`,
-        [productId, qty, moveType, String(note || "").trim() || null]
-      );
-
-      await client.query("COMMIT");
-      res.status(201).json({ ok: true, move: result.rows[0], stock: newStock });
-    } catch (error) {
-      await client.query("ROLLBACK");
-      return sendError(res, error);
-    } finally {
-      client.release();
-    }
-  })
-);
-
-/* =========================================================
-   VENDAS
-========================================================= */
-
-app.get(
-  "/api/sales",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const result = await pool.query(`
-      SELECT s.*, c.name AS client_name,
-      COALESCE((SELECT COUNT(*) FROM sale_installments si WHERE si.sale_id = s.id), 0)::INTEGER AS installment_count
-      FROM sales s LEFT JOIN clients c ON c.id = s.client_id
-      ORDER BY s.date DESC, s.id DESC
-    `);
-    res.json(result.rows);
-  })
-);
-
-app.get(
-  "/api/sales/:id",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const id = integer(req.params.id);
-
-    const saleResult = await pool.query(
-      `SELECT s.*, c.name AS client_name, c.phone AS client_phone, c.address AS client_address
-       FROM sales s LEFT JOIN clients c ON c.id = s.client_id WHERE s.id = $1`,
-      [id]
-    );
-
-    if (!saleResult.rows.length) {
-      return res.status(404).json({ error: "Venda não encontrada." });
-    }
-
-    const itemsResult = await pool.query(
-      `SELECT si.*, p.name AS product_name, p.code AS product_code, p.brand AS product_brand, p.size AS product_size
-       FROM sale_items si JOIN products p ON p.id = si.product_id WHERE si.sale_id = $1 ORDER BY si.id`,
-      [id]
-    );
-
-    const installmentsResult = await pool.query(
-      `SELECT * FROM sale_installments WHERE sale_id = $1 ORDER BY installment_no`,
-      [id]
-    );
-
-    const paymentsResult = await pool.query(
-      `SELECT * FROM sale_payments WHERE sale_id = $1 ORDER BY paid_at ASC, id ASC`,
-      [id]
-    );
-
-    res.json({
-      sale: saleResult.rows[0],
-      items: itemsResult.rows,
-      installments: installmentsResult.rows,
-      payments: paymentsResult.rows,
-    });
-  })
-);
-
-app.get(
-  "/api/sales/:id/pdf",
-  requireAuth,
-  asyncHandler(async (req, res) => {
-    const saleId = integer(req.params.id);
-
-    const saleResult = await pool.query(
-      `SELECT s.*, c.name AS client_name, c.phone AS client_phone, c.address AS client_address
-       FROM sales s LEFT JOIN clients c ON c.id = s.client_id WHERE s.id = $1`,
-      [saleId]
-    );
-
-    if (!saleResult.rows.length) {
-      return res.status(404).json({ error: "Venda não encontrada." });
-    }
-
-    const sale = saleResult.rows[0];
-
-    const itemsResult = await pool.query(
-      `SELECT si.*, p.name AS product_name, p.code AS product_code, p.brand AS product_brand, p.size AS product_size
-       FROM sale_items si JOIN products p ON p.id = si.product_id WHERE si.sale_id = $1 ORDER BY si.id`,
-      [saleId]
-    );
-
-    const installmentsResult = await pool.query(
-      `SELECT * FROM sale_installments WHERE sale_id = $1 ORDER BY installment_no`,
-      [saleId]
-    );
-
-    const paymentsResult = await pool.query(
-      `SELECT * FROM sale_payments WHERE sale_id = $1 ORDER BY paid_at ASC, id ASC`,
-      [saleId]
-    );
-
-    // Inicialização do PDFKit
-    const doc = new PDFDocument({ margin: 40 });
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `inline; filename="venda-${saleId}.pdf"`);
-    doc.pipe(res);
-
-    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-
-    // Funções auxiliares locais do PDF
-    function brl(value) {
-      return Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-    }
-
-    function dateBR(value) {
-      if (!value) return "";
-      const text = String(value).slice(0, 10);
-      const parts = text.split("-");
-      if (parts.length !== 3) return text;
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    }
-
-    // Exemplo de cabeçalho básico no PDF
-    doc.fontSize(16).font("Helvetica-Bold").text("COMPROVANTE DE VENDA", { align: "center" });
-    doc.moveDown(1);
-    doc.fontSize(10).font("Helvetica").text(`Venda ID: #${sale.id} | Data: ${dateBR(sale.date)}`);
-    doc.text(`Cliente: ${sale.client_name || "Cliente não informado"}`);
-    doc.moveDown(1);
-
-    if (installmentsResult.rows.length) {
-      doc.fontSize(12).font("Helvetica-Bold").text("PARCELAS");
-      doc.moveDown(0.4);
-
-      for (const installment of installmentsResult.rows) {
-        const installmentText = `${installment.installment_no}ª parcela — vencimento ${dateBR(installment.due_date)} — valor ${brl(installment.amount)} — pago ${brl(installment.paid_amount)} — ${installment.status || ""}`;
-        
-        const rowY = doc.y;
-        doc.rect(doc.page.margins.left, rowY - 2, pageWidth, 22).stroke();
-        doc.fontSize(9).font("Helvetica").text(installmentText, doc.page.margins.left + 8, rowY + 5, { width: pageWidth - 16 });
-        doc.y = rowY + 25;
-      }
-    }
-
-    doc.end();
-  })
-);
-
-/* =========================================================
-   INICIALIZAÇÃO DO SERVIDOR
-========================================================= */
-
-initDb()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Servidor rodando na porta ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("Erro ao iniciar banco de dados:", err);
-  });
