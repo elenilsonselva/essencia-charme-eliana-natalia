@@ -1,10 +1,10 @@
-
 <!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
+<!-- CONFIGURAÇÃO DO APP -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#b86f7d">
 <meta name="mobile-web-app-capable" content="yes">
@@ -36,9 +36,7 @@
   --shadow:0 8px 30px rgba(104,65,76,.08);
 }
 
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -291,14 +289,8 @@ nav button.active{
 }
 
 @keyframes fadeIn{
-  from{
-    opacity:0;
-    transform:translateY(5px);
-  }
-  to{
-    opacity:1;
-    transform:translateY(0);
-  }
+  from{opacity:0;transform:translateY(5px)}
+  to{opacity:1;transform:translateY(0)}
 }
 
 .section>h2{
@@ -570,39 +562,25 @@ td img{
 }
 
 @media(max-width:900px){
-
-  .grid{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .formgrid{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .header-right .user-label{
-    display:none;
-  }
-
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .formgrid{grid-template-columns:repeat(2,1fr)}
+  .header-right .user-label{display:none}
 }
 
 @media(max-width:600px){
 
   header{
-    padding:12px 13px;
+    padding:11px 13px;
   }
 
   header h1{
-    font-size:20px;
+    font-size:18px;
   }
 
   .brand-icon{
-    width:39px;
-    height:39px;
-    font-size:20px;
-  }
-
-  .brand-sub{
-    font-size:11px;
+    width:37px;
+    height:37px;
+    font-size:18px;
   }
 
   .online-badge{
@@ -610,37 +588,33 @@ td img{
   }
 
   nav{
-    padding:8px 9px;
+    padding:7px 9px;
   }
 
   nav button{
-    padding:11px 13px;
-    font-size:14px;
+    padding:9px 11px;
+    font-size:12px;
   }
 
   .wrap{
-    padding:22px 13px 38px;
+    padding:20px 12px 35px;
   }
 
   .section>h2{
-    font-size:27px;
+    font-size:24px;
   }
 
   .grid{
     grid-template-columns:1fr 1fr;
-    gap:11px;
+    gap:10px;
   }
 
   .card{
-    padding:17px;
-  }
-
-  .card-title{
-    font-size:14px;
+    padding:15px;
   }
 
   .big{
-    font-size:23px;
+    font-size:20px;
   }
 
   .formgrid{
@@ -655,90 +629,21 @@ td img{
     max-width:none;
   }
 
-  button,
-  .btn{
-    font-size:15px;
-    padding:12px 16px;
-  }
-
-  input,
-  select,
-  textarea{
-    font-size:16px;
-    padding:13px 13px;
-  }
-
-  label{
-    font-size:14px;
-  }
-
-  .muted{
-    font-size:15px;
-  }
-
   table{
     display:block;
     overflow-x:auto;
     white-space:nowrap;
   }
 
-  th,
-  td{
-    padding:12px 11px;
-    font-size:14px;
-  }
-
-  th{
+  th,td{
+    padding:10px;
     font-size:12px;
-  }
-
-  .modalbox{
-    padding:22px 18px;
-  }
-
-  .modalbox h3{
-    font-size:25px;
-  }
-
-  #rr h3{
-    font-size:20px;
   }
 
   .login-card{
-    padding:36px 24px 30px;
+    padding:34px 24px 28px;
     border-radius:24px;
   }
-
-  .login-card h2{
-    font-size:31px;
-  }
-
-  .login-card p{
-    font-size:15px;
-  }
-
-  .login-field label{
-    font-size:14px;
-  }
-
-  .login-card input{
-    font-size:16px;
-    padding:15px;
-  }
-
-  .login-card button{
-    font-size:16px;
-    padding:15px;
-  }
-
-  #loginError{
-    font-size:14px;
-  }
-
-  .login-footer{
-    font-size:12px;
-  }
-
 }
 
 @media(max-width:400px){
@@ -754,7 +659,6 @@ td img{
   header .secondary{
     padding:8px 10px;
   }
-
 }
 </style>
 </head>
@@ -770,7 +674,7 @@ td img{
     <h2>Essência & Charme</h2>
 
     <p>
-      Perfumes, moda e charme para você.
+      Gestão, beleza e delicadeza em um só lugar
     </p>
 
     <form id="loginForm">
@@ -803,7 +707,7 @@ td img{
 
       </div>
 
-      <button type="submit" id="loginButton">
+      <button type="submit">
         Entrar no sistema
       </button>
 
@@ -812,7 +716,7 @@ td img{
     <div id="loginError"></div>
 
     <div class="login-footer">
-      Eliana Natália · Gestão com charme ✨
+      Essência & Charme · Gestão com charme ✨
     </div>
 
   </div>
@@ -834,7 +738,7 @@ td img{
       </h1>
 
       <span class="brand-sub">
-        PERFUMES, MODA & VENDAS · Eliana Natália
+        GESTÃO & VENDAS by Eliana Natália
       </span>
 
     </div>
@@ -1053,21 +957,7 @@ td img{
 
 <section id="hist" class="section">
 
-  <div class="toolbar">
-
-    <h2 style="margin:0;">
-      Histórico de vendas
-    </h2>
-
-    <button
-      type="button"
-      onclick="clearSalesHistory()"
-      style="background:#b42318;color:white;"
-    >
-      🗑️ Apagar histórico
-    </button>
-
-  </div>
+  <h2>Histórico de vendas</h2>
 
   <div id="st"></div>
 
@@ -1121,35 +1011,21 @@ td img{
 
 async function authCheck(){
 
-  try{
+  const r=await fetch('/api/me');
 
-    const r=await fetch('/api/me',{
-      credentials:'same-origin'
-    });
+  const x=await r.json();
 
-    const x=await r.json().catch(()=>({}));
+  if(x.authenticated){
 
-    if(r.ok && x.authenticated){
+    document.getElementById('loginScreen').style.display='none';
 
-      document.getElementById('loginScreen').style.display='none';
-
-      return true;
-
-    }
-
-    document.getElementById('loginScreen').style.display='flex';
-
-    return false;
-
-  }catch(error){
-
-    console.error('Erro ao verificar sessão:',error);
-
-    document.getElementById('loginScreen').style.display='flex';
-
-    return false;
+    return true;
 
   }
+
+  document.getElementById('loginScreen').style.display='flex';
+
+  return false;
 
 }
 
@@ -1160,70 +1036,40 @@ document
   e.preventDefault();
 
   const er=document.getElementById('loginError');
-  const button=document.getElementById('loginButton');
-
-  const username=document
-    .getElementById('loginUser')
-    .value
-    .trim();
-
-  const password=document
-    .getElementById('loginPass')
-    .value;
 
   er.textContent='';
 
-  button.disabled=true;
-  button.textContent='Entrando...';
+  const r=await fetch('/api/login',{
 
-  try{
+    method:'POST',
 
-    const r=await fetch('/api/login',{
+    headers:{
+      'Content-Type':'application/json'
+    },
 
-      method:'POST',
+    body:JSON.stringify({
 
-      credentials:'same-origin',
+      username:loginUser.value,
 
-      headers:{
-        'Content-Type':'application/json'
-      },
+      password:loginPass.value
 
-      body:JSON.stringify({
-        username:username,
-        password:password
-      })
+    })
 
-    });
+  });
 
-    const x=await r.json().catch(()=>({}));
+  const x=await r.json();
 
-    if(r.ok){
+  if(r.ok){
 
-      document
-        .getElementById('loginScreen')
-        .style.display='none';
+    document
+    .getElementById('loginScreen')
+    .style.display='none';
 
-      location.reload();
+    location.reload();
 
-      return;
+  }else{
 
-    }
-
-    er.textContent=
-      x.error||
-      'Usuário ou senha inválidos.';
-
-  }catch(error){
-
-    console.error('Erro no login:',error);
-
-    er.textContent=
-      'Não foi possível conectar ao servidor.';
-
-  }finally{
-
-    button.disabled=false;
-    button.textContent='Entrar no sistema';
+    er.textContent=x.error||'Falha no login';
 
   }
 
@@ -1231,18 +1077,9 @@ document
 
 async function logout(){
 
-  try{
-
-    await fetch('/api/logout',{
-      method:'POST',
-      credentials:'same-origin'
-    });
-
-  }catch(error){
-
-    console.error('Erro ao sair:',error);
-
-  }
+  await fetch('/api/logout',{
+    method:'POST'
+  });
 
   location.reload();
 
@@ -1259,28 +1096,26 @@ const $=id=>document.getElementById(id);
 const money=v=>
   'R$ '+
   Number(v||0)
-    .toFixed(2)
-    .replace('.',',');
+  .toFixed(2)
+  .replace('.',',');
 
 function show(id,b){
 
   document
-    .querySelectorAll('.section')
-    .forEach(x=>x.classList.remove('active'));
+  .querySelectorAll('.section')
+  .forEach(x=>x.classList.remove('active'));
 
   $(id).classList.add('active');
 
   document
-    .querySelectorAll('nav button')
-    .forEach(x=>x.classList.remove('active'));
+  .querySelectorAll('nav button')
+  .forEach(x=>x.classList.remove('active'));
 
   b?.classList.add('active');
 
-  if(id==='prod')
-    loadProducts();
+  if(id==='prod') loadProducts();
 
-  if(id==='cli')
-    loadClients();
+  if(id==='cli') loadClients();
 
   if(id==='venda'){
 
@@ -1289,28 +1124,22 @@ function show(id,b){
 
   }
 
-  if(id==='hist')
-    loadSales();
+  if(id==='hist') loadSales();
 
-  if(id==='est')
-    renderStock();
+  if(id==='est') renderStock();
 
-  if(id==='rel')
-    loadReports();
+  if(id==='rel') loadReports();
 
 }
 
 async function api(u,o){
 
-  let r=await fetch(u,{
-    credentials:'same-origin',
-    ...(o||{})
-  });
+  let r=await fetch(u,o);
 
-  let j=await r.json().catch(()=>({}));
+  let j=await r.json();
 
   if(!r.ok)
-    throw Error(j.error||'Erro na comunicação com o servidor.');
+    throw Error(j.error||'Erro');
 
   return j;
 
@@ -1318,20 +1147,12 @@ async function api(u,o){
 
 async function dash(){
 
-  try{
+  let d=await api('/api/dashboard');
 
-    let d=await api('/api/dashboard');
-
-    $('dt').textContent=money(d.today.total);
-    $('dm').textContent=money(d.month.total);
-    $('dl').textContent=d.low;
-    $('dd').textContent=money(d.debt.v);
-
-  }catch(error){
-
-    console.error('Erro ao carregar dashboard:',error);
-
-  }
+  $('dt').textContent=money(d.today.total);
+  $('dm').textContent=money(d.month.total);
+  $('dl').textContent=d.low;
+  $('dd').textContent=money(d.debt.v);
 
 }
 
@@ -1351,8 +1172,8 @@ function renderProducts(){
 
   let a=products.filter(p=>
     (p.name+' '+p.brand+' '+p.code)
-      .toLowerCase()
-      .includes(q)
+    .toLowerCase()
+    .includes(q)
   );
 
   $('pt').innerHTML=
@@ -1429,11 +1250,7 @@ function openProd(id){
 
       <div class="formgrid">
 
-        <input
-          name="code"
-          placeholder="Código"
-          value="${p.code||''}"
-        >
+        <input name="code" placeholder="Código" value="${p.code||''}">
 
         <input
           name="name"
@@ -1442,17 +1259,9 @@ function openProd(id){
           value="${p.name||''}"
         >
 
-        <input
-          name="brand"
-          placeholder="Marca"
-          value="${p.brand||''}"
-        >
+        <input name="brand" placeholder="Marca" value="${p.brand||''}">
 
-        <input
-          name="size"
-          placeholder="Tamanho"
-          value="${p.size||''}"
-        >
+        <input name="size" placeholder="Tamanho" value="${p.size||''}">
 
         <input
           name="cost"
@@ -1656,9 +1465,7 @@ function openCli(id){
 
       <br><br>
 
-      <button type="submit" id="saveClientBtn">
-        Salvar
-      </button>
+      <button>Salvar</button>
 
       <button
         type="button"
@@ -1667,11 +1474,6 @@ function openCli(id){
       >
         Cancelar
       </button>
-
-      <div
-        id="clientError"
-        style="color:#b42318;margin-top:12px;font-size:13px;"
-      ></div>
 
     </form>
 
@@ -1683,48 +1485,28 @@ function openCli(id){
 
     e.preventDefault();
 
-    const button=$('saveClientBtn');
-    const errorBox=$('clientError');
+    await api(
+      id
+      ?'/api/clients/'+id
+      :'/api/clients',
+      {
+        method:id?'PUT':'POST',
 
-    errorBox.textContent='';
-    button.disabled=true;
-    button.textContent='Salvando...';
+        headers:{
+          'Content-Type':'application/json'
+        },
 
-    try{
-
-      const dados=Object.fromEntries(new FormData(e.target));
-      dados.name=(dados.name||'').trim();
-
-      if(!dados.name){
-        errorBox.textContent='Informe o nome do cliente.';
-        return;
+        body:JSON.stringify(
+          Object.fromEntries(
+            new FormData(e.target)
+          )
+        )
       }
+    );
 
-      await api(
-        id ? '/api/clients/'+id : '/api/clients',
-        {
-          method:id?'PUT':'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify(dados)
-        }
-      );
+    closeM();
 
-      closeM();
-      await loadClients();
-
-      alert(id?'Cliente atualizado com sucesso!':'Cliente cadastrado com sucesso!');
-
-    }catch(error){
-
-      console.error('Erro ao salvar cliente:',error);
-      errorBox.textContent=error.message||'Não foi possível salvar o cliente.';
-
-    }finally{
-
-      button.disabled=false;
-      button.textContent='Salvar';
-
-    }
+    loadClients();
 
   };
 
@@ -1771,8 +1553,7 @@ function addCart(){
 
   let q=+$('vq').value;
 
-  if(!p||q<1)
-    return;
+  if(!p||q<1) return;
 
   if(q>p.stock)
     return alert('Estoque insuficiente');
@@ -1781,6 +1562,7 @@ function addCart(){
 
   if(x)
     x.qty+=q;
+
   else
     cart.push({
       product_id:p.id,
@@ -1890,14 +1672,12 @@ async function finishSale(){
       }
     );
 
-    if(confirm('Venda realizada! Deseja abrir o comprovante PDF?')){
+    if(confirm('Venda realizada! Deseja abrir o comprovante PDF?'))
 
       window.open(
         '/api/sales/'+r.id+'/pdf',
         '_blank'
       );
-
-    }
 
     cart=[];
 
@@ -1910,48 +1690,6 @@ async function finishSale(){
   }catch(e){
 
     alert(e.message);
-
-  }
-
-}
-
-async function clearSalesHistory(){
-
-  const confirmacao=confirm(
-    "ATENÇÃO!\n\n"+
-    "Isso apagará todas as vendas registradas, incluindo os itens e pagamentos.\n\n"+
-    "Produtos, clientes e estoque não serão apagados.\n\n"+
-    "Deseja realmente continuar?"
-  );
-
-  if(!confirmacao)
-    return;
-
-  try{
-
-    const result=await api(
-      "/api/sales/all",
-      {
-        method:"DELETE"
-      }
-    );
-
-    alert(
-      result.message||
-      "Histórico de vendas apagado com sucesso."
-    );
-
-    await loadSales();
-
-    if(typeof dash==="function")
-      await dash();
-
-  }catch(error){
-
-    alert(
-      error.message||
-      "Não foi possível apagar o histórico de vendas."
-    );
 
   }
 
@@ -2179,18 +1917,16 @@ async function loadReports(){
       d.getMonth(),
       1
     )
-      .toISOString()
-      .slice(0,10);
+    .toISOString()
+    .slice(0,10);
 
   }
 
-  if(!t){
+  if(!t)
 
     t=new Date()
-      .toISOString()
-      .slice(0,10);
-
-  }
+    .toISOString()
+    .slice(0,10);
 
   let r=await api(
     '/api/reports?from='+f+'&to='+t
@@ -2362,15 +2098,11 @@ async function payDebt(id){
 }
 
 function showM(){
-
   $('modal').style.display='flex';
-
 }
 
 function closeM(){
-
   $('modal').style.display='none';
-
 }
 
 $('modal').addEventListener('click',e=>{
