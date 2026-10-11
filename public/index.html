@@ -932,13 +932,33 @@ td img{
 
       <label>Parcelas</label>
 
-      <input
-        id="vi"
-        type="number"
-        value="1"
-        min="1"
-        style="max-width:150px"
-      >
+<select
+  id="vi"
+  style="max-width:150px"
+  onchange="toggleDueDate()"
+>
+  <option value="1">1x</option>
+  <option value="2">2x</option>
+  <option value="3">3x</option>
+  <option value="12">12x</option>
+</select>
+
+
+<div
+  id="dueDateContainer"
+  style="display:none; margin-top:15px"
+>
+
+<label>
+  Primeiro vencimento
+</label>
+
+<input
+  id="first_due_date"
+  type="date"
+>
+
+</div>
 
     </div>
 
