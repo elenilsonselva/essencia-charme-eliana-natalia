@@ -1477,29 +1477,18 @@ const item of items
 
 const produto =
 (
-await connection.query(
-
-`
-
-SELECT *
-
-FROM products
-
-WHERE id=$1
-
-FOR UPDATE
-
-`
-
-,
-
-[
-item.product_id
-]
-
-)
-
-.rows[0];
+  await connection.query(
+    `
+    SELECT *
+    FROM products
+    WHERE id=$1
+    FOR UPDATE
+    `,
+    [
+      item.product_id
+    ]
+  )
+).rows[0];
 
 
 
