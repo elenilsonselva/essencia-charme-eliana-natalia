@@ -2204,39 +2204,36 @@ async(req,res)=>{
 
 const venda =
 (
-await pool.query(
+  await pool.query(
 
-`
+  `
 
-SELECT
+  SELECT
 
-s.*,
+  s.*,
 
-c.name client
-
-
-FROM sales s
+  c.name client
 
 
-LEFT JOIN clients c
-
-ON c.id=s.client_id
+  FROM sales s
 
 
-WHERE s.id=$1
+  LEFT JOIN clients c
+
+  ON c.id=s.client_id
 
 
-`
+  WHERE s.id=$1
 
-,
 
-[
-req.params.id
-]
+  `,
 
-)
+  [
+    req.params.id
+  ]
 
-.rows[0];
+  )
+).rows[0];
 
 
 
