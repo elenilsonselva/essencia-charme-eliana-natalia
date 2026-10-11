@@ -4,37 +4,62 @@ const crypto = require("crypto");
 const cookieParser = require("cookie-parser");
 const multer = require("multer");
 const PDFDocument = require("pdfkit");
+const QRCode = require("qrcode");
 const { Pool } = require("pg");
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
+
 const SESSION_DAYS = 7;
+
 
 /* =========================
    CONFIGURAÇÕES
 ========================= */
 
-const sessions = new Map();
+const PIX_KEY =
+  process.env.PIX_KEY ||
+  "97984031709";
+
+const PIX_NAME =
+  process.env.PIX_NAME ||
+  "ELIANA NATALIA DIAS LIMA";
+
+const PIX_CITY =
+  process.env.PIX_CITY ||
+  "VENDA NOVA";
+
 
 const ADMIN_USER =
-  process.env.ADMIN_USER || "admin";
+  process.env.ADMIN_USER ||
+  "admin";
+
 
 const ADMIN_PASSWORD =
-  process.env.ADMIN_PASSWORD || "troque-esta-senha";
+  process.env.ADMIN_PASSWORD ||
+  "troque-esta-senha";
+
+
+const sessions = new Map();
+
+
+
+/* =========================
+   BANCO
+========================= */
+
 
 if (!process.env.DATABASE_URL) {
 
   console.error(
-    "ERRO: configure a variável DATABASE_URL com a URL do PostgreSQL."
+    "DATABASE_URL não configurada"
   );
 
   process.exit(1);
+
 }
 
-/* =========================
-   BANCO DE DADOS
-========================= */
 
 const pool = new Pool({
 
@@ -43,2299 +68,2651 @@ const pool = new Pool({
 
   ssl:
     process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
+      ? {
+          rejectUnauthorized:false
+        }
       : undefined
 
 });
 
+
+
 /* =========================
-   UPLOAD DE IMAGENS
+   UPLOAD
 ========================= */
 
-const upload = multer({
+
+const upload =
+multer({
 
   storage:
     multer.memoryStorage(),
 
-  limits: {
+  limits:{
     fileSize:
       4 * 1024 * 1024
   }
 
 });
 
+
+
 /* =========================
-   MIDDLEWARES
+   MIDDLEWARE
 ========================= */
 
-app.use(
-  express.json({
-    limit: "6mb"
-  })
-);
 
 app.use(
-  express.urlencoded({
-    extended: true
-  })
+express.json({
+limit:"6mb"
+})
 );
+
+
+app.use(
+express.urlencoded({
+extended:true
+})
+);
+
 
 app.use(cookieParser());
 
+
 app.use(
-  express.static(
-    path.join(__dirname, "public")
-  )
+express.static(
+path.join(
+__dirname,
+"public"
+)
+)
 );
 
+
+
 /* =========================
-   SESSÃO / AUTENTICAÇÃO
+   AUTENTICAÇÃO
 ========================= */
 
-function requireAuth(req, res, next) {
 
-  const token =
-    req.cookies.ec_session;
+function requireAuth(req,res,next){
 
-  const session =
-    token && sessions.get(token);
 
-  if (
-    !session ||
-    session.expires < Date.now()
-  ) {
+const token =
+req.cookies.ec_session;
 
-    if (token) {
-      sessions.delete(token);
-    }
 
-    return res
-      .status(401)
-      .json({
-        error:
-          "Não autenticado"
-      });
+const session =
+token &&
+sessions.get(token);
 
-  }
 
-  next();
+
+if(
+!session ||
+session.expires < Date.now()
+){
+
+
+if(token)
+sessions.delete(token);
+
+
+
+return res
+.status(401)
+.json({
+
+error:
+"Não autenticado"
+
+});
+
+
 }
 
-function createSession() {
 
-  const token =
-    crypto.randomBytes(32).toString("hex");
+next();
 
-  sessions.set(
-    token,
-    {
-      expires:
-        Date.now() +
-        SESSION_DAYS *
-        86400000
-    }
-  );
 
-  return token;
 }
 
-/* =========================
-   LOGIN
-========================= */
 
-app.post(
-  "/api/login",
-  (req, res) => {
 
-    const {
-      username,
-      password
-    } = req.body || {};
+function createSession(){
 
-    if (
-      username === ADMIN_USER &&
-      password === ADMIN_PASSWORD
-    ) {
 
-      const token =
-        createSession();
+const token =
+crypto
+.randomBytes(32)
+.toString("hex");
 
-      res.cookie(
-        "ec_session",
-        token,
-        {
-          httpOnly: true,
 
-          secure:
-            process.env.NODE_ENV ===
-            "production",
 
-          sameSite: "lax",
+sessions.set(
 
-          maxAge:
-            SESSION_DAYS *
-            86400000
-        }
-      );
+token,
 
-      return res.json({
-        ok: true
-      });
+{
 
-    }
+expires:
+Date.now()
++
+SESSION_DAYS *
+86400000
 
-    res
-      .status(401)
-      .json({
-        error:
-          "Usuário ou senha inválidos"
-      });
+}
 
-  }
 );
 
-/* =========================
-   LOGOUT
-========================= */
 
-app.post(
-  "/api/logout",
-  (req, res) => {
 
-    const token =
-      req.cookies.ec_session;
+return token;
 
-    if (token) {
-      sessions.delete(token);
-    }
 
-    res.clearCookie(
-      "ec_session"
-    );
+}
 
-    res.json({
-      ok: true
-    });
 
-  }
-);
-
-/* =========================
-   VERIFICAÇÃO DE LOGIN
-========================= */
-
-app.get(
-  "/api/me",
-  (req, res) => {
-
-    const token =
-      req.cookies.ec_session;
-
-    const session =
-      token &&
-      sessions.get(token);
-
-    const authenticated =
-      !!(
-        session &&
-        session.expires >
-        Date.now()
-      );
-
-    res.json({
-
-      authenticated,
-
-      username:
-        authenticated
-          ? ADMIN_USER
-          : null
-
-    });
-
-  }
-);
 
 /* =========================
    UTILITÁRIOS
 ========================= */
 
-const money = value =>
-  Number(value || 0)
-    .toFixed(2);
 
-const now = () =>
-  new Date().toISOString();
+const money =
+value =>
+Number(value || 0)
+.toFixed(2);
 
-function photoData(file) {
 
-  if (!file) {
-    return null;
-  }
 
-  const mime =
-    file.mimetype ||
-    "image/jpeg";
+function photoData(file){
 
-  return (
-    `data:${mime};base64,` +
-    file.buffer.toString("base64")
-  );
+
+if(!file)
+return null;
+
+
+
+return (
+
+`data:${file.mimetype};base64,`
++
+file.buffer.toString("base64")
+
+);
+
 
 }
 
-/* =========================
-   BANCO — INICIALIZAÇÃO
-========================= */
-
-async function initDb() {
-
-  await pool.query(`
-
-    CREATE TABLE IF NOT EXISTS products (
-
-      id SERIAL PRIMARY KEY,
-
-      code TEXT UNIQUE,
-
-      name TEXT NOT NULL,
-
-      brand TEXT DEFAULT '',
-
-      size TEXT DEFAULT '',
-
-      cost NUMERIC(12,2)
-        DEFAULT 0,
-
-      price NUMERIC(12,2)
-        DEFAULT 0,
-
-      stock INTEGER
-        DEFAULT 0,
-
-      min_stock INTEGER
-        DEFAULT 1,
-
-      photo TEXT,
-
-      created_at
-        TIMESTAMPTZ
-        DEFAULT NOW()
-
-    );
 
 
-    CREATE TABLE IF NOT EXISTS clients (
-
-      id SERIAL PRIMARY KEY,
-
-      name TEXT NOT NULL,
-
-      phone TEXT DEFAULT '',
-
-      address TEXT DEFAULT '',
-
-      notes TEXT DEFAULT '',
-
-      created_at
-        TIMESTAMPTZ
-        DEFAULT NOW()
-
-    );
+function gerarParcelas(
+total,
+quantidade,
+primeiroVencimento
+){
 
 
-    CREATE TABLE IF NOT EXISTS sales (
-
-      id SERIAL PRIMARY KEY,
-
-      client_id INTEGER
-        REFERENCES clients(id)
-        ON DELETE SET NULL,
-
-      date TIMESTAMPTZ
-        NOT NULL
-        DEFAULT NOW(),
-
-      total NUMERIC(12,2)
-        NOT NULL,
-
-      discount NUMERIC(12,2)
-        DEFAULT 0,
-
-      payment TEXT
-        NOT NULL,
-
-      installments INTEGER
-        DEFAULT 1,
-
-      status TEXT
-        DEFAULT 'paid',
-
-      created_at
-        TIMESTAMPTZ
-        DEFAULT NOW()
-
-    );
+const permitidas =
+[
+1,
+2,
+3,
+12
+];
 
 
-    CREATE TABLE IF NOT EXISTS sale_items (
+if(
+!permitidas.includes(
+Number(quantidade)
+)
+){
 
-      id SERIAL PRIMARY KEY,
-
-      sale_id INTEGER
-        REFERENCES sales(id)
-        ON DELETE CASCADE,
-
-      product_id INTEGER
-        REFERENCES products(id)
-        ON DELETE RESTRICT,
-
-      qty INTEGER
-        NOT NULL,
-
-      price NUMERIC(12,2)
-        NOT NULL,
-
-      cost NUMERIC(12,2)
-        DEFAULT 0
-
-    );
-
-
-    CREATE TABLE IF NOT EXISTS stock_moves (
-
-      id SERIAL PRIMARY KEY,
-
-      product_id INTEGER
-        REFERENCES products(id)
-        ON DELETE CASCADE,
-
-      qty INTEGER
-        NOT NULL,
-
-      type TEXT
-        NOT NULL,
-
-      note TEXT
-        DEFAULT '',
-
-      date TIMESTAMPTZ
-        DEFAULT NOW()
-
-    );
-
-
-    CREATE INDEX IF NOT EXISTS
-      idx_sales_date
-      ON sales(date);
-
-
-    CREATE INDEX IF NOT EXISTS
-      idx_sale_items_sale
-      ON sale_items(sale_id);
-
-  `);
+throw new Error(
+"Parcelamento permitido: 1x, 2x, 3x ou 12x"
+);
 
 }
 
+
+
+const parcelas=[];
+
+
+const valorBase =
+Math.floor(
+(
+Number(total) /
+Number(quantidade)
+)
+*
+100
+)
+/100;
+
+
+
+for(
+let i=1;
+i<=Number(quantidade);
+i++
+){
+
+
+const data =
+new Date(
+primeiroVencimento
+);
+
+
+
+data.setMonth(
+data.getMonth()
++
+i-1
+);
+
+
+
+let valor =
+valorBase;
+
+
+
+if(
+i === Number(quantidade)
+){
+
+valor =
+Number(total)
+-
+(
+valorBase *
+(
+Number(quantidade)-1
+)
+);
+
+}
+
+
+
+parcelas.push({
+
+numero:i,
+
+valor:
+Number(
+valor.toFixed(2)
+),
+
+vencimento:
+data
+.toISOString()
+.slice(0,10)
+
+});
+
+
+}
+
+
+
+return parcelas;
+
+
+}
+
+
+
 /* =========================
-   HEALTH CHECK
+   BANCO - TABELAS
 ========================= */
+
+
+async function initDb(){
+
+
+await pool.query(`
+
+
+CREATE TABLE IF NOT EXISTS sale_installments (
+
+id SERIAL PRIMARY KEY,
+
+sale_id INTEGER
+REFERENCES sales(id)
+ON DELETE CASCADE,
+
+
+number INTEGER NOT NULL,
+
+
+total_installments INTEGER NOT NULL,
+
+
+amount NUMERIC(12,2) NOT NULL,
+
+
+due_date DATE NOT NULL,
+
+
+paid BOOLEAN DEFAULT FALSE,
+
+
+paid_at TIMESTAMPTZ,
+
+
+payment_method TEXT DEFAULT '',
+
+
+created_at TIMESTAMPTZ DEFAULT NOW()
+
+);
+
+
+`);
+
+
+}
+/* =========================
+   LOGIN
+========================= */
+
+
+app.post(
+"/api/login",
+(req,res)=>{
+
+
+const {
+
+username,
+
+password
+
+}=req.body || {};
+
+
+
+if(
+
+username === ADMIN_USER
+
+&&
+
+password === ADMIN_PASSWORD
+
+){
+
+const token =
+createSession();
+
+
+
+res.cookie(
+
+"ec_session",
+
+token,
+
+{
+
+httpOnly:true,
+
+secure:
+process.env.NODE_ENV ===
+"production",
+
+sameSite:"lax",
+
+maxAge:
+SESSION_DAYS *
+86400000
+
+}
+
+);
+
+
+
+return res.json({
+
+ok:true
+
+});
+
+
+}
+
+
+
+res.status(401)
+.json({
+
+error:
+"Usuário ou senha inválidos"
+
+});
+
+
+}
+
+);
+
+
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+
+app.post(
+"/api/logout",
+(req,res)=>{
+
+
+const token =
+req.cookies.ec_session;
+
+
+
+if(token){
+
+sessions.delete(token);
+
+}
+
+
+
+res.clearCookie(
+"ec_session"
+);
+
+
+
+res.json({
+
+ok:true
+
+});
+
+
+}
+
+);
+
+
+
+
+
+/* =========================
+   ME
+========================= */
+
 
 app.get(
-  "/api/health",
-  async (req, res) => {
+"/api/me",
+(req,res)=>{
 
-    try {
 
-      await pool.query(
-        "SELECT 1"
-      );
+const token =
+req.cookies.ec_session;
 
-      res.json({
-        ok: true,
-        app: "Essência & Charme"
-      });
 
-    } catch (error) {
 
-      res
-        .status(500)
-        .json({
-          ok: false,
-          error:
-            error.message
-        });
+const session =
+token &&
+sessions.get(token);
 
-    }
 
-  }
+
+const authenticated =
+Boolean(
+
+session
+&&
+session.expires > Date.now()
+
 );
+
+
+
+res.json({
+
+authenticated,
+
+username:
+authenticated
+?
+ADMIN_USER
+:
+null
+
+});
+
+
+}
+
+);
+
+
+
+
+
+/* =========================
+   HEALTH
+========================= */
+
+
+app.get(
+"/api/health",
+async(req,res)=>{
+
+
+try{
+
+
+await pool.query(
+"SELECT 1"
+);
+
+
+
+res.json({
+
+ok:true,
+
+app:
+"Essência & Charme"
+
+});
+
+
+
+}catch(error){
+
+
+res.status(500)
+.json({
+
+ok:false,
+
+error:
+error.message
+
+});
+
+
+}
+
+
+}
+
+);
+
+
+
+
 
 /* =========================
    DASHBOARD
 ========================= */
 
+
 app.get(
-  "/api/dashboard",
-  requireAuth,
-  async (req, res) => {
-
-    try {
-
-      const today =
-        new Date()
-          .toISOString()
-          .slice(0, 10);
-
-      const daily =
-        await pool.query(
-
-          `
-
-          SELECT
-
-            COALESCE(
-              SUM(total),
-              0
-            ) total,
-
-            COUNT(*)::int count
-
-          FROM sales
-
-          WHERE
-            date::date = $1
-
-            AND status = 'paid'
-
-          `,
-
-          [today]
-
-        );
+"/api/dashboard",
+requireAuth,
+async(req,res)=>{
 
 
-      const monthly =
-        await pool.query(
-
-          `
-
-          SELECT
-
-            COALESCE(
-              SUM(total),
-              0
-            ) total
-
-          FROM sales
-
-          WHERE
-
-            date::date >=
-              date_trunc(
-                'month',
-                CURRENT_DATE
-              )
-
-            AND status = 'paid'
-
-          `
-
-        );
+try{
 
 
-      const low =
-        await pool.query(
-
-          `
-
-          SELECT
-            COUNT(*)::int c
-
-          FROM products
-
-          WHERE
-            stock <= min_stock
-
-          `
-
-        );
+const hoje =
+new Date()
+.toISOString()
+.slice(0,10);
 
 
-      const debt =
-        await pool.query(
 
-          `
+const vendasHoje =
+await pool.query(
 
-          SELECT
+`
 
-            COALESCE(
-              SUM(total),
-              0
-            ) v,
+SELECT
 
-            COUNT(*)::int c
+COALESCE(
+SUM(total),
+0
+) total,
 
-          FROM sales
-
-          WHERE
-            payment = 'Fiado'
-
-            AND status = 'open'
-
-          `
-
-        );
+COUNT(*)::int quantidade
 
 
-      res.json({
+FROM sales
 
-        today:
-          daily.rows[0],
 
-        month:
-          monthly.rows[0],
+WHERE
 
-        low:
-          low.rows[0].c,
+date::date=$1
 
-        debt:
-          debt.rows[0]
+AND status='paid'
 
-      });
+`
 
-    } catch (error) {
+,
 
-      res
-        .status(500)
-        .json({
-          error:
-            "Erro ao carregar dashboard."
-        });
+[hoje]
 
-    }
-
-  }
 );
+
+
+
+
+const estoque =
+await pool.query(
+
+`
+
+SELECT
+
+COUNT(*)::int quantidade
+
+
+FROM products
+
+
+WHERE stock <= min_stock
+
+`
+
+);
+
+
+
+
+const parcelas =
+await pool.query(
+
+`
+
+SELECT
+
+COALESCE(
+SUM(amount),
+0
+) total
+
+
+FROM sale_installments
+
+
+WHERE paid=false
+
+`
+
+);
+
+
+
+res.json({
+
+today:
+vendasHoje.rows[0],
+
+low:
+estoque.rows[0].quantidade,
+
+installments:
+parcelas.rows[0]
+
+});
+
+
+
+}catch(error){
+
+
+res.status(500)
+.json({
+
+error:
+error.message
+
+});
+
+
+}
+
+
+}
+
+);
+
+
+
+
+
 
 /* =========================
    PRODUTOS
 ========================= */
 
+
 app.get(
-  "/api/products",
-  requireAuth,
-  async (req, res) => {
+"/api/products",
+requireAuth,
+async(req,res)=>{
 
-    const result =
-      await pool.query(
-        `
-        SELECT *
-        FROM products
-        ORDER BY name
-        `
-      );
 
-    res.json(
-      result.rows
-    );
+const result =
+await pool.query(
 
-  }
+`
+
+SELECT *
+
+FROM products
+
+ORDER BY name
+
+`
+
 );
+
+
+
+res.json(
+result.rows
+);
+
+
+}
+
+);
+
+
+
 
 
 app.post(
-  "/api/products",
-  upload.single("photo"),
-  requireAuth,
-  async (req, res) => {
+"/api/products",
+upload.single("photo"),
+requireAuth,
+async(req,res)=>{
 
-    try {
 
-      const data =
-        req.body;
+try{
 
-      const result =
-        await pool.query(
 
-          `
+const data =
+req.body;
 
-          INSERT INTO products(
 
-            code,
-            name,
-            brand,
-            size,
-            cost,
-            price,
-            stock,
-            min_stock,
-            photo
 
-          )
+const result =
+await pool.query(
 
-          VALUES(
-            $1,$2,$3,$4,$5,
-            $6,$7,$8,$9
-          )
+`
 
-          RETURNING id
+INSERT INTO products
 
-          `,
+(
 
-          [
+code,
 
-            data.code || null,
+name,
 
-            data.name,
+brand,
 
-            data.brand || "",
+size,
 
-            data.size || "",
+cost,
 
-            Number(data.cost) || 0,
+price,
 
-            Number(data.price) || 0,
+stock,
 
-            Number(data.stock) || 0,
+min_stock,
 
-            Number(data.min_stock) || 1,
+photo
 
-            photoData(req.file)
+)
 
-          ]
 
-        );
+VALUES
 
-      res.json({
-        id:
-          result.rows[0].id
-      });
+($1,$2,$3,$4,$5,$6,$7,$8,$9)
 
-    } catch (error) {
 
-      res
-        .status(400)
-        .json({
-          error:
-            error.message
-        });
+RETURNING id
 
-    }
+`
 
-  }
+,
+
+[
+
+
+data.code || null,
+
+data.name,
+
+data.brand || "",
+
+data.size || "",
+
+Number(data.cost)||0,
+
+Number(data.price)||0,
+
+Number(data.stock)||0,
+
+Number(data.min_stock)||1,
+
+photoData(req.file)
+
+
+]
+
 );
+
+
+
+res.json({
+
+id:
+result.rows[0].id
+
+});
+
+
+
+}catch(error){
+
+
+res.status(400)
+.json({
+
+error:
+error.message
+
+});
+
+
+}
+
+
+}
+
+);
+
+
+
+
 
 
 app.put(
-  "/api/products/:id",
-  upload.single("photo"),
-  requireAuth,
-  async (req, res) => {
+"/api/products/:id",
+upload.single("photo"),
+requireAuth,
+async(req,res)=>{
 
-    try {
 
-      const data =
-        req.body;
+try{
 
-      const old =
-        await pool.query(
 
-          `
-          SELECT photo
-          FROM products
-          WHERE id=$1
-          `,
+const data =
+req.body;
 
-          [req.params.id]
 
-        );
 
-      if (!old.rows.length) {
+await pool.query(
 
-        return res
-          .status(404)
-          .json({
-            error:
-              "Produto não encontrado"
-          });
+`
 
-      }
+UPDATE products
 
-      await pool.query(
+SET
 
-        `
+code=$1,
 
-        UPDATE products
+name=$2,
 
-        SET
+brand=$3,
 
-          code=$1,
+size=$4,
 
-          name=$2,
+cost=$5,
 
-          brand=$3,
+price=$6,
 
-          size=$4,
+stock=$7,
 
-          cost=$5,
+min_stock=$8,
 
-          price=$6,
+photo=
+COALESCE($9,photo)
 
-          stock=$7,
 
-          min_stock=$8,
+WHERE id=$10
 
-          photo=$9
+`
 
-        WHERE id=$10
+,
 
-        `,
+[
 
-        [
 
-          data.code || null,
+data.code || null,
 
-          data.name,
+data.name,
 
-          data.brand || "",
+data.brand || "",
 
-          data.size || "",
+data.size || "",
 
-          Number(data.cost) || 0,
+Number(data.cost)||0,
 
-          Number(data.price) || 0,
+Number(data.price)||0,
 
-          Number(data.stock) || 0,
+Number(data.stock)||0,
 
-          Number(data.min_stock) || 1,
+Number(data.min_stock)||1,
 
-          photoData(req.file) ||
-            old.rows[0].photo,
+photoData(req.file),
 
-          req.params.id
+req.params.id
 
-        ]
 
-      );
+]
 
-      res.json({
-        ok: true
-      });
-
-    } catch (error) {
-
-      res
-        .status(400)
-        .json({
-          error:
-            error.message
-        });
-
-    }
-
-  }
 );
+
+
+
+res.json({
+
+ok:true
+
+});
+
+
+
+}catch(error){
+
+
+res.status(400)
+.json({
+
+error:
+error.message
+
+});
+
+
+}
+
+
+}
+
+);
+
+
+
 
 
 app.delete(
-  "/api/products/:id",
-  requireAuth,
-  async (req, res) => {
+"/api/products/:id",
+requireAuth,
+async(req,res)=>{
 
-    try {
 
-      await pool.query(
-        `
-        DELETE FROM products
-        WHERE id=$1
-        `,
-        [req.params.id]
-      );
+await pool.query(
 
-      res.json({
-        ok: true
-      });
+`
 
-    } catch (error) {
+DELETE FROM products
 
-      res
-        .status(400)
-        .json({
+WHERE id=$1
 
-          error:
-            "Não foi possível excluir. Verifique se o produto já foi vendido."
+`
 
-        });
+,
 
-    }
+[
+req.params.id
+]
 
-  }
 );
 
+
+
+res.json({
+
+ok:true
+
+});
+
+
+}
+
+);
 /* =========================
    CLIENTES
 ========================= */
 
+
 app.get(
-  "/api/clients",
-  requireAuth,
-  async (req, res) => {
+"/api/clients",
+requireAuth,
+async(req,res)=>{
 
-    const result =
-      await pool.query(
-        `
-        SELECT *
-        FROM clients
-        ORDER BY name
-        `
-      );
 
-    res.json(
-      result.rows
-    );
+const result =
+await pool.query(
 
-  }
+`
+
+SELECT *
+
+FROM clients
+
+ORDER BY name
+
+`
+
 );
+
+
+res.json(
+result.rows
+);
+
+
+}
+
+);
+
+
+
 
 
 app.post(
-  "/api/clients",
-  requireAuth,
-  async (req, res) => {
+"/api/clients",
+requireAuth,
+async(req,res)=>{
 
-    const data =
-      req.body;
 
-    const result =
-      await pool.query(
+const data =
+req.body;
 
-        `
 
-        INSERT INTO clients(
-          name,
-          phone,
-          address,
-          notes
-        )
 
-        VALUES(
-          $1,$2,$3,$4
-        )
+const result =
+await pool.query(
 
-        RETURNING id
+`
 
-        `,
+INSERT INTO clients
 
-        [
+(
 
-          data.name,
+name,
 
-          data.phone || "",
+phone,
 
-          data.address || "",
+address,
 
-          data.notes || ""
+notes
 
-        ]
+)
 
-      );
 
-    res.json({
-      id:
-        result.rows[0].id
-    });
+VALUES
 
-  }
+($1,$2,$3,$4)
+
+
+RETURNING id
+
+`
+
+,
+
+[
+
+data.name,
+
+data.phone || "",
+
+data.address || "",
+
+data.notes || ""
+
+]
+
 );
+
+
+
+res.json({
+
+id:
+result.rows[0].id
+
+});
+
+
+}
+
+);
+
+
+
 
 
 app.put(
-  "/api/clients/:id",
-  requireAuth,
-  async (req, res) => {
+"/api/clients/:id",
+requireAuth,
+async(req,res)=>{
 
-    const data =
-      req.body;
 
-    await pool.query(
+const data =
+req.body;
 
-      `
 
-      UPDATE clients
 
-      SET
+await pool.query(
 
-        name=$1,
+`
 
-        phone=$2,
+UPDATE clients
 
-        address=$3,
+SET
 
-        notes=$4
+name=$1,
 
-      WHERE id=$5
+phone=$2,
 
-      `,
+address=$3,
 
-      [
+notes=$4
 
-        data.name,
 
-        data.phone || "",
+WHERE id=$5
 
-        data.address || "",
+`
 
-        data.notes || "",
+,
 
-        req.params.id
+[
 
-      ]
+data.name,
 
-    );
+data.phone || "",
 
-    res.json({
-      ok: true
-    });
+data.address || "",
 
-  }
+data.notes || "",
+
+req.params.id
+
+]
+
 );
+
+
+
+res.json({
+
+ok:true
+
+});
+
+
+}
+
+);
+
+
+
 
 
 app.delete(
-  "/api/clients/:id",
-  requireAuth,
-  async (req, res) => {
+"/api/clients/:id",
+requireAuth,
+async(req,res)=>{
 
-    try {
 
-      await pool.query(
+await pool.query(
 
-        `
-        DELETE FROM clients
-        WHERE id=$1
-        `,
+`
 
-        [req.params.id]
+DELETE FROM clients
 
-      );
+WHERE id=$1
 
-      res.json({
-        ok: true
-      });
+`
 
-    } catch (error) {
+,
 
-      res
-        .status(400)
-        .json({
+[
+req.params.id
+]
 
-          error:
-            "Não foi possível excluir este cliente."
-
-        });
-
-    }
-
-  }
 );
+
+
+
+res.json({
+
+ok:true
+
+});
+
+
+}
+
+);
+
+
+
+
+
+
 
 /* =========================
    VENDAS
 ========================= */
 
+
 app.get(
-  "/api/sales",
-  requireAuth,
-  async (req, res) => {
+"/api/sales",
+requireAuth,
+async(req,res)=>{
 
-    const result =
-      await pool.query(
 
-        `
+const result =
+await pool.query(
 
-        SELECT
+`
 
-          s.*,
+SELECT
 
-          c.name client
+s.*,
 
-        FROM sales s
+c.name client
 
-        LEFT JOIN clients c
-          ON c.id=s.client_id
 
-        ORDER BY s.id DESC
+FROM sales s
 
-        LIMIT 300
 
-        `
+LEFT JOIN clients c
 
-      );
+ON c.id=s.client_id
 
-    res.json(
-      result.rows
-    );
 
-  }
+ORDER BY s.id DESC
+
+LIMIT 300
+
+`
+
 );
+
+
+
+res.json(
+result.rows
+);
+
+
+}
+
+);
+
+
+
+
 
 
 app.post(
-  "/api/sales",
-  requireAuth,
-  async (req, res) => {
+"/api/sales",
+requireAuth,
+async(req,res)=>{
 
-    const {
 
-      client_id,
-      items,
-      discount,
-      payment,
-      installments
+const {
 
-    } = req.body;
+client_id,
 
+items,
 
-    if (
-      !Array.isArray(items) ||
-      !items.length
-    ) {
+discount,
 
-      return res
-        .status(400)
-        .json({
-          error:
-            "Venda sem produtos"
-        });
+payment,
 
-    }
+installments,
 
+first_due_date
 
-    if (
-      payment === "Fiado" &&
-      !client_id
-    ) {
+}=req.body;
 
-      return res
-        .status(400)
-        .json({
 
-          error:
-            "Selecione o cliente para venda fiada"
 
-        });
+if(
+!Array.isArray(items)
+||
+!items.length
+){
 
-    }
+return res.status(400)
+.json({
 
+error:
+"Venda sem produtos"
 
-    const connection =
-      await pool.connect();
+});
 
+}
 
-    try {
 
-      await connection.query(
-        "BEGIN"
-      );
 
+const parcelasQtd =
+Number(installments)
+||
+1;
 
-      let subtotal = 0;
 
-      const checked = [];
 
+if(
+![1,2,3,12]
+.includes(parcelasQtd)
+){
 
-      for (
-        const item of items
-      ) {
+return res.status(400)
+.json({
 
-        const product =
-          (
+error:
+"Parcelas permitidas: 1x, 2x, 3x ou 12x"
 
-            await connection.query(
+});
 
-              `
-              SELECT *
-              FROM products
-              WHERE id=$1
-              FOR UPDATE
-              `,
+}
 
-              [item.product_id]
 
-            )
 
-          ).rows[0];
 
 
-        if (!product) {
+const connection =
+await pool.connect();
 
-          throw new Error(
-            "Produto não encontrado"
-          );
 
-        }
 
+try{
 
-        const qty =
-          Number(item.qty);
 
-
-        if (
-          !Number.isInteger(qty) ||
-          qty < 1
-        ) {
-
-          throw new Error(
-            "Quantidade inválida"
-          );
-
-        }
-
-
-        if (
-          Number(product.stock) <
-          qty
-        ) {
-
-          throw new Error(
-
-            "Estoque insuficiente: " +
-            product.name
-
-          );
-
-        }
-
-
-        subtotal +=
-          Number(product.price) *
-          qty;
-
-
-        checked.push({
-
-          item,
-
-          product,
-
-          qty
-
-        });
-
-      }
-
-
-      const total =
-        Math.max(
-
-          0,
-
-          subtotal -
-          (
-            Number(discount) || 0
-          )
-
-        );
-
-
-      const status =
-        payment === "Fiado"
-          ? "open"
-          : "paid";
-
-
-      const sale =
-        (
-
-          await connection.query(
-
-            `
-
-            INSERT INTO sales(
-
-              client_id,
-              total,
-              discount,
-              payment,
-              installments,
-              status
-
-            )
-
-            VALUES(
-              $1,$2,$3,$4,$5,$6
-            )
-
-            RETURNING id
-
-            `,
-
-            [
-
-              client_id || null,
-
-              total,
-
-              Number(discount) || 0,
-
-              payment,
-
-              Number(installments) || 1,
-
-              status
-
-            ]
-
-          )
-
-        ).rows[0];
-
-
-      for (
-        const {
-          product,
-          qty
-        } of checked
-      ) {
-
-        await connection.query(
-
-          `
-
-          INSERT INTO sale_items(
-
-            sale_id,
-            product_id,
-            qty,
-            price,
-            cost
-
-          )
-
-          VALUES(
-            $1,$2,$3,$4,$5
-          )
-
-          `,
-
-          [
-
-            sale.id,
-
-            product.id,
-
-            qty,
-
-            product.price,
-
-            product.cost
-
-          ]
-
-        );
-
-
-        await connection.query(
-
-          `
-
-          UPDATE products
-
-          SET stock =
-            stock - $1
-
-          WHERE id=$2
-
-          `,
-
-          [
-
-            qty,
-
-            product.id
-
-          ]
-
-        );
-
-
-        await connection.query(
-
-          `
-
-          INSERT INTO stock_moves(
-
-            product_id,
-            qty,
-            type,
-            note
-
-          )
-
-          VALUES(
-            $1,$2,'SAIDA',$3
-          )
-
-          `,
-
-          [
-
-            product.id,
-
-            -qty,
-
-            "Venda #" +
-            sale.id
-
-          ]
-
-        );
-
-      }
-
-
-      await connection.query(
-        "COMMIT"
-      );
-
-
-      res.json({
-        id:
-          sale.id
-      });
-
-
-    } catch (error) {
-
-      await connection.query(
-        "ROLLBACK"
-      );
-
-      res
-        .status(400)
-        .json({
-          error:
-            error.message
-        });
-
-
-    } finally {
-
-      connection.release();
-
-    }
-
-  }
+await connection.query(
+"BEGIN"
 );
 
+
+
+let subtotal=0;
+
+
+const produtos=[];
+
+
+
+for(
+const item of items
+){
+
+
+const produto =
+(
+await connection.query(
+
+`
+
+SELECT *
+
+FROM products
+
+WHERE id=$1
+
+FOR UPDATE
+
+`
+
+,
+
+[
+item.product_id
+]
+
+)
+
+.rows[0];
+
+
+
+if(!produto){
+
+throw new Error(
+"Produto não encontrado"
+);
+
+}
+
+
+
+const quantidade =
+Number(item.qty);
+
+
+
+if(
+quantidade < 1
+){
+
+throw new Error(
+"Quantidade inválida"
+);
+
+}
+
+
+
+if(
+Number(produto.stock)
+<
+quantidade
+){
+
+throw new Error(
+
+"Estoque insuficiente: "
++
+produto.name
+
+);
+
+}
+
+
+
+
+subtotal +=
+Number(produto.price)
+*
+quantidade;
+
+
+
+produtos.push({
+
+produto,
+
+quantidade
+
+});
+
+
+}
+
+
+
+
+
+const total =
+Math.max(
+
+0,
+
+subtotal -
+(
+Number(discount)||0
+)
+
+);
+
+
+
+
+
+
+const status =
+payment === "Fiado"
+
+?
+"open"
+
+:
+"paid";
+
+
+
+
+
+
+const venda =
+(
+await connection.query(
+
+`
+
+INSERT INTO sales
+
+(
+
+client_id,
+
+total,
+
+discount,
+
+payment,
+
+installments,
+
+status
+
+)
+
+
+VALUES
+
+($1,$2,$3,$4,$5,$6)
+
+
+RETURNING id
+
+`
+
+,
+
+[
+
+client_id || null,
+
+total,
+
+Number(discount)||0,
+
+payment || "Dinheiro",
+
+parcelasQtd,
+
+status
+
+]
+
+)
+
+)
+
+.rows[0];
+
+
+
+
+
+
+
+for(
+const item of produtos
+){
+
+
+await connection.query(
+
+`
+
+INSERT INTO sale_items
+
+(
+
+sale_id,
+
+product_id,
+
+qty,
+
+price,
+
+cost
+
+)
+
+
+VALUES
+
+($1,$2,$3,$4,$5)
+
+`
+
+,
+
+[
+
+venda.id,
+
+item.produto.id,
+
+item.quantidade,
+
+item.produto.price,
+
+item.produto.cost
+
+]
+
+);
+
+
+
+
+
+await connection.query(
+
+`
+
+UPDATE products
+
+SET stock =
+stock-$1
+
+WHERE id=$2
+
+`
+
+,
+
+[
+
+item.quantidade,
+
+item.produto.id
+
+]
+
+);
+
+
+}
+
+
+
+
+
+
+
+if(
+parcelasQtd > 1
+){
+
+
+const parcelas =
+gerarParcelas(
+
+total,
+
+parcelasQtd,
+
+first_due_date ||
+new Date()
+
+);
+
+
+
+
+for(
+const parcela of parcelas
+){
+
+
+await connection.query(
+
+`
+
+INSERT INTO sale_installments
+
+(
+
+sale_id,
+
+number,
+
+total_installments,
+
+amount,
+
+due_date
+
+)
+
+
+VALUES
+
+($1,$2,$3,$4,$5)
+
+`
+
+,
+
+[
+
+venda.id,
+
+parcela.numero,
+
+parcelasQtd,
+
+parcela.valor,
+
+parcela.vencimento
+
+]
+
+);
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+await connection.query(
+"COMMIT"
+);
+
+
+
+res.json({
+
+id:
+venda.id
+
+});
+
+
+
+
+}catch(error){
+
+
+await connection.query(
+"ROLLBACK"
+);
+
+
+
+res.status(400)
+.json({
+
+error:
+error.message
+
+});
+
+
+
+}finally{
+
+
+connection.release();
+
+
+}
+
+
+
+}
+
+);
+
+
+
+
+
+
+
+/* =========================
+   PARCELAS
+========================= */
+
+
+app.get(
+"/api/installments",
+requireAuth,
+async(req,res)=>{
+
+
+const result =
+await pool.query(
+
+`
+
+SELECT
+
+si.*,
+
+s.total,
+
+c.name client
+
+
+FROM sale_installments si
+
+
+JOIN sales s
+
+ON s.id=si.sale_id
+
+
+LEFT JOIN clients c
+
+ON c.id=s.client_id
+
+
+ORDER BY si.due_date
+
+
+`
+
+);
+
+
+
+res.json(
+result.rows
+);
+
+
+}
+
+);
+
+
+
+
+
+app.post(
+"/api/installments/:id/pay",
+requireAuth,
+async(req,res)=>{
+
+
+await pool.query(
+
+`
+
+UPDATE sale_installments
+
+SET
+
+paid=true,
+
+paid_at=NOW(),
+
+payment_method=$1
+
+
+WHERE id=$2
+
+`
+
+,
+
+[
+
+req.body.payment ||
+"Dinheiro",
+
+req.params.id
+
+]
+
+);
+
+
+
+res.json({
+
+ok:true
+
+});
+
+
+}
+
+);
 /* =========================
    ESTOQUE
 ========================= */
 
+
 app.post(
-  "/api/stock",
-  requireAuth,
-  async (req, res) => {
+"/api/stock",
+requireAuth,
+async(req,res)=>{
 
-    const {
 
-      product_id,
-      qty,
-      type,
-      note
+const {
 
-    } = req.body;
+product_id,
 
+qty,
 
-    const quantity =
-      Number(qty) || 0;
+type,
 
+note
 
-    if (
-      !Number.isInteger(quantity) ||
-      quantity < 1
-    ) {
+}=req.body;
 
-      return res
-        .status(400)
-        .json({
-          error:
-            "Quantidade inválida"
-        });
 
-    }
 
+const quantidade =
+Number(qty);
 
-    if (
-      type !== "ENTRADA" &&
-      type !== "SAIDA"
-    ) {
 
-      return res
-        .status(400)
-        .json({
-          error:
-            "Tipo de movimentação inválido"
-        });
 
-    }
+if(
+!Number.isInteger(quantidade)
+||
+quantidade < 1
+){
 
+return res.status(400)
+.json({
 
-    const connection =
-      await pool.connect();
+error:
+"Quantidade inválida"
 
+});
 
-    try {
+}
 
-      await connection.query(
-        "BEGIN"
-      );
 
 
-      const product =
-        (
+const delta =
+type === "ENTRADA"
+?
+quantidade
+:
+-quantidade;
 
-          await connection.query(
 
-            `
-            SELECT stock
-            FROM products
-            WHERE id=$1
-            FOR UPDATE
-            `,
 
-            [product_id]
+await pool.query(
 
-          )
+`
 
-        ).rows[0];
+UPDATE products
 
+SET stock =
+stock+$1
 
-      if (!product) {
+WHERE id=$2
 
-        throw new Error(
-          "Produto não encontrado"
-        );
+`
 
-      }
+,
 
+[
 
-      if (
-        type === "SAIDA" &&
-        Number(product.stock) <
-        quantity
-      ) {
+delta,
 
-        throw new Error(
-          "Estoque insuficiente"
-        );
+product_id
 
-      }
+]
 
-
-      const delta =
-        type === "ENTRADA"
-          ? quantity
-          : -quantity;
-
-
-      await connection.query(
-
-        `
-
-        UPDATE products
-
-        SET stock =
-          stock + $1
-
-        WHERE id=$2
-
-        `,
-
-        [
-
-          delta,
-
-          product_id
-
-        ]
-
-      );
-
-
-      await connection.query(
-
-        `
-
-        INSERT INTO stock_moves(
-
-          product_id,
-          qty,
-          type,
-          note
-
-        )
-
-        VALUES(
-          $1,$2,$3,$4
-        )
-
-        `,
-
-        [
-
-          product_id,
-
-          delta,
-
-          type,
-
-          note || "Ajuste"
-
-        ]
-
-      );
-
-
-      await connection.query(
-        "COMMIT"
-      );
-
-
-      res.json({
-        ok: true
-      });
-
-
-    } catch (error) {
-
-      await connection.query(
-        "ROLLBACK"
-      );
-
-      res
-        .status(400)
-        .json({
-          error:
-            error.message
-        });
-
-
-    } finally {
-
-      connection.release();
-
-    }
-
-  }
 );
+
+
+
+await pool.query(
+
+`
+
+INSERT INTO stock_moves
+
+(
+
+product_id,
+
+qty,
+
+type,
+
+note
+
+)
+
+VALUES
+
+($1,$2,$3,$4)
+
+`
+
+,
+
+[
+
+product_id,
+
+delta,
+
+type,
+
+note || "Ajuste"
+
+]
+
+);
+
+
+
+res.json({
+
+ok:true
+
+});
+
+
+}
+
+);
+
+
+
+
+
+
 
 /* =========================
    RELATÓRIOS
 ========================= */
 
-app.get(
-  "/api/reports",
-  requireAuth,
-  async (req, res) => {
-
-    const from =
-      req.query.from ||
-      "1900-01-01";
-
-
-    const to =
-      (
-        req.query.to ||
-        new Date()
-          .toISOString()
-          .slice(0,10)
-      ) +
-      " 23:59:59.999";
-
-
-    const sales =
-      (
-
-        await pool.query(
-
-          `
-
-          SELECT
-
-            s.*,
-
-            c.name client
-
-          FROM sales s
-
-          LEFT JOIN clients c
-            ON c.id=s.client_id
-
-          WHERE
-            s.date BETWEEN $1 AND $2
-
-          ORDER BY
-            s.id DESC
-
-          `,
-
-          [from,to]
-
-        )
-
-      ).rows;
-
-
-    const totals =
-      (
-
-        await pool.query(
-
-          `
-
-          SELECT
-
-            COALESCE(
-              SUM(total),
-              0
-            ) revenue,
-
-            COALESCE(
-
-              SUM(
-
-                CASE
-
-                  WHEN status='paid'
-
-                  THEN (
-
-                    SELECT
-
-                      COALESCE(
-
-                        SUM(
-                          (
-                            si.price -
-                            si.cost
-                          ) *
-                          si.qty
-                        ),
-
-                        0
-
-                      )
-
-                    FROM sale_items si
-
-                    WHERE
-                      si.sale_id=s.id
-
-                  )
-
-                  ELSE 0
-
-                END
-
-              ),
-
-              0
-
-            ) profit
-
-          FROM sales s
-
-          WHERE
-            s.date BETWEEN $1 AND $2
-
-          `,
-
-          [from,to]
-
-        )
-
-      ).rows[0];
-
-
-    const top =
-      (
-
-        await pool.query(
-
-          `
-
-          SELECT
-
-            p.name,
-
-            SUM(
-              si.qty
-            )::int qty
-
-          FROM sale_items si
-
-          JOIN products p
-            ON p.id=si.product_id
-
-          JOIN sales s
-            ON s.id=si.sale_id
-
-          WHERE
-
-            s.date BETWEEN $1 AND $2
-
-            AND s.status='paid'
-
-          GROUP BY
-            p.id,
-            p.name
-
-          ORDER BY
-            qty DESC
-
-          LIMIT 10
-
-          `,
-
-          [from,to]
-
-        )
-
-      ).rows;
-
-
-    const debts =
-      (
-
-        await pool.query(
-
-          `
-
-          SELECT
-
-            s.id,
-
-            s.date,
-
-            s.total,
-
-            c.name,
-
-            c.phone
-
-          FROM sales s
-
-          LEFT JOIN clients c
-            ON c.id=s.client_id
-
-          WHERE
-
-            s.payment='Fiado'
-
-            AND s.status='open'
-
-          ORDER BY
-            s.id DESC
-
-          `
-
-        )
-
-      ).rows;
-
-
-    res.json({
-
-      sales,
-
-      totals,
-
-      top,
-
-      debts
-
-    });
-
-  }
-);
-
-/* =========================
-   RECEBIMENTO DE FIADO
-========================= */
-
-app.post(
-  "/api/sales/:id/pay",
-  requireAuth,
-  async (req, res) => {
-
-    const result =
-      await pool.query(
-
-        `
-
-        UPDATE sales
-
-        SET
-
-          status='paid',
-
-          payment =
-            COALESCE(
-              NULLIF($1,''),
-              payment
-            )
-
-        WHERE
-
-          id=$2
-
-          AND status='open'
-
-        RETURNING id
-
-        `,
-
-        [
-
-          req.body.payment ||
-          "Dinheiro",
-
-          req.params.id
-
-        ]
-
-      );
-
-
-    if (!result.rows.length) {
-
-      return res
-        .status(400)
-        .json({
-
-          error:
-            "Venda não encontrada ou já paga"
-
-        });
-
-    }
-
-
-    res.json({
-      ok: true
-    });
-
-  }
-);
-
-/* =========================
-   COMPROVANTE PDF
-========================= */
 
 app.get(
-  "/api/sales/:id/pdf",
-  requireAuth,
-  async (req, res) => {
+"/api/reports",
+requireAuth,
+async(req,res)=>{
 
-    const sale =
-      (
 
-        await pool.query(
+const result =
+await pool.query(
 
-          `
+`
 
-          SELECT
+SELECT
 
-            s.*,
+s.*,
 
-            c.name client,
+c.name client
 
-            c.phone
 
-          FROM sales s
+FROM sales s
 
-          LEFT JOIN clients c
-            ON c.id=s.client_id
 
-          WHERE
-            s.id=$1
+LEFT JOIN clients c
 
-          `,
+ON c.id=s.client_id
 
-          [req.params.id]
 
-        )
+ORDER BY s.id DESC
 
-      ).rows[0];
 
+`
 
-    if (!sale) {
-
-      return res
-        .status(404)
-        .end();
-
-    }
-
-
-    const items =
-      (
-
-        await pool.query(
-
-          `
-
-          SELECT
-
-            si.*,
-
-            p.name,
-
-            p.brand,
-
-            p.size
-
-          FROM sale_items si
-
-          JOIN products p
-            ON p.id=si.product_id
-
-          WHERE
-            si.sale_id=$1
-
-          `,
-
-          [sale.id]
-
-        )
-
-      ).rows;
-
-
-    res.setHeader(
-      "Content-Type",
-      "application/pdf"
-    );
-
-
-    res.setHeader(
-
-      "Content-Disposition",
-
-      `inline; filename="comprovante-${sale.id}.pdf"`
-
-    );
-
-
-    const doc =
-      new PDFDocument({
-
-        size: "A5",
-
-        margin: 35
-
-      });
-
-
-    doc.pipe(res);
-
-
-    /* CABEÇALHO */
-
-    doc
-      .fontSize(19)
-      .fillColor("#8f4e5d")
-      .text(
-        "Essência & Charme",
-        {
-          align: "center"
-        }
-      );
-
-
-    doc
-      .fontSize(10)
-      .fillColor("#777777")
-      .text(
-        "Comprovante de venda",
-        {
-          align: "center"
-        }
-      );
-
-
-    doc
-      .moveDown();
-
-
-    doc
-      .strokeColor("#d8b3bc")
-      .moveTo(35, doc.y)
-      .lineTo(385, doc.y)
-      .stroke();
-
-
-    doc
-      .moveDown();
-
-
-    /* INFORMAÇÕES */
-
-    doc
-      .fontSize(10)
-      .fillColor("#403338")
-      .text(
-        "Venda #" +
-        sale.id
-      );
-
-
-    doc.text(
-
-      new Date(
-        sale.date
-      ).toLocaleString(
-        "pt-BR"
-      )
-
-    );
-
-
-    doc.text(
-
-      "Cliente: " +
-      (
-        sale.client ||
-        "Consumidor"
-      )
-
-    );
-
-
-    if (sale.phone) {
-
-      doc.text(
-        "Telefone: " +
-        sale.phone
-      );
-
-    }
-
-
-    doc.moveDown();
-
-
-    /* PRODUTOS */
-
-    items.forEach(
-      item => {
-
-        const value =
-          Number(item.qty) *
-          Number(item.price);
-
-
-        const name =
-          item.name +
-          (
-            item.size
-              ? " - " +
-                item.size
-              : ""
-          );
-
-
-        doc
-          .fontSize(10)
-          .fillColor("#403338")
-          .text(
-
-            `${item.qty}x ${name}`,
-
-            {
-              continued: true
-            }
-
-          );
-
-
-        doc
-          .text(
-
-            `R$ ${money(value)
-              .replace(".",",")}`,
-
-            {
-              align:
-                "right"
-            }
-
-          );
-
-      }
-    );
-
-
-    doc.moveDown();
-
-
-    doc
-      .strokeColor("#eadfe0")
-      .moveTo(35, doc.y)
-      .lineTo(385, doc.y)
-      .stroke();
-
-
-    doc.moveDown();
-
-
-    doc
-      .fontSize(10)
-      .fillColor("#403338")
-      .text(
-
-        "Desconto: R$ " +
-        money(sale.discount)
-          .replace(".",",")
-
-      );
-
-
-    doc
-      .fontSize(15)
-      .fillColor("#8f4e5d")
-      .text(
-
-        "TOTAL: R$ " +
-        money(sale.total)
-          .replace(".",",")
-
-      );
-
-
-    doc
-      .fontSize(10)
-      .fillColor("#403338")
-      .text(
-
-        "Pagamento: " +
-        sale.payment +
-        (
-          sale.installments > 1
-            ? " - " +
-              sale.installments +
-              "x"
-            : ""
-        )
-
-      );
-
-
-    doc.moveDown(2);
-
-
-    doc
-      .fontSize(11)
-      .fillColor("#8f4e5d")
-      .text(
-
-        "Obrigada pela preferência! 🌸",
-
-        {
-          align: "center"
-        }
-
-      );
-
-
-    doc
-      .fontSize(8)
-      .fillColor("#999999")
-      .text(
-
-        "Essência & Charme",
-
-        {
-          align: "center"
-        }
-
-      );
-
-
-    doc.end();
-
-  }
 );
 
+
+
+res.json({
+
+sales:
+result.rows
+
+});
+
+
+}
+
+);
+
+
+
+
+
+
+
 /* =========================
-   PÁGINA PRINCIPAL
+   PDF VENDA + PIX
 ========================= */
+
+
+app.get(
+"/api/sales/:id/pdf",
+requireAuth,
+async(req,res)=>{
+
+
+const venda =
+(
+await pool.query(
+
+`
+
+SELECT
+
+s.*,
+
+c.name client
+
+
+FROM sales s
+
+
+LEFT JOIN clients c
+
+ON c.id=s.client_id
+
+
+WHERE s.id=$1
+
+
+`
+
+,
+
+[
+req.params.id
+]
+
+)
+
+.rows[0];
+
+
+
+if(!venda){
+
+return res.status(404)
+.end();
+
+}
+
+
+
+const itens =
+(
+await pool.query(
+
+`
+
+SELECT
+
+si.*,
+
+p.name,
+
+p.size
+
+
+FROM sale_items si
+
+
+JOIN products p
+
+ON p.id=si.product_id
+
+
+WHERE si.sale_id=$1
+
+
+`
+
+,
+
+[
+venda.id
+]
+
+)
+
+.rows;
+
+
+
+
+const parcelas =
+(
+await pool.query(
+
+`
+
+SELECT *
+
+FROM sale_installments
+
+WHERE sale_id=$1
+
+ORDER BY number
+
+
+`
+
+,
+
+[
+venda.id
+]
+
+)
+
+.rows;
+
+
+
+
+
+res.setHeader(
+"Content-Type",
+"application/pdf"
+);
+
+
+
+const doc =
+new PDFDocument({
+
+size:"A5",
+
+margin:35
+
+});
+
+
+
+doc.pipe(res);
+
+
+
+doc.fontSize(18)
+.fillColor("#8f4e5d")
+.text(
+"Essência & Charme",
+{
+align:"center"
+}
+);
+
+
+
+doc.fontSize(10)
+.fillColor("#555")
+.text(
+"Comprovante de venda",
+{
+align:"center"
+}
+);
+
+
+
+doc.moveDown();
+
+
+
+doc.text(
+"Venda #"
++
+venda.id
+);
+
+
+
+doc.text(
+
+"Cliente: "
++
+(
+venda.client ||
+"Consumidor"
+)
+
+);
+
+
+
+doc.moveDown();
+
+
+
+itens.forEach(item=>{
+
+
+const valor =
+Number(item.qty)
+*
+Number(item.price);
+
+
+
+doc.text(
+
+`${item.qty}x ${item.name}${item.size ? " - "+item.size : ""}`
+
+);
+
+
+
+doc.text(
+
+"R$ "
++
+money(valor)
+.replace(".",",")
+
+);
+
+
+});
+
+
+
+doc.moveDown();
+
+
+
+doc.fontSize(14)
+.fillColor("#8f4e5d")
+.text(
+
+"TOTAL: R$ "
++
+money(venda.total)
+.replace(".",",")
+
+);
+
+
+
+
+
+doc.fontSize(10)
+.fillColor("#333")
+.text(
+
+"Pagamento: "
++
+(
+venda.payment ||
+"Não informado"
+)
+
+);
+
+
+
+
+
+
+if(parcelas.length){
+
+
+doc.moveDown();
+
+doc.text(
+"Parcelas:"
+);
+
+
+
+parcelas.forEach(p=>{
+
+
+doc.text(
+
+`${p.number}/${p.total_installments} - R$ ${money(p.amount).replace(".",",")} - ${new Date(p.due_date).toLocaleDateString("pt-BR")}`
+
+);
+
+
+});
+
+
+}
+
+
+
+
+
+
+
+/* GERAR PIX */
+
+
+const pixPayload =
+
+`00020126580014BR.GOV.BCB.PIX0136${PIX_KEY}520400005303986540${money(venda.total)}5802BR5918${PIX_NAME}6009${PIX_CITY}6304`;
+
+
+
+const qr =
+await QRCode.toDataURL(
+pixPayload
+);
+
+
+
+const imagem =
+Buffer.from(
+
+qr.replace(
+"data:image/png;base64,",
+""
+),
+
+"base64"
+
+);
+
+
+
+doc.moveDown();
+
+
+
+doc.fontSize(11)
+.fillColor("#8f4e5d")
+.text(
+"PIX",
+{
+align:"center"
+}
+);
+
+
+
+doc.image(
+imagem,
+{
+
+fit:[120,120],
+
+align:"center"
+
+}
+
+);
+
+
+
+doc.fontSize(8)
+.fillColor("#555")
+.text(
+
+"Chave PIX: "
++
+PIX_KEY,
+
+{
+
+align:"center"
+
+}
+
+);
+
+
+
+doc.moveDown();
+
+
+
+doc.fontSize(10)
+.fillColor("#8f4e5d")
+.text(
+
+"Obrigada pela preferência!",
+
+{
+
+align:"center"
+
+}
+
+);
+
+
+
+doc.end();
+
+
+
+}
+
+);
+
+
+
+
+
+
+/* =========================
+   PÁGINA
+========================= */
+
 
 app.use(
-  (req, res, next) => {
+(req,res,next)=>{
 
-    if (
-      req.method === "GET" &&
-      !req.path.startsWith("/api/")
-    ) {
 
-      return res.sendFile(
+if(
 
-        path.join(
-          __dirname,
-          "public",
-          "index.html"
-        )
+req.method==="GET"
 
-      );
+&&
 
-    }
+!req.path.startsWith("/api/")
 
-    next();
+){
 
-  }
+
+return res.sendFile(
+
+path.join(
+
+__dirname,
+
+"public",
+
+"index.html"
+
+)
+
 );
 
+
+}
+
+
+next();
+
+
+}
+
+);
+
+
+
+
+
+
 /* =========================
-   INICIALIZAÇÃO
+   START
 ========================= */
+
 
 initDb()
 
-  .then(
-    () => {
+.then(()=>{
 
-      app.listen(
 
-        PORT,
+app.listen(
 
-        "0.0.0.0",
+PORT,
 
-        () => {
+"0.0.0.0",
 
-          console.log(
-            `🌸 Essência & Charme online na porta ${PORT}`
-          );
+()=>{
 
-        }
 
-      );
+console.log(
 
-    }
-  )
+`🌸 Essência & Charme online na porta ${PORT}`
 
-  .catch(
-    error => {
+);
 
-      console.error(
-        "Erro ao iniciar o sistema:",
-        error
-      );
 
-      process.exit(1);
+}
 
-    }
-  );
+);
+
+
+})
+
+.catch(error=>{
+
+
+console.error(
+
+"Erro ao iniciar:",
+
+error
+
+);
+
+
+
+process.exit(1);
+
+
+});
