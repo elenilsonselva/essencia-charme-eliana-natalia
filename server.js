@@ -2248,41 +2248,38 @@ return res.status(404)
 
 const itens =
 (
-await pool.query(
+  await pool.query(
 
-`
+  `
 
-SELECT
+  SELECT
 
-si.*,
+  si.*,
 
-p.name,
+  p.name,
 
-p.size
-
-
-FROM sale_items si
+  p.size
 
 
-JOIN products p
-
-ON p.id=si.product_id
+  FROM sale_items si
 
 
-WHERE si.sale_id=$1
+  JOIN products p
+
+  ON p.id=si.product_id
 
 
-`
+  WHERE si.sale_id=$1
 
-,
 
-[
-venda.id
-]
+  `,
 
-)
+  [
+    venda.id
+  ]
 
-.rows;
+  )
+).rows;
 
 
 
