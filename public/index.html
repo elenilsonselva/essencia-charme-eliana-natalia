@@ -1715,6 +1715,32 @@ async function finishSale(){
 
 }
 
+  function toggleDueDate(){
+
+  const parcelas =
+    Number(
+      document.getElementById("vi").value
+    );
+
+  const campo =
+    document.getElementById(
+      "dueDateContainer"
+    );
+
+  if(parcelas > 1){
+    campo.style.display = "block";
+  } else {
+    campo.style.display = "none";
+  }
+
+}
+
+
+function finishSale(){
+
+   // seu código atual da venda
+
+}
 async function loadSales(){
 
   let a=await api('/api/sales');
