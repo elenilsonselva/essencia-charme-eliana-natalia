@@ -376,7 +376,6 @@ async function initDb(){
 
 await pool.query(`
 
-
 CREATE TABLE IF NOT EXISTS sale_installments (
 
 id SERIAL PRIMARY KEY,
@@ -385,35 +384,53 @@ sale_id INTEGER
 REFERENCES sales(id)
 ON DELETE CASCADE,
 
+number INTEGER DEFAULT 1,
 
-number INTEGER NOT NULL,
+total_installments INTEGER DEFAULT 1,
 
+amount NUMERIC(12,2) DEFAULT 0,
 
-total_installments INTEGER NOT NULL,
-
-
-amount NUMERIC(12,2) NOT NULL,
-
-
-due_date DATE NOT NULL,
-
+due_date DATE DEFAULT CURRENT_DATE,
 
 paid BOOLEAN DEFAULT FALSE,
 
-
 paid_at TIMESTAMPTZ,
 
-
 payment_method TEXT DEFAULT '',
-
 
 created_at TIMESTAMPTZ DEFAULT NOW()
 
 );
 
 
-`);
+ALTER TABLE sale_installments
+ADD COLUMN IF NOT EXISTS number INTEGER DEFAULT 1;
 
+
+ALTER TABLE sale_installments
+ADD COLUMN IF NOT EXISTS total_installments INTEGER DEFAULT 1;
+
+
+ALTER TABLE sale_installments
+ADD COLUMN IF NOT EXISTS amount NUMERIC(12,2) DEFAULT 0;
+
+
+ALTER TABLE sale_installments
+ADD COLUMN IF NOT EXISTS due_date DATE DEFAULT CURRENT_DATE;
+
+
+ALTER TABLE sale_installments
+ADD COLUMN IF NOT EXISTS paid BOOLEAN DEFAULT FALSE;
+
+
+ALTER TABLE sale_installments
+ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+
+
+ALTER TABLE sale_installments
+ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT '';
+
+`);
 
 }
 /* =========================
