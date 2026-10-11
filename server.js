@@ -2286,30 +2286,26 @@ const itens =
 
 const parcelas =
 (
-await pool.query(
+  await pool.query(
 
-`
+  `
 
-SELECT *
+  SELECT *
 
-FROM sale_installments
+  FROM sale_installments
 
-WHERE sale_id=$1
+  WHERE sale_id=$1
 
-ORDER BY number
+  ORDER BY number
 
+  `,
 
-`
+  [
+    venda.id
+  ]
 
-,
-
-[
-venda.id
-]
-
-)
-
-.rows;
+  )
+).rows;
 
 
 
