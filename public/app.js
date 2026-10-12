@@ -1124,75 +1124,89 @@ body
 // ================================
 
 
-async function salvarProduto(){
+async function salvarProduto(event){
+
+    if(event){
+        event.preventDefault();
+    }
 
 
- const nome =
-   $("productName")?.value;
+    const id =
+    $("productId")?.value;
 
 
- if(!nome){
+    const body = {
 
-   alert(
-    "Informe o produto"
-   );
-
-   return;
-
- }
-
-console.log(
-"PRODUTO CADASTRADO:",
-body
-);
-
- await api(
-   "/api/products",
-   {
-
-    method:"POST",
-
-    body:{
+        name:
+        $("productName").value,
 
 
-name:
-$("productName").value,
+        brand:
+        $("productBrand")?.value || "",
 
 
-brand:
-$("productBrand").value,
+        cost:
+        Number(
+            $("productCost")?.value || 0
+        ),
 
 
-cost:
-Number(
-$("productCost").value || 0
-),
+        price:
+        Number(
+            $("productPrice")?.value || 0
+        ),
 
 
-price:
-Number(
-$("productPrice").value || 0
-),
+        stock:
+        Number(
+            $("productStock")?.value || 0
+        )
+
+    };
 
 
-stock:
-Number(
-$("productStock").value || 0
-)
-
-}
-
-   }
- );
+    console.log(
+        "PRODUTO:",
+        body
+    );
 
 
- await carregarProdutos();
+    await api(
+
+        id
+        ?
+        `/api/products/${id}`
+        :
+        "/api/products",
+
+        {
+
+            method:
+            id
+            ?
+            "PUT"
+            :
+            "POST",
 
 
- alert(
- "Produto salvo"
- );
+            body
 
+        }
+
+    );
+
+
+    await carregarProdutos();
+
+
+    closeModal(
+        "productModal"
+    );
+
+
+    alert(
+        "Produto salvo com sucesso"
+    );
 
 }
 
