@@ -1681,7 +1681,7 @@ function configurarEventos(){
 
  );
 
-
+ }
 
  $("productForm")
 ?.addEventListener(
