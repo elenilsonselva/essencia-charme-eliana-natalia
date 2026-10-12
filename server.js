@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
@@ -2404,10 +2406,20 @@ doc.moveDown();
 itens.forEach(item=>{
 
 
+const quantidade =
+Number(
+    item.qty ||
+    item.quantity ||
+    item.quantidade ||
+    0
+);
+
+
 const valor =
-Number(item.qty)
-*
-Number(item.price);
+quantidade *
+Number(
+    item.price || 0
+);
 
 
 
