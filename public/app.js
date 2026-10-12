@@ -1270,13 +1270,17 @@ function editarProduto(id){
 
     const produto =
     products.find(
-        p =>
-        Number(p.id) === Number(id)
+        p => Number(p.id) === Number(id)
     );
 
 
-    if(!produto)
+    if(!produto){
+
+        alert("Produto não encontrado");
+
         return;
+
+    }
 
 
 
@@ -1284,30 +1288,38 @@ function editarProduto(id){
     produto.id;
 
 
+
     $("productName").value =
     produto.name || "";
+
 
 
     $("productBrand").value =
     produto.brand || "";
 
 
+
     $("productCost").value =
     produto.cost || 0;
+
 
 
     $("productPrice").value =
     produto.price || 0;
 
 
+
     $("productStock").value =
     produto.stock || 0;
+
 
 
     calcularLucro();
 
 
+
     openProductModal();
+
 
 }
 
