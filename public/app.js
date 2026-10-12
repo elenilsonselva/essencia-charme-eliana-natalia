@@ -1077,13 +1077,32 @@ async function salvarCliente(event){
     };
 
 
-    await api(
-        "/api/clients",
-        {
-            method:"POST",
-            body
-        }
-    );
+    const id =
+$("clientId").value;
+
+
+await api(
+
+id
+?
+`/api/clients/${id}`
+:
+"/api/clients",
+
+{
+
+method:
+id
+?
+"PUT"
+:
+"POST",
+
+body
+
+}
+
+);
 
 
     await carregarClientes();
