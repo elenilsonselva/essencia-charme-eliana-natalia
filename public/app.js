@@ -1141,7 +1141,10 @@ async function salvarProduto(){
 
  }
 
-
+console.log(
+"PRODUTO CADASTRADO:",
+body
+);
 
  await api(
    "/api/products",
