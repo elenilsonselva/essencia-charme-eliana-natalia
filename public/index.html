@@ -1,2172 +1,1109 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<!-- CONFIGURAÇÃO DO APP -->
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#b86f7d">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Essência & Charme">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<meta charset="UTF-8">
 
-<title>Essência & Charme - Gestão & Vendas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+<title>
+Essência & Charme
+</title>
 
-:root{
-  --rose:#b86f7d;
-  --rose-dark:#8f4e5d;
-  --rose-light:#f7e7ea;
-  --rose-pale:#fdf5f6;
-  --cream:#fffaf7;
-  --beige:#f5ede9;
-  --gold:#c6a06b;
-  --gold-light:#ead9bc;
-  --text:#403338;
-  --muted:#8b7d82;
-  --white:#fff;
-  --danger:#b94d5a;
-  --success:#5d9276;
-  --border:#eadfe0;
-  --shadow:0 8px 30px rgba(104,65,76,.08);
-}
 
-*{box-sizing:border-box}
+<link rel="stylesheet" href="style.css">
 
-body{
-  margin:0;
-  font-family:'DM Sans',Arial,sans-serif;
-  background:linear-gradient(135deg,#fdf8f6 0%,#f8eef0 100%);
-  color:var(--text);
-  min-height:100vh;
-}
 
-#loginScreen{
-  position:fixed;
-  inset:0;
-  background:
-    radial-gradient(circle at 15% 20%,rgba(255,255,255,.9) 0,transparent 28%),
-    radial-gradient(circle at 85% 80%,rgba(201,160,107,.13) 0,transparent 25%),
-    linear-gradient(135deg,#f8e9ec,#fff9f5 50%,#f5e9e4);
-  z-index:99999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  overflow:hidden;
-}
-
-#loginScreen:before,
-#loginScreen:after{
-  content:"";
-  position:absolute;
-  border-radius:50%;
-  border:1px solid rgba(184,111,125,.12);
-}
-
-#loginScreen:before{
-  width:420px;
-  height:420px;
-  top:-210px;
-  left:-160px;
-}
-
-#loginScreen:after{
-  width:350px;
-  height:350px;
-  bottom:-190px;
-  right:-130px;
-}
-
-.login-card{
-  position:relative;
-  width:min(410px,100%);
-  background:rgba(255,255,255,.96);
-  border-radius:30px;
-  padding:42px 36px 36px;
-  box-shadow:0 25px 70px rgba(99,61,72,.15);
-  text-align:center;
-  z-index:2;
-}
-
-.login-logo{
-  width:76px;
-  height:76px;
-  margin:0 auto 17px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:50%;
-  background:linear-gradient(145deg,var(--rose-light),#fff);
-  border:1px solid #eed6da;
-  color:var(--rose-dark);
-  font-size:34px;
-}
-
-.login-card h2{
-  font-family:'Playfair Display',serif;
-  font-size:30px;
-  color:var(--rose-dark);
-  margin:0 0 5px;
-}
-
-.login-card p{
-  margin:0 0 28px;
-  color:var(--muted);
-  font-size:13px;
-}
-
-.login-field{
-  text-align:left;
-  margin-bottom:13px;
-}
-
-.login-field label{
-  display:block;
-  font-size:12px;
-  font-weight:600;
-  margin:0 0 6px 4px;
-}
-
-.login-card input{
-  width:100%;
-  padding:14px 15px;
-  border:1px solid var(--border);
-  border-radius:13px;
-  background:#fff;
-  font:inherit;
-  color:var(--text);
-  outline:none;
-}
-
-.login-card input:focus{
-  border-color:var(--rose);
-  box-shadow:0 0 0 4px rgba(184,111,125,.10);
-}
-
-.login-card button{
-  width:100%;
-  padding:14px;
-  border:0;
-  border-radius:13px;
-  background:linear-gradient(135deg,var(--rose),var(--rose-dark));
-  color:white;
-  font-weight:700;
-  margin-top:8px;
-  cursor:pointer;
-}
-
-#loginError{
-  color:#b42318;
-  font-size:13px;
-  min-height:18px;
-  margin-top:9px;
-}
-
-.login-footer{
-  margin-top:22px;
-  font-size:11px;
-  color:#aa9da1;
-}
-
-header{
-  background:rgba(255,255,255,.96);
-  color:var(--text);
-  padding:14px 25px;
-  display:flex;
-  align-items:center;
-  gap:14px;
-  position:sticky;
-  top:0;
-  z-index:20;
-  border-bottom:1px solid rgba(226,211,214,.8);
-  backdrop-filter:blur(15px);
-}
-
-.brand{
-  display:flex;
-  align-items:center;
-  gap:11px;
-}
-
-.brand-icon{
-  width:42px;
-  height:42px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:13px;
-  background:linear-gradient(135deg,var(--rose-light),#fff);
-  color:var(--rose-dark);
-  font-size:21px;
-}
-
-header h1{
-  font-family:'Playfair Display',serif;
-  margin:0;
-  font-size:22px;
-  color:var(--rose-dark);
-}
-
-.brand-sub{
-  display:block;
-  font-size:10px;
-  color:var(--rose);
-  margin-top:4px;
-  letter-spacing:.5px;
-  font-weight:600;
-}
-
-.header-right{
-  margin-left:auto;
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
-.online-badge{
-  font-size:11px;
-  color:var(--success);
-  background:#edf7f1;
-  padding:6px 10px;
-  border-radius:20px;
-}
-
-.user-label{
-  font-size:12px;
-  color:var(--muted);
-}
-
-nav{
-  display:flex;
-  gap:5px;
-  overflow-x:auto;
-  background:rgba(255,250,247,.96);
-  padding:9px 18px;
-  border-bottom:1px solid var(--border);
-}
-
-nav button{
-  flex:0 0 auto;
-  border:0;
-  border-radius:10px;
-  padding:10px 14px;
-  cursor:pointer;
-  background:transparent;
-  color:#75686d;
-  font:500 13px 'DM Sans',sans-serif;
-}
-
-nav button:hover{
-  background:var(--rose-light);
-  color:var(--rose-dark);
-}
-
-nav button.active{
-  background:var(--rose-dark)!important;
-  color:#fff!important;
-  box-shadow:0 5px 14px rgba(143,78,93,.18);
-}
-
-.wrap{
-  max-width:1250px;
-  margin:auto;
-  padding:28px 22px 45px;
-}
-
-.section{
-  display:none;
-  animation:fadeIn .25s ease;
-}
-
-.section.active{
-  display:block;
-}
-
-@keyframes fadeIn{
-  from{opacity:0;transform:translateY(5px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-.section>h2{
-  font-family:'Playfair Display',serif;
-  color:var(--rose-dark);
-  font-size:28px;
-  margin:0 0 20px;
-}
-
-.section>h2:after{
-  content:"";
-  display:block;
-  width:38px;
-  height:2px;
-  background:var(--gold);
-  margin-top:8px;
-  border-radius:2px;
-}
-
-.toolbar{
-  display:flex;
-  gap:9px;
-  flex-wrap:wrap;
-  margin-bottom:16px;
-}
-
-.toolbar input{
-  max-width:330px;
-}
-
-button,.btn{
-  border:0;
-  border-radius:10px;
-  padding:10px 15px;
-  cursor:pointer;
-  background:linear-gradient(135deg,var(--rose),var(--rose-dark));
-  color:white;
-  font:600 13px 'DM Sans',sans-serif;
-  transition:.2s;
-  text-decoration:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:5px;
-}
-
-button:hover,.btn:hover{
-  transform:translateY(-1px);
-  box-shadow:0 6px 15px rgba(143,78,93,.16);
-}
-
-button.secondary{
-  background:#f4eaec;
-  color:var(--rose-dark);
-}
-
-button.danger{
-  background:#fae7e9;
-  color:var(--danger);
-}
-
-button.danger:hover{
-  background:#f5d7db;
-}
-
-#dash:before{
-  content:"Bem-vinda ao seu espaço de gestão";
-  display:block;
-  font-family:'Playfair Display',serif;
-  color:var(--rose-dark);
-  font-size:14px;
-  margin-bottom:5px;
-}
-
-#dash>h2{
-  margin-bottom:5px;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:15px;
-}
-
-.card{
-  background:rgba(255,255,255,.96);
-  padding:19px;
-  border-radius:17px;
-  border:1px solid var(--border);
-  box-shadow:var(--shadow);
-}
-
-.grid .card{
-  position:relative;
-  overflow:hidden;
-}
-
-.grid .card:before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  width:4px;
-  height:100%;
-  background:var(--rose);
-}
-
-.grid .card:nth-child(2):before{
-  background:var(--gold);
-}
-
-.grid .card:nth-child(3):before{
-  background:#8bb49a;
-}
-
-.grid .card:nth-child(4):before{
-  background:#b58c9b;
-}
-
-.card-title{
-  font-size:12px;
-  color:var(--muted);
-  font-weight:600;
-  text-transform:uppercase;
-  letter-spacing:.5px;
-}
-
-.big{
-  font-size:25px;
-  font-weight:700;
-  color:var(--text);
-  margin-top:7px;
-}
-
-input,select,textarea{
-  width:100%;
-  padding:11px 12px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:#fff;
-  color:var(--text);
-  font:13px 'DM Sans',sans-serif;
-  outline:none;
-  transition:.2s;
-}
-
-input:focus,select:focus,textarea:focus{
-  border-color:var(--rose);
-  box-shadow:0 0 0 4px rgba(184,111,125,.09);
-}
-
-textarea{
-  min-height:90px;
-  resize:vertical;
-}
-
-label{
-  display:block;
-  font-size:12px;
-  color:#76696e;
-  font-weight:600;
-  margin:0 0 6px 2px;
-}
-
-.formgrid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:13px;
-}
-
-table{
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0;
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:15px;
-  overflow:hidden;
-  box-shadow:var(--shadow);
-}
-
-th{
-  background:#fbf1f3;
-  color:var(--rose-dark);
-  font-size:11px;
-  text-transform:uppercase;
-  letter-spacing:.4px;
-  font-weight:700;
-}
-
-th,td{
-  padding:12px 13px;
-  border-bottom:1px solid #f0e8e9;
-  text-align:left;
-  font-size:13px;
-}
-
-tr:last-child td{
-  border-bottom:0;
-}
-
-table tr:hover td{
-  background:#fffafb;
-}
-
-td img{
-  border-radius:8px;
-  object-fit:cover;
-  border:1px solid var(--border);
-}
-
-#venda .card{
-  max-width:1000px;
-}
-
-.cart{
-  margin:18px 0;
-}
-
-.cart table{
-  box-shadow:none;
-}
-
-#vtotal{
-  color:var(--rose-dark);
-  font-size:24px;
-}
-
-.muted{
-  color:var(--muted);
-  font-size:13px;
-}
-
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(48,32,38,.45);
-  backdrop-filter:blur(5px);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:15px;
-  z-index:100;
-}
-
-.modalbox{
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:21px;
-  padding:25px;
-  max-width:650px;
-  width:100%;
-  max-height:90vh;
-  overflow:auto;
-  box-shadow:0 25px 70px rgba(45,28,34,.2);
-}
-
-.modalbox h3{
-  font-family:'Playfair Display',serif;
-  color:var(--rose-dark);
-  font-size:22px;
-  margin-top:0;
-}
-
-#rr h3{
-  color:var(--rose-dark);
-  font-family:'Playfair Display',serif;
-  margin-top:28px;
-}
-
-@media(max-width:900px){
-  .grid{grid-template-columns:repeat(2,1fr)}
-  .formgrid{grid-template-columns:repeat(2,1fr)}
-  .header-right .user-label{display:none}
-}
-
-@media(max-width:600px){
-
-  header{
-    padding:11px 13px;
-  }
-
-  header h1{
-    font-size:18px;
-  }
-
-  .brand-icon{
-    width:37px;
-    height:37px;
-    font-size:18px;
-  }
-
-  .online-badge{
-    display:none;
-  }
-
-  nav{
-    padding:7px 9px;
-  }
-
-  nav button{
-    padding:9px 11px;
-    font-size:12px;
-  }
-
-  .wrap{
-    padding:20px 12px 35px;
-  }
-
-  .section>h2{
-    font-size:24px;
-  }
-
-  .grid{
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-  }
-
-  .card{
-    padding:15px;
-  }
-
-  .big{
-    font-size:20px;
-  }
-
-  .formgrid{
-    grid-template-columns:1fr;
-  }
-
-  .toolbar{
-    flex-direction:column;
-  }
-
-  .toolbar input{
-    max-width:none;
-  }
-
-  table{
-    display:block;
-    overflow-x:auto;
-    white-space:nowrap;
-  }
-
-  th,td{
-    padding:10px;
-    font-size:12px;
-  }
-
-  .login-card{
-    padding:34px 24px 28px;
-    border-radius:24px;
-  }
-}
-
-@media(max-width:400px){
-
-  .grid{
-    grid-template-columns:1fr;
-  }
-
-  .brand-sub{
-    display:none;
-  }
-
-  header .secondary{
-    padding:8px 10px;
-  }
-}
-</style>
 </head>
+
 
 <body>
 
-<div id="loginScreen">
 
-  <div class="login-card">
 
-    <div class="login-logo">🌸</div>
+<!-- =================================================
+LOGIN
+================================================= -->
 
-    <h2>Essência & Charme</h2>
 
-    <p>
-      Gestão, beleza e delicadeza em um só lugar
-    </p>
+<section id="loginScreen">
 
-    <form id="loginForm">
 
-      <div class="login-field">
+<div class="login-box">
 
-        <label>Usuário</label>
 
-        <input
-          id="loginUser"
-          autocomplete="username"
-          placeholder="Digite seu usuário"
-          value="admin"
-          required
-        >
+<h1>
+🌸 Essência & Charme
+</h1>
 
-      </div>
 
-      <div class="login-field">
+<p>
+Sistema de vendas inteligente
+</p>
 
-        <label>Senha</label>
 
-        <input
-          id="loginPass"
-          autocomplete="current-password"
-          type="password"
-          placeholder="Digite sua senha"
-          required
-        >
 
-      </div>
+<form id="loginForm">
 
-      <button type="submit">
-        Entrar no sistema
-      </button>
 
-    </form>
+<input
 
-    <div id="loginError"></div>
+id="username"
 
-    <div class="login-footer">
-      Essência & Charme · Gestão com charme ✨
-    </div>
+name="username"
 
-  </div>
+placeholder="Usuário"
+
+autocomplete="username"
+
+required
+
+>
+
+
+
+<input
+
+id="password"
+
+name="password"
+
+type="password"
+
+placeholder="Senha"
+
+autocomplete="current-password"
+
+required
+
+>
+
+
+
+<button type="submit">
+
+Entrar
+
+</button>
+
+
+</form>
+
+
+
+<div id="loginError"></div>
+
 
 </div>
 
-<header>
 
-  <div class="brand">
+</section>
 
-    <div class="brand-icon">
-      🌸
-    </div>
 
-    <div>
 
-      <h1>
-        Essência & Charme
-      </h1>
 
-      <span class="brand-sub">
-        GESTÃO & VENDAS by Eliana Natália
-      </span>
 
-    </div>
+<!-- =================================================
+APLICAÇÃO
+================================================= -->
 
-  </div>
 
-  <div class="header-right">
+<div id="app">
 
-    <span class="online-badge">
-      ● Sistema online
-    </span>
 
-    <span class="user-label">
-      Painel administrativo
-    </span>
 
-    <button
-      onclick="logout()"
-      class="secondary"
-    >
-      Sair
-    </button>
 
-  </div>
 
-</header>
+<!-- =================================================
+SIDEBAR
+================================================= -->
+
+
+<aside class="sidebar">
+
+
+<h2>
+🌸 Essência
+<br>
+& Charme
+</h2>
+
+
+
+
+<div id="loggedUser">
+
+</div>
+
+<div class="busca-rapida">
+
+<input
+id="globalSearch"
+placeholder="🔎 Buscar cliente ou venda..."
+>
+
+<div id="searchResults"></div>
+
+</div>
+
+
 
 <nav>
 
-  <button onclick="show('dash',this)" class="active">
-    🏠 Início
-  </button>
 
-  <button onclick="show('prod',this)">
-    🌸 Produtos
-  </button>
 
-  <button onclick="show('cli',this)">
-    👩 Clientes
-  </button>
+<button
 
-  <button onclick="show('venda',this)">
-    🛍️ Nova Venda
-  </button>
+class="nav-item active"
 
-  <button onclick="show('hist',this)">
-    📋 Vendas
-  </button>
+data-page="dashboard">
 
-  <button onclick="show('est',this)">
-    📦 Estoque
-  </button>
+🏠 Dashboard
 
-  <button onclick="show('rel',this)">
-    📊 Relatórios
-  </button>
+</button>
+
+
+
+
+<button
+
+class="nav-item"
+
+data-page="clients">
+
+👥 Clientes
+
+</button>
+
+
+
+
+<button
+
+class="nav-item admin-only"
+
+data-page="products">
+
+🛍 Produtos
+
+</button>
+
+
+
+
+<button
+
+class="nav-item"
+
+data-page="sales">
+
+💰 Vendas
+
+</button>
+
+
+
+
+<button
+
+class="nav-item admin-only"
+
+data-page="stock">
+
+📦 Estoque
+
+</button>
+
+
+
+
+<button
+
+class="nav-item admin-only"
+
+data-page="reports">
+
+📊 Relatórios
+
+</button>
+
+
+
+
+<button
+
+id="logoutButton">
+
+🚪 Sair
+
+</button>
+
+
 
 </nav>
 
-<main class="wrap">
 
-<section id="dash" class="section active">
+</aside>
 
-  <h2>Dashboard</h2>
 
-  <div class="grid">
 
-    <div class="card">
-      <div class="card-title">💗 Vendas hoje</div>
-      <div class="big" id="dt">R$ 0,00</div>
-    </div>
 
-    <div class="card">
-      <div class="card-title">✨ Vendas no mês</div>
-      <div class="big" id="dm">R$ 0,00</div>
-    </div>
 
-    <div class="card">
-      <div class="card-title">📦 Estoque baixo</div>
-      <div class="big" id="dl">0</div>
-    </div>
 
-    <div class="card">
-      <div class="card-title">💳 Fiado em aberto</div>
-      <div class="big" id="dd">R$ 0,00</div>
-    </div>
 
-  </div>
+<!-- =================================================
+CONTEÚDO
+================================================= -->
+
+
+<main class="content">
+
+
+
+<header>
+
+
+<h1 id="pageTitle">
+
+Dashboard
+
+</h1>
+
+
+</header>
+
+
+
+
+
+<!-- =================================================
+DASHBOARD
+================================================= -->
+
+
+<section
+
+id="page-dashboard"
+
+class="page active">
+
+
+<div class="cards">
+
+
+
+<div class="card">
+
+<h3>
+
+💰 Vendas Hoje
+
+</h3>
+
+
+<strong id="dashboardSales">
+
+R$ 0,00
+
+</strong>
+
+
+</div>
+
+
+
+
+<div class="card">
+
+<h3>
+
+👥 Clientes
+
+</h3>
+
+
+<strong id="dashboardClients">
+
+0
+
+</strong>
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<h3>
+
+📦 Estoque Baixo
+
+</h3>
+
+
+<strong id="dashboardStock">
+
+0
+
+</strong>
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
+<h3>
+
+📈 Faturamento
+
+</h3>
+
+
+<strong id="dashboardRevenue">
+
+R$ 0,00
+
+</strong>
+
+
+</div>
+
+
+
+
+</div>
+
+
+
+
+
+<div class="table-box">
+
+
+<h2>
+
+Resumo do Sistema
+
+</h2>
+
+
+<p>
+
+Bem-vindo ao painel da Essência & Charme.
+
+</p>
+
+
+</div>
+
+
+
+</section>
+<!-- =================================================
+CLIENTES
+================================================= -->
+
+
+<section
+
+id="page-clients"
+
+class="page">
+
+
+<div class="section-header">
+
+
+<h2>
+👥 Clientes
+</h2>
+
+
+
+<button onclick="openClientModal()">
+
++ Novo Cliente
+
+</button>
+
+
+
+</div>
+
+
+
+
+<div class="table-box">
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>
+Nome
+</th>
+
+
+<th>
+Telefone
+</th>
+
+
+<th>
+Endereço
+</th>
+
+
+<th>
+Ações
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody id="clientsBody">
+
+
+</tbody>
+
+
+
+</table>
+
+
+
+</div>
+
 
 </section>
 
-<section id="prod" class="section">
 
-  <h2>Produtos</h2>
 
-  <div class="toolbar">
 
-    <button onclick="openProd()">
-      ＋ Novo produto
-    </button>
 
-    <input
-      id="ps"
-      placeholder="🔎 Buscar produto..."
-      oninput="renderProducts()"
-    >
 
-  </div>
 
-  <div id="pt"></div>
-
-</section>
-
-<section id="cli" class="section">
-
-  <h2>Clientes</h2>
-
-  <div class="toolbar">
-
-    <button onclick="openCli()">
-      ＋ Novo cliente
-    </button>
-
-    <input
-      id="cs"
-      placeholder="🔎 Buscar cliente..."
-      oninput="renderClients()"
-    >
-
-  </div>
-
-  <div id="ct"></div>
-
-</section>
-
-<section id="venda" class="section">
-
-  <h2>Nova Venda</h2>
-
-  <div class="card">
-
-    <div class="formgrid">
-
-      <div>
-        <label>Produto</label>
-        <select id="vp"></select>
-      </div>
-
-      <div>
-        <label>Quantidade</label>
-        <input id="vq" type="number" value="1" min="1">
-      </div>
-
-      <div>
-        <label>&nbsp;</label>
-        <button onclick="addCart()">＋ Adicionar</button>
-      </div>
-
-    </div>
-
-    <div id="cart" class="cart"></div>
-
-    <div class="formgrid">
-
-      <div>
-        <label>Cliente</label>
-        <select id="vc"></select>
-      </div>
-
-      <div>
-        <label>Desconto (R$)</label>
-        <input id="vd" type="number" min="0" value="0">
-      </div>
-
-      <div>
-        <label>Pagamento</label>
-
-        <select id="vpay">
-          <option>Dinheiro</option>
-          <option>PIX</option>
-          <option>Cartão de débito</option>
-          <option>Cartão de crédito</option>
-          <option>Fiado</option>
-        </select>
-
-      </div>
-
-    </div>
-
-    <div style="margin-top:14px">
-
-      <label>Parcelas</label>
-
-<select
-  id="vi"
-  style="max-width:150px"
-  onchange="toggleDueDate()"
->
-  <option value="1">1x</option>
-  <option value="2">2x</option>
-  <option value="3">3x</option>
-  <option value="12">12x</option>
-</select>
+<!-- =================================================
+MODAL CLIENTE
+================================================= -->
 
 
 <div
-  id="dueDateContainer"
-  style="display:none; margin-top:15px"
->
+
+id="clientModal"
+
+class="modal">
+
+
+<div class="modal-box">
+
+
+
+<h2>
+Cadastro de Cliente
+</h2>
+
+
+
+
+<form id="clientForm">
+
+
+<input
+
+type="hidden"
+
+id="clientId">
+
+
+
+
 
 <label>
-  Primeiro vencimento
+
+Nome
+
+</label>
+
+
+<input
+
+id="clientName"
+
+placeholder="Nome completo"
+
+required>
+
+
+
+<label>
+
+Telefone
+
+</label>
+
+
+<input
+
+id="clientPhone"
+
+placeholder="(00) 00000-0000">
+
+
+
+<label>
+
+Endereço
+
+</label>
+
+
+<input
+
+id="clientAddress"
+
+placeholder="Rua, número, cidade">
+
+
+
+<label>
+
+Observações
+
+</label>
+
+
+<textarea
+
+id="clientNotes"
+
+placeholder="Observações do cliente">
+
+</textarea>
+
+
+
+
+
+<button
+
+type="submit">
+
+Salvar Cliente
+
+</button>
+
+
+
+<button
+
+type="button"
+
+onclick="closeModal('clientModal')">
+
+Cancelar
+
+</button>
+
+
+
+</form>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- =================================================
+PRODUTOS
+================================================= -->
+
+
+<section
+
+id="page-products"
+
+class="page">
+
+
+
+<div class="section-header">
+
+
+<h2>
+
+🛍 Produtos
+
+</h2>
+
+
+
+<button onclick="openProductModal()">
+
++ Novo Produto
+
+</button>
+
+
+</div>
+
+
+
+
+
+<div class="table-box">
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>
+Produto
+</th>
+
+<th>
+Marca
+</th>
+
+<th>
+Custo
+</th>
+
+<th>
+Venda
+</th>
+
+<th>
+Lucro
+</th>
+
+<th>
+Margem
+</th>
+
+<th>
+Estoque
+</th>
+
+<th>
+Ações
+</th>
+
+</tr>
+
+</thead>
+
+
+
+<tbody id="productsBody">
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+
+
+</section>
+
+
+
+
+
+
+
+
+<!-- =================================================
+MODAL PRODUTO
+================================================= -->
+
+
+<div
+
+id="productModal"
+
+class="modal">
+
+
+<div class="modal-box">
+
+
+<h2>
+
+Cadastro de Produto
+
+</h2>
+
+<form id="productForm"></form>
+
+<label>
+Nome do Produto
 </label>
 
 <input
-  id="first_due_date"
-  type="date"
+id="productName"
+placeholder="Ex: Perfume FLORATTA"
 >
+
+
+<label>
+Marca
+</label>
+
+<input
+id="productBrand"
+placeholder="Ex: O Boticário"
+>
+
+
+<label>
+Preço de Custo
+</label>
+
+<input
+id="productCost"
+type="number"
+step="0.01"
+placeholder="R$ 0,00"
+>
+
+
+<label>
+Preço de Venda
+</label>
+
+<input
+id="productPrice"
+type="number"
+step="0.01"
+placeholder="R$ 0,00"
+oninput="calcularLucro()"
+>
+
+
+<div class="lucro-box">
+
+<p>
+Lucro:
+<strong id="productProfit">
+R$ 0,00
+</strong>
+</p>
+
+
+<p>
+Margem:
+<strong id="productMargin">
+0%
+</strong>
+</p>
 
 </div>
 
-    </div>
 
-    <h3 style="margin-top:22px">
-      Total:
-      <span id="vtotal">R$ 0,00</span>
-    </h3>
 
-    <button onclick="finishSale()">
-      ✓ Finalizar venda
-    </button>
+<label>
+Quantidade em Estoque
+</label>
 
-  </div>
+<input
+id="productStock"
+type="number"
+placeholder="Quantidade"
+>
+
+
+
+
+
+
+<button
+
+type="submit">
+
+Salvar Produto
+
+</button>
+
+
+
+
+<button
+
+type="button"
+
+onclick="closeModal('productModal')">
+
+Cancelar
+
+</button>
+
+
+
+</form>
+
+
+
+</div>
+
+
+</div>
+<!-- =================================================
+VENDAS
+================================================= -->
+
+
+<section
+
+id="page-sales"
+
+class="page">
+
+
+<div class="section-header">
+
+
+<h2>
+
+💰 Vendas
+
+</h2>
+
+
+<button onclick="newSale()">
+
++ Nova Venda
+
+</button>
+
+
+</div>
+
+
+
+
+
+<div class="table-box">
+
+
+<table>
+
+
+<thead>
+
+
+<tr>
+
+
+<th>
+Número
+</th>
+
+
+<th>
+Cliente
+</th>
+
+
+<th>
+Valor
+</th>
+
+
+<th>
+Ações
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody id="salesBody">
+
+
+</tbody>
+
+
+</table>
+
+
+
+</div>
+
+
 
 </section>
 
-<section id="hist" class="section">
 
-  <h2>Histórico de vendas</h2>
 
-  <div id="st"></div>
+
+
+
+
+<!-- =================================================
+ESTOQUE
+================================================= -->
+
+<section
+id="page-stock"
+class="page admin-only">
+
+
+<div class="section-header">
+
+<h2>
+📦 Estoque
+</h2>
+
+</div>
+
+
+<div class="table-box">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>
+Produto
+</th>
+
+<th>
+Quantidade
+</th>
+
+<th>
+Movimentação
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="stockBody">
+
+</tbody>
+
+
+</table>
+
+</div>
+
 
 </section>
 
-<section id="est" class="section">
+<!-- =================================================
+RELATÓRIOS
+================================================= -->
+<section
+id="page-reports"
+class="page admin-only">
 
-  <h2>Estoque</h2>
 
-  <div class="toolbar">
+<div class="section-header">
 
-    <button onclick="stockMove()">
-      ＋ Entrada / saída
-    </button>
+<h2>
+📊 Relatórios
+</h2>
 
-  </div>
+</div>
 
-  <div id="et"></div>
+
+<div class="cards">
+
+
+<div class="card">
+
+<h3>
+Vendas
+</h3>
+
+<strong id="reportSales">
+R$ 0,00
+</strong>
+
+</div>
+
+
+<div class="card">
+
+<h3>
+Parcelas abertas
+</h3>
+
+<strong id="reportInstallments">
+R$ 0,00
+</strong>
+
+</div>
+
+
+</div>
+
 
 </section>
 
-<section id="rel" class="section">
+<!-- =================================================
+FINAL
+================================================= -->
 
-  <h2>Relatórios</h2>
-
-  <div class="toolbar">
-
-    <input type="date" id="rf">
-
-    <input type="date" id="rt">
-
-    <button onclick="loadReports()">
-      ↻ Atualizar
-    </button>
-
-  </div>
-
-  <div id="rr"></div>
-
-</section>
 
 </main>
 
-<div class="modal" id="modal">
-
-  <div class="modalbox" id="mb"></div>
 
 </div>
 
-<script>
 
-async function authCheck(){
 
-  const r=await fetch('/api/me');
 
-  const x=await r.json();
 
-  if(x.authenticated){
+<script src="app.js"></script>
 
-    document.getElementById('loginScreen').style.display='none';
 
-    return true;
-
-  }
-
-  document.getElementById('loginScreen').style.display='flex';
-
-  return false;
-
-}
-
-document
-.getElementById('loginForm')
-.addEventListener('submit',async e=>{
-
-  e.preventDefault();
-
-  const er=document.getElementById('loginError');
-
-  er.textContent='';
-
-  const r=await fetch('/api/login',{
-
-    method:'POST',
-
-    headers:{
-      'Content-Type':'application/json'
-    },
-
-    body:JSON.stringify({
-
-      username:loginUser.value,
-
-      password:loginPass.value
-
-    })
-
-  });
-
-  const x=await r.json();
-
-  if(r.ok){
-
-    document
-    .getElementById('loginScreen')
-    .style.display='none';
-
-    location.reload();
-
-  }else{
-
-    er.textContent=x.error||'Falha no login';
-
-  }
-
-});
-
-async function logout(){
-
-  await fetch('/api/logout',{
-    method:'POST'
-  });
-
-  location.reload();
-
-}
-
-authCheck();
-
-let products=[];
-let clients=[];
-let cart=[];
-
-const $=id=>document.getElementById(id);
-
-const money=v=>
-  'R$ '+
-  Number(v||0)
-  .toFixed(2)
-  .replace('.',',');
-
-function show(id,b){
-
-  document
-  .querySelectorAll('.section')
-  .forEach(x=>x.classList.remove('active'));
-
-  $(id).classList.add('active');
-
-  document
-  .querySelectorAll('nav button')
-  .forEach(x=>x.classList.remove('active'));
-
-  b?.classList.add('active');
-
-  if(id==='prod') loadProducts();
-
-  if(id==='cli') loadClients();
-
-  if(id==='venda'){
-
-    loadProducts();
-    loadClients();
-
-  }
-
-  if(id==='hist') loadSales();
-
-  if(id==='est') renderStock();
-
-  if(id==='rel') loadReports();
-
-}
-
-async function api(u,o){
-
-  let r=await fetch(u,o);
-
-  let j=await r.json();
-
-  if(!r.ok)
-    throw Error(j.error||'Erro');
-
-  return j;
-
-}
-
-async function dash(){
-
-  let d=await api('/api/dashboard');
-
-  $('dt').textContent=money(d.today.total);
-  $('dm').textContent=money(d.month.total);
-  $('dl').textContent=d.low;
-  $('dd').textContent=money(d.debt.v);
-
-}
-
-async function loadProducts(){
-
-  products=await api('/api/products');
-
-  renderProducts();
-
-  fillSale();
-
-}
-
-function renderProducts(){
-
-  let q=($('ps')?.value||'').toLowerCase();
-
-  let a=products.filter(p=>
-    (p.name+' '+p.brand+' '+p.code)
-    .toLowerCase()
-    .includes(q)
-  );
-
-  $('pt').innerHTML=
-    '<table>'+
-    '<tr>'+
-    '<th>Foto</th>'+
-    '<th>Código</th>'+
-    '<th>Produto</th>'+
-    '<th>Marca</th>'+
-    '<th>Preço</th>'+
-    '<th>Estoque</th>'+
-    '<th>Ações</th>'+
-    '</tr>'+
-
-    a.map(p=>`
-
-      <tr>
-
-        <td>
-          ${
-            p.photo
-            ? '<img src="'+p.photo+'" width="38">'
-            : '—'
-          }
-        </td>
-
-        <td>${p.code||''}</td>
-
-        <td>
-          ${p.name}
-          ${p.size?'('+p.size+')':''}
-        </td>
-
-        <td>${p.brand}</td>
-
-        <td>${money(p.price)}</td>
-
-        <td>${p.stock}</td>
-
-        <td>
-
-          <button onclick="openProd(${p.id})">
-            Editar
-          </button>
-
-          <button
-            class="danger"
-            onclick="delProd(${p.id})"
-          >
-            Excluir
-          </button>
-
-        </td>
-
-      </tr>
-
-    `).join('')+
-
-    '</table>';
-
-}
-
-function openProd(id){
-
-  let p=products.find(x=>x.id===id)||{};
-
-  $('mb').innerHTML=`
-
-    <h3>
-      ${id?'Editar':'Novo'} produto
-    </h3>
-
-    <form id="pf">
-
-      <div class="formgrid">
-
-        <input name="code" placeholder="Código" value="${p.code||''}">
-
-        <input
-          name="name"
-          required
-          placeholder="Nome"
-          value="${p.name||''}"
-        >
-
-        <input name="brand" placeholder="Marca" value="${p.brand||''}">
-
-        <input name="size" placeholder="Tamanho" value="${p.size||''}">
-
-        <input
-          name="cost"
-          type="number"
-          step="0.01"
-          placeholder="Custo"
-          value="${p.cost||0}"
-        >
-
-        <input
-          name="price"
-          type="number"
-          step="0.01"
-          placeholder="Venda"
-          value="${p.price||0}"
-        >
-
-        <input
-          name="stock"
-          type="number"
-          placeholder="Estoque"
-          value="${p.stock||0}"
-        >
-
-        <input
-          name="min_stock"
-          type="number"
-          placeholder="Estoque mínimo"
-          value="${p.min_stock||1}"
-        >
-
-        <input
-          name="photo"
-          type="file"
-          accept="image/*"
-        >
-
-      </div>
-
-      <br>
-
-      <button>Salvar</button>
-
-      <button
-        type="button"
-        class="secondary"
-        onclick="closeM()"
-      >
-        Cancelar
-      </button>
-
-    </form>
-
-  `;
-
-  showM();
-
-  $('pf').onsubmit=async e=>{
-
-    e.preventDefault();
-
-    let f=new FormData(e.target);
-
-    await api(
-      id
-      ?'/api/products/'+id
-      :'/api/products',
-      {
-        method:id?'PUT':'POST',
-        body:f
-      }
-    );
-
-    closeM();
-
-    loadProducts();
-
-    dash();
-
-  };
-
-}
-
-async function delProd(id){
-
-  if(confirm('Excluir produto?')){
-
-    await api(
-      '/api/products/'+id,
-      {method:'DELETE'}
-    );
-
-    loadProducts();
-
-  }
-
-}
-
-async function loadClients(){
-
-  clients=await api('/api/clients');
-
-  renderClients();
-
-  fillSale();
-
-}
-
-function renderClients(){
-
-  let q=($('cs')?.value||'').toLowerCase();
-
-  let a=clients.filter(c=>
-    c.name.toLowerCase().includes(q)||
-    (c.phone||'').includes(q)
-  );
-
-  $('ct').innerHTML=
-    '<table>'+
-    '<tr>'+
-    '<th>Nome</th>'+
-    '<th>Telefone</th>'+
-    '<th>Endereço</th>'+
-    '<th>Ações</th>'+
-    '</tr>'+
-
-    a.map(c=>`
-
-      <tr>
-
-        <td>${c.name}</td>
-
-        <td>${c.phone||''}</td>
-
-        <td>${c.address||''}</td>
-
-        <td>
-
-          <button onclick="openCli(${c.id})">
-            Editar
-          </button>
-
-          <button
-            class="danger"
-            onclick="delCli(${c.id})"
-          >
-            Excluir
-          </button>
-
-        </td>
-
-      </tr>
-
-    `).join('')+
-
-    '</table>';
-
-}
-
-function openCli(id){
-
-  let c=clients.find(x=>x.id===id)||{};
-
-  $('mb').innerHTML=`
-
-    <h3>
-      ${id?'Editar':'Novo'} cliente
-    </h3>
-
-    <form id="cf">
-
-      <input
-        name="name"
-        required
-        placeholder="Nome"
-        value="${c.name||''}"
-      >
-
-      <br><br>
-
-      <input
-        name="phone"
-        placeholder="Telefone"
-        value="${c.phone||''}"
-      >
-
-      <br><br>
-
-      <input
-        name="address"
-        placeholder="Endereço"
-        value="${c.address||''}"
-      >
-
-      <br><br>
-
-      <textarea
-        name="notes"
-        placeholder="Observações"
-      >${c.notes||''}</textarea>
-
-      <br><br>
-
-      <button>Salvar</button>
-
-      <button
-        type="button"
-        class="secondary"
-        onclick="closeM()"
-      >
-        Cancelar
-      </button>
-
-    </form>
-
-  `;
-
-  showM();
-
-  $('cf').onsubmit=async e=>{
-
-    e.preventDefault();
-
-    await api(
-      id
-      ?'/api/clients/'+id
-      :'/api/clients',
-      {
-        method:id?'PUT':'POST',
-
-        headers:{
-          'Content-Type':'application/json'
-        },
-
-        body:JSON.stringify(
-          Object.fromEntries(
-            new FormData(e.target)
-          )
-        )
-      }
-    );
-
-    closeM();
-
-    loadClients();
-
-  };
-
-}
-
-async function delCli(id){
-
-  if(confirm('Excluir cliente?')){
-
-    await api(
-      '/api/clients/'+id,
-      {method:'DELETE'}
-    );
-
-    loadClients();
-
-  }
-
-}
-
-function fillSale(){
-
-  $('vp').innerHTML=
-    products.map(p=>`
-
-      <option value="${p.id}">
-        ${p.name} — ${money(p.price)}
-        (estoque ${p.stock})
-      </option>
-
-    `).join('');
-
-  $('vc').innerHTML=
-    '<option value="">Consumidor</option>'+
-    clients.map(c=>
-      `<option value="${c.id}">${c.name}</option>`
-    ).join('');
-
-}
-
-function addCart(){
-
-  let p=products.find(x=>x.id==$('vp').value);
-
-  let q=+$('vq').value;
-
-  if(!p||q<1) return;
-
-  if(q>p.stock)
-    return alert('Estoque insuficiente');
-
-  let x=cart.find(i=>i.product_id==p.id);
-
-  if(x)
-    x.qty+=q;
-
-  else
-    cart.push({
-      product_id:p.id,
-      name:p.name,
-      price:p.price,
-      qty:q
-    });
-
-  renderCart();
-
-}
-
-function renderCart(){
-
-  let sub=cart.reduce(
-    (s,i)=>s+i.price*i.qty,
-    0
-  );
-
-  let d=+$('vd').value||0;
-
-  $('cart').innerHTML=
-    cart.length ?
-
-    '<table>'+
-    '<tr>'+
-    '<th>Produto</th>'+
-    '<th>Qtd.</th>'+
-    '<th>Valor</th>'+
-    '<th></th>'+
-    '</tr>'+
-
-    cart.map((i,n)=>`
-
-      <tr>
-
-        <td>${i.name}</td>
-
-        <td>${i.qty}</td>
-
-        <td>${money(i.price*i.qty)}</td>
-
-        <td>
-
-          <button
-            class="danger"
-            onclick="cart.splice(${n},1);renderCart()"
-          >
-            ×
-          </button>
-
-        </td>
-
-      </tr>
-
-    `).join('')+
-
-    '</table>'
-
-    :
-
-    '<p class="muted">Nenhum item adicionado à venda.</p>';
-
-  $('vtotal').textContent=
-    money(Math.max(0,sub-d));
-
-}
-
-$('vd').addEventListener('input',renderCart);
-
-async function finishSale(){
-
-  if(!cart.length)
-    return alert('Adicione produtos');
-
-  let d=+$('vd').value||0;
-
-  let pay=$('vpay').value;
-
-  if(pay==='Fiado'&&!$('vc').value)
-    return alert('Selecione o cliente para venda fiada');
-
-  try{
-
-    let r=await api(
-      '/api/sales',
-      {
-        method:'POST',
-
-        headers:{
-          'Content-Type':'application/json'
-        },
-
-        body:JSON.stringify({
-
-          client_id:$('vc').value||null,
-
-          items:cart,
-
-          discount:d,
-
-          payment:pay,
-
-          installments:+$('vi').value||1
-
-        })
-      }
-    );
-
-    if(confirm('Venda realizada! Deseja abrir o comprovante PDF?'))
-
-      window.open(
-        '/api/sales/'+r.id+'/pdf',
-        '_blank'
-      );
-
-    cart=[];
-
-    renderCart();
-
-    loadProducts();
-
-    dash();
-
-  }catch(e){
-
-    alert(e.message);
-
-  }
-
-}
-
-  function toggleDueDate(){
-
-  const parcelas =
-    Number(
-      document.getElementById("vi").value
-    );
-
-  const campo =
-    document.getElementById(
-      "dueDateContainer"
-    );
-
-  if(parcelas > 1){
-    campo.style.display = "block";
-  } else {
-    campo.style.display = "none";
-  }
-
-}
-
-
-function finishSale(){
-
-   // seu código atual da venda
-
-}
-async function loadSales(){
-
-  let a=await api('/api/sales');
-
-  $('st').innerHTML=
-    '<table>'+
-    '<tr>'+
-    '<th>#</th>'+
-    '<th>Data</th>'+
-    '<th>Cliente</th>'+
-    '<th>Total</th>'+
-    '<th>Pagamento</th>'+
-    '<th>Status</th>'+
-    '<th>PDF</th>'+
-    '</tr>'+
-
-    a.map(s=>`
-
-      <tr>
-
-        <td>${s.id}</td>
-
-        <td>
-          ${new Date(s.date).toLocaleString('pt-BR')}
-        </td>
-
-        <td>${s.client||'Consumidor'}</td>
-
-        <td>${money(s.total)}</td>
-
-        <td>${s.payment}</td>
-
-        <td>
-          ${s.status==='open'?'Em aberto':'Pago'}
-        </td>
-
-        <td>
-
-          <a
-            class="btn"
-            target="_blank"
-            href="/api/sales/${s.id}/pdf"
-          >
-            PDF
-          </a>
-
-        </td>
-
-      </tr>
-
-    `).join('')+
-
-    '</table>';
-
-}
-
-function renderStock(){
-
-  $('et').innerHTML=
-    '<table>'+
-    '<tr>'+
-    '<th>Produto</th>'+
-    '<th>Estoque</th>'+
-    '<th>Mínimo</th>'+
-    '<th>Situação</th>'+
-    '</tr>'+
-
-    products.map(p=>`
-
-      <tr>
-
-        <td>${p.name}</td>
-
-        <td>${p.stock}</td>
-
-        <td>${p.min_stock}</td>
-
-        <td>
-          ${
-            p.stock<=p.min_stock
-            ?'⚠️ Baixo'
-            :'✓ OK'
-          }
-        </td>
-
-      </tr>
-
-    `).join('')+
-
-    '</table>';
-
-}
-
-function stockMove(){
-
-  if(!products.length)
-    return;
-
-  $('mb').innerHTML=`
-
-    <h3>Movimentar estoque</h3>
-
-    <form id="sf">
-
-      <label>Produto</label>
-
-      <select name="product_id">
-
-        ${
-          products.map(p=>
-            `<option value="${p.id}">
-              ${p.name} (${p.stock})
-            </option>`
-          ).join('')
-        }
-
-      </select>
-
-      <br><br>
-
-      <label>Tipo de movimentação</label>
-
-      <select name="type">
-
-        <option>ENTRADA</option>
-        <option>SAIDA</option>
-
-      </select>
-
-      <br><br>
-
-      <label>Quantidade</label>
-
-      <input
-        name="qty"
-        type="number"
-        min="1"
-        required
-        placeholder="Quantidade"
-      >
-
-      <br><br>
-
-      <label>Observação</label>
-
-      <input
-        name="note"
-        placeholder="Observação"
-      >
-
-      <br><br>
-
-      <button>Salvar</button>
-
-      <button
-        type="button"
-        class="secondary"
-        onclick="closeM()"
-      >
-        Cancelar
-      </button>
-
-    </form>
-
-  `;
-
-  showM();
-
-  $('sf').onsubmit=async e=>{
-
-    e.preventDefault();
-
-    try{
-
-      await api(
-        '/api/stock',
-        {
-          method:'POST',
-
-          headers:{
-            'Content-Type':'application/json'
-          },
-
-          body:JSON.stringify(
-            Object.fromEntries(
-              new FormData(e.target)
-            )
-          )
-        }
-      );
-
-      closeM();
-
-      loadProducts();
-
-      renderStock();
-
-    }catch(x){
-
-      alert(x.message);
-
-    }
-
-  };
-
-}
-
-async function loadReports(){
-
-  let f=$('rf').value;
-
-  let t=$('rt').value;
-
-  if(!f){
-
-    let d=new Date();
-
-    f=new Date(
-      d.getFullYear(),
-      d.getMonth(),
-      1
-    )
-    .toISOString()
-    .slice(0,10);
-
-  }
-
-  if(!t)
-
-    t=new Date()
-    .toISOString()
-    .slice(0,10);
-
-  let r=await api(
-    '/api/reports?from='+f+'&to='+t
-  );
-
-  $('rr').innerHTML=`
-
-    <div class="grid">
-
-      <div class="card">
-
-        <div class="card-title">
-          💰 Faturamento
-        </div>
-
-        <div class="big">
-          ${money(r.totals.revenue)}
-        </div>
-
-      </div>
-
-      <div class="card">
-
-        <div class="card-title">
-          ✨ Lucro estimado
-        </div>
-
-        <div class="big">
-          ${money(r.totals.profit)}
-        </div>
-
-      </div>
-
-      <div class="card">
-
-        <div class="card-title">
-          🛍️ Vendas
-        </div>
-
-        <div class="big">
-          ${r.sales.length}
-        </div>
-
-      </div>
-
-      <div class="card">
-
-        <div class="card-title">
-          💳 Fiado aberto
-        </div>
-
-        <div class="big">
-          ${
-            money(
-              r.debts.reduce(
-                (a,x)=>a+x.total,
-                0
-              )
-            )
-          }
-        </div>
-
-      </div>
-
-    </div>
-
-    <h3>Produtos mais vendidos</h3>
-
-    <table>
-
-      <tr>
-        <th>Produto</th>
-        <th>Quantidade</th>
-      </tr>
-
-      ${
-        r.top.map(x=>`
-
-          <tr>
-
-            <td>${x.name}</td>
-
-            <td>${x.qty}</td>
-
-          </tr>
-
-        `).join('')
-      }
-
-    </table>
-
-    <h3>Clientes devedores</h3>
-
-    <table>
-
-      <tr>
-
-        <th>Cliente</th>
-        <th>Venda</th>
-        <th>Valor</th>
-        <th></th>
-
-      </tr>
-
-      ${
-        r.debts.map(x=>`
-
-          <tr>
-
-            <td>${x.name||'Sem cliente'}</td>
-
-            <td>#${x.id}</td>
-
-            <td>${money(x.total)}</td>
-
-            <td>
-
-              <button onclick="payDebt(${x.id})">
-                Receber
-              </button>
-
-            </td>
-
-          </tr>
-
-        `).join('')
-      }
-
-    </table>
-
-  `;
-
-}
-
-async function payDebt(id){
-
-  if(!confirm('Marcar esta venda como recebida?'))
-    return;
-
-  try{
-
-    await api(
-      '/api/sales/'+id+'/pay',
-      {
-        method:'POST',
-
-        headers:{
-          'Content-Type':'application/json'
-        },
-
-        body:JSON.stringify({
-          payment:'Dinheiro'
-        })
-      }
-    );
-
-    alert('Recebimento registrado.');
-
-    loadReports();
-
-    dash();
-
-  }catch(e){
-
-    alert(e.message);
-
-  }
-
-}
-
-function showM(){
-  $('modal').style.display='flex';
-}
-
-function closeM(){
-  $('modal').style.display='none';
-}
-
-$('modal').addEventListener('click',e=>{
-
-  if(e.target===$('modal'))
-    closeM();
-
-});
-
-dash();
-
-loadProducts();
-
-loadClients();
-
-renderCart();
-
-</script>
 
 </body>
+
+
 </html>
