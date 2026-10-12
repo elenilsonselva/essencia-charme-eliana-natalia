@@ -1268,39 +1268,48 @@ function editarCliente(id){
 function editarProduto(id){
 
 
- const produto =
- products.find(
- item=>
- item.id===id
- );
+    const produto =
+    products.find(
+        p =>
+        Number(p.id) === Number(id)
+    );
 
 
- if(!produto)
-
- return;
-
-
- if($("productName"))
-
- $("productName").value =
- produto.name;
+    if(!produto)
+        return;
 
 
- if($("productPrice"))
 
- $("productPrice").value =
- produto.price;
+    $("productId").value =
+    produto.id;
 
 
- if($("productStock"))
+    $("productName").value =
+    produto.name || "";
 
- $("productStock").value =
- produto.stock;
 
+    $("productBrand").value =
+    produto.brand || "";
+
+
+    $("productCost").value =
+    produto.cost || 0;
+
+
+    $("productPrice").value =
+    produto.price || 0;
+
+
+    $("productStock").value =
+    produto.stock || 0;
+
+
+    calcularLucro();
+
+
+    openProductModal();
 
 }
-
-
 
 
 
