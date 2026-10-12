@@ -1506,6 +1506,13 @@ openClientModal;
 window.buscarClienteVenda =
 buscarClienteVenda;
 
+window.salvarProduto =
+salvarProduto;
+
+
+window.editarProduto =
+editarProduto;
+
 // =====================================================
 // PARTE 3/3
 // DASHBOARD + PERMISSÕES + FINALIZAÇÃO
