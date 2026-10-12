@@ -1684,25 +1684,18 @@ function configurarEventos(){
 
 
  $("productForm")
- ?.addEventListener(
- "submit",
+?.addEventListener(
+"submit",
+function(e){
 
- function(e){
+    e.preventDefault();
 
- e.preventDefault();
-
- salvarProduto();
-
- }
-
- );
-
+    salvarProduto(e);
 
 }
+);
 
-
-
-
+}
 
 // ================================
 // INICIALIZAÇÃO COMPLETA
