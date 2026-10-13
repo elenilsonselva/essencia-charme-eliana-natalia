@@ -21,6 +21,7 @@ let currentUser = {
 let clients = [];
 let products = [];
 let sales = [];
+let payments = [];
 
 
 
@@ -552,6 +553,8 @@ async function carregarTudo(){
 
     carregarVendas()
 
+    carregarPagamentos()
+
   ]);
 
 
@@ -985,7 +988,135 @@ async function carregarVendas(){
 }
 
 
+async function carregarPagamentos(){
 
+    try{
+
+        const data =
+        await api("/api/payments");
+
+
+        payments =
+        Array.isArray(data)
+        ?
+        data
+        :
+        [];
+
+
+        renderPagamentos();
+
+
+    }catch(error){
+
+        console.error(
+            "Erro pagamentos:",
+            error
+        );
+
+    }
+
+}
+function renderPagamentos(){
+
+const tabela =
+$("paymentsBody");
+
+
+if(!tabela)
+return;
+
+
+
+tabela.innerHTML =
+sales.map(venda=>{
+
+
+const lista =
+payments.filter(
+p=>Number(p.sale_id)===Number(venda.id)
+);
+
+
+const pago =
+lista.reduce(
+(total,p)=>
+total + Number(p.valor),
+0
+);
+
+
+const restante =
+Number(venda.total)-pago;
+
+
+
+return `
+
+<tr>
+
+<td>
+#${venda.id}
+</td>
+
+
+<td>
+${venda.client || "Consumidor"}
+</td>
+
+
+<td>
+${money(venda.total)}
+</td>
+
+
+<td>
+${money(pago)}
+</td>
+
+
+<td>
+${money(restante)}
+</td>
+
+
+<td>
+${lista.length ? lista[lista.length-1].data : "-"}
+</td>
+
+
+<td>
+
+${
+restante <=0
+?
+"✅ Pago"
+:
+"⏳ Pendente"
+}
+
+</td>
+
+
+<td>
+
+<button onclick="openPaymentModal(${venda.id})">
+
++ Pagamento
+
+</button>
+
+
+</td>
+
+
+</tr>
+
+`;
+
+}).join("");
+
+}
 
 function renderVendas(){
 
@@ -1035,6 +1166,9 @@ Ver
 
 <button onclick="verParcelas(${venda.id})">
 Parcelas
+</button>
+<button onclick="excluirVenda(${venda.id})">
+Excluir
 </button>
 </td>
 
