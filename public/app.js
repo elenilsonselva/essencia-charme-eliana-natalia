@@ -1898,7 +1898,54 @@ async()=>{
 
 
 
+// ================================
+// NOVA VENDA
+// ================================
 
+function newSale(){
+
+    showPage("sales");
+
+
+    window.currentSale = {
+
+        client_id:null,
+
+        items:[],
+
+        discount:0,
+
+        payment:"Dinheiro",
+
+        installments:1
+
+    };
+
+
+    const modal =
+    document.getElementById(
+        "saleModal"
+    );
+
+
+    if(modal){
+
+        modal.style.display="flex";
+
+    }
+    else{
+
+        console.error(
+            "Modal de venda não encontrado: saleModal"
+        );
+
+        alert(
+            "Erro: tela de venda não encontrada"
+        );
+
+    }
+
+}
 
 
 // ================================
@@ -1961,3 +2008,5 @@ excluirVenda;
 
 window.showPage =
 showPage;
+
+window.newSale = newSale;
