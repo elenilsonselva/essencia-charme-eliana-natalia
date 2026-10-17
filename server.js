@@ -2015,14 +2015,19 @@ app.delete("/api/sales/:id", requireAuth, async (req, res) => {
       }
     }
 
-    // As linhas e parcelas são removidas por ON DELETE CASCADE nas tabelas-base.
+    // Remoção explícita dos registros dependentes: bancos antigos podem ter
+    // sido criados sem ON DELETE CASCADE nas chaves estrangeiras.
+    await connection.query("DELETE FROM sale_installments WHERE sale_id = $1", [saleId]);
+    await connection.query("DELETE FROM sale_items WHERE sale_id = $1", [saleId]);
     await connection.query("DELETE FROM sales WHERE id = $1", [saleId]);
     await connection.query("COMMIT");
     return res.json({ ok: true, message: "Venda excluída e estoque restituído" });
   } catch (error) {
     await connection.query("ROLLBACK").catch(() => {});
     console.error("Erro ao excluir venda:", error);
-    return res.status(500).json({ error: "Não foi possível excluir a venda e restituir o estoque. Nenhuma alteração foi confirmada." });
+    // Mostra a mensagem real do PostgreSQL para facilitar o diagnóstico,
+    // mantendo a transação desfeita caso qualquer etapa falhe.
+    return res.status(500).json({ error: `Não foi possível excluir a venda e restituir o estoque. Nenhuma alteração foi confirmada. Detalhe: ${error.message}` });
   } finally {
     connection.release();
   }
