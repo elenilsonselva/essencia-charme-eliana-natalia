@@ -161,6 +161,7 @@ async function carregarRelatorios() {
     const d = await api("/api/reports");
     const list = d.sales || [];
     if ($("reportSales")) $("reportSales").textContent = money(list.reduce((sum, v) => sum + Number(v.total || 0), 0));
+    if ($("reportSalesProfit")) $("reportSalesProfit").textContent = money(d.profit || 0);
     const inst = await api("/api/installments");
     if ($("reportInstallments")) {
       $("reportInstallments").textContent = money(inst.filter(i => !i.paid).reduce((sum, i) => sum + Number(i.amount || 0), 0));
