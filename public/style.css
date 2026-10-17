@@ -1871,3 +1871,11 @@ td{
 
 
 }
+
+/* Ajustes da tela de nova venda */
+.sale-modal-box { width: 620px; max-width: 94vw; max-height: 90vh; overflow-y: auto; }
+.sale-add-row { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: end; }
+.sale-items-list { border: 1px solid #eadcf0; border-radius: 12px; padding: 12px; max-height: 180px; overflow-y: auto; }
+.sale-item-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0e7f5; }
+.sale-item-row button { padding: 7px 10px; }
+@media(max-width:600px) { .sale-add-row { grid-template-columns: 1fr; } .sale-item-row { grid-template-columns: 1fr auto; } .sale-item-row button { grid-column: 1 / -1; } }
