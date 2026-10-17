@@ -856,8 +856,22 @@ Quantidade em Estoque
 <input
 id="productStock"
 type="number"
+min="0"
 placeholder="Quantidade"
 >
+
+<label for="productPhoto">Foto do Produto</label>
+<input
+ id="productPhoto"
+ name="photo"
+ type="file"
+ accept="image/*"
+ onchange="previewProductPhoto()"
+>
+<p class="photo-help">Selecione uma foto do celular ou computador (máximo 4 MB).</p>
+<div id="productPhotoPreview" class="product-photo-preview" aria-live="polite">
+  <span>A foto aparecerá aqui</span>
+</div>
 
 
 
