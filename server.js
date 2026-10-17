@@ -1989,13 +1989,34 @@ app.delete("/api/sales/:id", requireAuth, async (req, res) => {
       return res.status(404).json({ error: "Venda não encontrada" });
     }
 
-    // Agrega por produto para restaurar corretamente inclusive vendas com linhas repetidas.
+    // Detecta os nomes reais das colunas para funcionar também com bancos
+    // antigos que usam "quantity" em vez de "qty".
+    const saleItemColumnsResult = await connection.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_schema = current_schema() AND table_name = 'sale_items'
+    `);
+    const saleItemColumns = new Set(saleItemColumnsResult.rows.map(row => row.column_name));
+    const qtyColumn = saleItemColumns.has("qty") ? "qty" :
+      (saleItemColumns.has("quantity") ? "quantity" : null);
+    if (!qtyColumn) {
+      throw new Error('A tabela sale_items não possui a coluna qty nem quantity.');
+    }
+
+    // O nome da coluna vem exclusivamente da lista permitida acima.
     const itemsResult = await connection.query(`
-      SELECT product_id, SUM(qty)::integer AS qty
+      SELECT product_id, SUM(COALESCE(${qtyColumn}, 0))::integer AS qty
       FROM sale_items
       WHERE sale_id = $1 AND product_id IS NOT NULL
       GROUP BY product_id
     `, [saleId]);
+
+    const stockMoveColumnsResult = await connection.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_schema = current_schema() AND table_name = 'stock_moves'
+    `);
+    const stockMoveColumns = new Set(stockMoveColumnsResult.rows.map(row => row.column_name));
+    const movementQtyColumn = stockMoveColumns.has("qty") ? "qty" :
+      (stockMoveColumns.has("quantity") ? "quantity" : null);
 
     for (const item of itemsResult.rows) {
       const qty = Number(item.qty) || 0;
@@ -2006,10 +2027,10 @@ app.delete("/api/sales/:id", requireAuth, async (req, res) => {
         [qty, item.product_id]
       );
 
-      // Registra a devolução para manter o histórico de movimentações do estoque.
-      if (productResult.rowCount) {
+      // Registra a devolução usando o nome de coluna existente no banco.
+      if (productResult.rowCount && movementQtyColumn && stockMoveColumns.has("product_id") && stockMoveColumns.has("type") && stockMoveColumns.has("note")) {
         await connection.query(`
-          INSERT INTO stock_moves (product_id, qty, type, note)
+          INSERT INTO stock_moves (product_id, ${movementQtyColumn}, type, note)
           VALUES ($1, $2, $3, $4)
         `, [item.product_id, qty, "ENTRADA", `Restituição por exclusão da venda #${saleId}`]);
       }
