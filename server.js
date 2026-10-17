@@ -2383,343 +2383,325 @@ result.rows
 
 
 
+
+
+/* =========================
+   COMPRAS E PDF COM PIX DO FORNECEDOR
+========================= */
+app.get('/api/purchases', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM purchases ORDER BY id DESC LIMIT 300');
+    res.json(result.rows);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.post('/api/purchases', requireAuth, async (req, res) => {
+  const { supplier_name, supplier_pix_key, supplier_pix_name, supplier_pix_city, items } = req.body || {};
+  if (!String(supplier_name || '').trim()) return res.status(400).json({ error: 'Informe o nome do fornecedor.' });
+  if (!Array.isArray(items) || !items.length) return res.status(400).json({ error: 'Adicione pelo menos um item à compra.' });
+  const cleanItems = items.map(i => ({
+    product_name: String(i.product_name || '').trim(),
+    qty: Number(i.qty), unit_price: Number(i.unit_price)
+  }));
+  if (cleanItems.some(i => !i.product_name || !Number.isFinite(i.qty) || i.qty <= 0 || !Number.isFinite(i.unit_price) || i.unit_price < 0))
+    return res.status(400).json({ error: 'Confira nome, quantidade e preço de cada produto.' });
+  const total = cleanItems.reduce((sum, i) => sum + i.qty * i.unit_price, 0);
+  const cx = await pool.connect();
+  try {
+    await cx.query('BEGIN');
+    const purchase = (await cx.query(`INSERT INTO purchases (supplier_name, supplier_pix_key, supplier_pix_name, supplier_pix_city, total) VALUES ($1,$2,$3,$4,$5) RETURNING *`, [String(supplier_name).trim(), String(supplier_pix_key || '').trim(), String(supplier_pix_name || '').trim(), String(supplier_pix_city || '').trim(), total])).rows[0];
+    for (const item of cleanItems) await cx.query(`INSERT INTO purchase_items (purchase_id, product_name, qty, unit_price, line_total) VALUES ($1,$2,$3,$4,$5)`, [purchase.id, item.product_name, item.qty, item.unit_price, item.qty * item.unit_price]);
+    await cx.query('COMMIT');
+    res.json({ id: purchase.id, total: purchase.total });
+  } catch (error) { await cx.query('ROLLBACK').catch(()=>{}); res.status(500).json({ error: error.message }); }
+  finally { cx.release(); }
+});
+
+app.get('/api/purchases/:id/pdf', requireAuth, async (req, res) => {
+  try {
+    const purchase = (await pool.query('SELECT * FROM purchases WHERE id=$1', [req.params.id])).rows[0];
+    if (!purchase) return res.status(404).json({ error: 'Compra não encontrada.' });
+    const items = (await pool.query('SELECT * FROM purchase_items WHERE purchase_id=$1 ORDER BY id', [purchase.id])).rows;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="compra-${purchase.id}.pdf"`);
+    const doc = new PDFDocument({ size: 'A4', margin: 42 });
+    doc.pipe(res);
+    doc.fillColor('#8f4e5d').fontSize(20).text('Essência & Charme', { align: 'center' });
+    doc.fillColor('#333').fontSize(13).text(`Pedido de compra #${purchase.id}`, { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(11).text(`Fornecedor: ${purchase.supplier_name}`);
+    doc.text(`Data: ${new Date(purchase.created_at).toLocaleDateString('pt-BR')}`);
+    doc.moveDown();
+    doc.fontSize(10).text('PRODUTO                                      QTD.        UNITÁRIO          TOTAL');
+    doc.moveDown(0.5);
+    for (const item of items) {
+      doc.text(`${item.product_name}  |  ${item.qty}  |  R$ ${money(item.unit_price).replace('.', ',')}  |  R$ ${money(item.line_total).replace('.', ',')}`);
+    }
+    doc.moveDown();
+    doc.fontSize(15).fillColor('#8f4e5d').text(`TOTAL: R$ ${money(purchase.total).replace('.', ',')}`);
+    doc.moveDown();
+    if (purchase.supplier_pix_key) {
+      doc.fillColor('#333').fontSize(12).text('DADOS PARA PAGAMENTO PIX');
+      if (purchase.supplier_pix_name) doc.fontSize(10).text(`Beneficiário: ${purchase.supplier_pix_name}`);
+      if (purchase.supplier_pix_city) doc.fontSize(10).text(`Cidade: ${purchase.supplier_pix_city}`);
+      doc.fontSize(10).text(`Chave PIX: ${purchase.supplier_pix_key}`);
+      doc.moveDown(0.5);
+      const pixPayload = buildPixPayload({ key: purchase.supplier_pix_key, name: purchase.supplier_pix_name || purchase.supplier_name, city: purchase.supplier_pix_city || 'BRASIL', amount: purchase.total, txid: `COMPRA${purchase.id}` });
+      const pixQrData = await QRCode.toDataURL(pixPayload, { errorCorrectionLevel: 'M', margin: 1, width: 220 });
+      const pixQrBuffer = Buffer.from(pixQrData.split(',')[1], 'base64');
+      doc.image(pixQrBuffer, { fit: [145, 145], align: 'center' });
+      doc.moveDown(0.5);
+      doc.fontSize(9).fillColor('#555').text('Leia o QR Code no aplicativo do seu banco e confira os dados do beneficiário e o valor antes de confirmar o pagamento.', { align: 'center' });
+    } else {
+      doc.fontSize(10).text('Dados PIX do fornecedor não informados. Solicite a chave PIX ao fornecedor antes de efetuar o pagamento.');
+    }
+    doc.end();
+  } catch (error) { console.error('Erro ao gerar PDF de compra:', error); if (!res.headersSent) res.status(500).json({ error: error.message }); }
+});
+
 /* =========================
    PDF VENDA + PIX
 ========================= */
 
-app.get(
-  "/api/sales/:id/pdf",
-  requireAuth,
-  async (req, res) => {
-    try {
-      // Buscar venda e cliente
-      const vendaResult = await pool.query(
-        `
-        SELECT
-          s.*,
-          c.name AS client
-        FROM sales s
-        LEFT JOIN clients c ON c.id = s.client_id
-        WHERE s.id = $1
-        `,
-        [req.params.id]
-      );
+app.get("/api/sales/:id/pdf", requireAuth, async (req, res) => {
+  try {
+    const vendaResult = await pool.query(
+      `SELECT s.*, c.name AS client
+       FROM sales s
+       LEFT JOIN clients c ON c.id = s.client_id
+       WHERE s.id = $1`,
+      [req.params.id]
+    );
+    const venda = vendaResult.rows[0];
 
-      const venda = vendaResult.rows[0];
+    if (!venda) {
+      return res.status(404).json({ error: "Venda não encontrada." });
+    }
 
-      if (!venda) {
-        return res.status(404).json({
-          error: "Venda não encontrada."
-        });
-      }
+    // Detecta a coluna de quantidade existente no banco (qty ou quantity).
+    const columnsResult = await pool.query(
+      `SELECT column_name FROM information_schema.columns
+       WHERE table_schema = current_schema() AND table_name = 'sale_items'`
+    );
+    const columns = new Set(columnsResult.rows.map(row => row.column_name));
+    const qtyColumn = columns.has("qty") ? "qty" : (columns.has("quantity") ? "quantity" : null);
+    if (!qtyColumn) {
+      return res.status(500).json({ error: "Não foi encontrada a coluna de quantidade na tabela sale_items." });
+    }
 
-      // Buscar produtos sem depender exclusivamente
-      // de uma coluna chamada qty ou quantity
-      const itensResult = await pool.query(
-        `
-        SELECT
-          si.*,
-          p.name AS product_name,
-          p.size AS product_size,
-          COALESCE(
-            NULLIF(to_jsonb(si)->>'qty', '')::numeric,
-            NULLIF(to_jsonb(si)->>'quantity', '')::numeric,
-            NULLIF(to_jsonb(si)->>'quantidade', '')::numeric,
-            0
-          ) AS item_qty,
-          COALESCE(
-            NULLIF(to_jsonb(si)->>'price', '')::numeric,
-            0
-          ) AS item_price
-        FROM sale_items si
-        LEFT JOIN products p ON p.id = si.product_id
-        WHERE si.sale_id = $1
-        ORDER BY si.id
-        `,
-        [venda.id]
-      );
+    const itens = (await pool.query(
+      `SELECT si.*, COALESCE(p.name, 'Produto #' || COALESCE(si.product_id::text, si.id::text)) AS product_name,
+              COALESCE(p.size, '') AS product_size,
+              si.${qtyColumn} AS display_qty,
+              COALESCE(si.price, 0) AS display_price
+       FROM sale_items si
+       LEFT JOIN products p ON p.id = si.product_id
+       WHERE si.sale_id = $1
+       ORDER BY si.id`,
+      [venda.id]
+    )).rows;
 
-      const itens = itensResult.rows;
+    const parcelas = (await pool.query(
+      `SELECT * FROM sale_installments WHERE sale_id = $1 ORDER BY id`,
+      [venda.id]
+    )).rows;
 
-      // Buscar parcelas
-      const parcelasResult = await pool.query(
-        `
-        SELECT *
-        FROM sale_installments
-        WHERE sale_id = $1
-        ORDER BY COALESCE(
-          NULLIF(to_jsonb(sale_installments)->>'installment_no', '')::integer,
-          NULLIF(to_jsonb(sale_installments)->>'number', '')::integer,
-          NULLIF(to_jsonb(sale_installments)->>'no', '')::integer,
-          1
-        )
-        `,
-        [venda.id]
-      );
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename="venda-${venda.id}.pdf"`);
 
-      const parcelas = parcelasResult.rows;
+    const doc = new PDFDocument({ size: "A5", margin: 35 });
+    doc.on("error", error => {
+      console.error("Erro ao gerar PDF da venda:", error);
+      if (!res.headersSent) res.status(500).end("Erro ao gerar PDF da venda.");
+      else res.end();
+    });
+    doc.pipe(res);
 
-      // Configurar PDF
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader(
-        "Content-Disposition",
-        `inline; filename="venda-${venda.id}.pdf"`
-      );
+    const vinho = "#8f4e5d";
+    const brl = value => `R$ ${money(value).replace(".", ",")}`;
 
-      const doc = new PDFDocument({
-        size: "A5",
-        margin: 35,
-        bufferPages: true
-      });
+    doc.fontSize(18).fillColor(vinho).text("Essência & Charme", { align: "center" });
+    doc.fontSize(10).fillColor("#555555").text("Comprovante de venda", { align: "center" });
+    doc.moveDown();
 
-      doc.on("error", (error) => {
-        console.error("Erro ao gerar PDF:", error);
-        if (!res.headersSent) {
-          res.status(500).end("Erro ao gerar PDF.");
-        } else {
-          res.end();
-        }
-      });
+    doc.fontSize(10).fillColor("#333333").text(`Venda #${venda.id}`);
+    doc.text(`Cliente: ${venda.client || "Consumidor"}`);
+    if (venda.date) {
+      const dataVenda = new Date(venda.date);
+      if (!Number.isNaN(dataVenda.getTime())) doc.text(`Data: ${dataVenda.toLocaleDateString("pt-BR")}`);
+    }
+    doc.moveDown();
 
-      doc.pipe(res);
-
-      const cor = "#8f4e5d";
-
-      // Cabeçalho
-      doc
-        .fontSize(18)
-        .fillColor(cor)
-        .text("Essência & Charme", {
-          align: "center"
-        });
-
-      doc
-        .fontSize(10)
-        .fillColor("#555555")
-        .text("Comprovante de venda", {
-          align: "center"
-        });
-
-      doc.moveDown();
-
-      // Dados da venda
-      doc
-        .fontSize(10)
-        .fillColor("#333333")
-        .text(`Venda #${venda.id}`);
-
-      doc.text(
-        `Cliente: ${venda.client || "Consumidor"}`
-      );
-
-      if (venda.date) {
-        doc.text(
-          `Data: ${new Date(venda.date).toLocaleDateString("pt-BR")}`
-        );
-      }
-
-      doc.moveDown();
-
-      // Produtos e preços
-      doc
-        .fontSize(11)
-        .fillColor(cor)
-        .text("Produtos");
-
+    for (const item of itens) {
+      const quantidade = Number(item.display_qty ?? 0);
+      const precoUnitario = Number(item.display_price ?? 0);
+      const subtotal = quantidade * precoUnitario;
+      const nome = item.product_name || `Produto #${item.product_id || item.id}`;
+      const tamanho = item.product_size ? ` - ${item.product_size}` : "";
+      doc.fontSize(9).fillColor("#333333").text(`${quantidade}x ${nome}${tamanho}`);
+      doc.fontSize(9).fillColor("#555555").text(`${brl(precoUnitario)} cada  |  Subtotal: ${brl(subtotal)}`);
       doc.moveDown(0.4);
+    }
 
-      if (!itens.length) {
-        doc
-          .fontSize(9)
-          .fillColor("#555555")
-          .text("Nenhum produto encontrado nesta venda.");
-      }
+    doc.moveDown(0.4);
+    doc.fontSize(14).fillColor(vinho).text(`TOTAL: ${brl(venda.total)}`);
+    doc.fontSize(10).fillColor("#333333").text(`Pagamento: ${venda.payment || "Não informado"}`);
 
-      for (const item of itens) {
-        const quantidade = Number(item.item_qty || 0);
-        const preco = Number(item.item_price || 0);
-        const subtotal = quantidade * preco;
-
-        const nome =
-          item.product_name ||
-          item.name ||
-          "Produto não encontrado";
-
-        const tamanho = item.product_size
-          ? ` - ${item.product_size}`
-          : "";
-
-        doc
-          .fontSize(9)
-          .fillColor("#333333")
-          .text(
-            `${quantidade}x ${nome}${tamanho}`
-          );
-
-        doc
-          .fontSize(9)
-          .fillColor("#555555")
-          .text(
-            `${money(preco).replace(".", ",")} cada  |  Total: ${money(subtotal).replace(".", ",")}`
-          );
-
-        doc.moveDown(0.5);
-      }
-
-      doc.moveDown(0.5);
-
-      // Total e pagamento
-      doc
-        .fontSize(14)
-        .fillColor(cor)
-        .text(
-          `TOTAL: ${money(venda.total).replace(".", ",")}`
+    if (parcelas.length) {
+      doc.moveDown();
+      doc.fontSize(11).fillColor(vinho).text("Parcelas");
+      parcelas.forEach((parcela, index) => {
+        const numero = parcela.installment_no ?? parcela.number ?? parcela.no ?? (index + 1);
+        const totalParcelas = parcela.total_installments ?? venda.installments ?? parcelas.length;
+        const valor = parcela.amount ?? parcela.value ?? 0;
+        const vencimento = parcela.due_date
+          ? new Date(parcela.due_date).toLocaleDateString("pt-BR")
+          : "Sem vencimento";
+        doc.fontSize(9).fillColor("#333333").text(
+          `${numero}/${totalParcelas} - ${brl(valor)} - ${vencimento} - ${parcela.paid ? "Paga" : "Pendente"}`
         );
-
-      doc
-        .fontSize(10)
-        .fillColor("#333333")
-        .text(
-          `Pagamento: ${venda.payment || "Não informado"}`
-        );
-
-      // Parcelas, se existirem
-      if (parcelas.length) {
-        doc.moveDown();
-
-        doc
-          .fontSize(11)
-          .fillColor(cor)
-          .text("Parcelas");
-
-        for (const parcela of parcelas) {
-          const numero = Number(
-            parcela.installment_no ??
-            parcela.number ??
-            parcela.no ??
-            1
-          );
-
-          const totalParcelas = Number(
-            parcela.total_installments ??
-            venda.installments ??
-            parcelas.length
-          );
-
-          const valor = Number(
-            parcela.amount ?? parcela.value ?? 0
-          );
-
-          const vencimento = parcela.due_date
-            ? new Date(parcela.due_date).toLocaleDateString("pt-BR")
-            : "Sem vencimento";
-
-          const status = parcela.paid
-            ? "Paga"
-            : "Pendente";
-
-          doc
-            .fontSize(9)
-            .fillColor("#333333")
-            .text(
-              `${numero}/${totalParcelas} - ${money(valor).replace(".", ",")} - ${vencimento} - ${status}`
-            );
-        }
-      }
-
-      // Área do PIX
-      doc.moveDown(1.5);
-
-      doc
-        .fontSize(11)
-        .fillColor(cor)
-        .text("PIX", {
-          align: "center"
-        });
-
-      doc.moveDown(0.5);
-
-      // Gerar QR Code usando a configuração existente
-      const pixPayload =
-        `00020126580014BR.GOV.BCB.PIX0136${PIX_KEY}` +
-        `520400005303986540${money(venda.total)}` +
-        `5802BR5918${PIX_NAME}6009${PIX_CITY}6304`;
-
-      const qr = await QRCode.toDataURL(pixPayload);
-
-      const imagem = Buffer.from(
-        qr.replace("data:image/png;base64,", ""),
-        "base64"
-      );
-
-      const tamanhoQR = 120;
-      const xQR = (doc.page.width - tamanhoQR) / 2;
-      const yQR = doc.y;
-
-      // Centralizar QR Code
-      doc.image(imagem, xQR, yQR, {
-        width: tamanhoQR,
-        height: tamanhoQR
       });
+    }
 
-      // Continuar abaixo da imagem para não sobrepor o conteúdo
-      doc.y = yQR + tamanhoQR + 10;
+    // PIX da Essência & Charme para pagamento desta venda.
+    doc.moveDown(1.2);
+    doc.fontSize(11).fillColor(vinho).text("PIX", { align: "center" });
+    doc.moveDown(0.5);
 
-      doc
-        .fontSize(8)
-        .fillColor("#555555")
-        .text(`Chave PIX: ${PIX_KEY}`, {
-          align: "center"
-        });
+    const pixPayload =
+      `00020126580014BR.GOV.BCB.PIX0136${PIX_KEY}` +
+      `520400005303986540${money(venda.total)}` +
+      `5802BR5918${PIX_NAME}6009${PIX_CITY}6304`;
+    const qrDataUrl = await QRCode.toDataURL(pixPayload, {
+      errorCorrectionLevel: "M",
+      margin: 1,
+      width: 240
+    });
+    const qrBuffer = Buffer.from(qrDataUrl.split(",")[1], "base64");
+    const qrSize = 120;
+    const qrX = (doc.page.width - qrSize) / 2;
+    const qrY = doc.y;
+    doc.image(qrBuffer, qrX, qrY, { width: qrSize, height: qrSize });
+    doc.y = qrY + qrSize + 8;
 
-      doc.moveDown(0.8);
+    doc.fontSize(8).fillColor("#555555").text(`Chave PIX: ${PIX_KEY}`, { align: "center" });
+    doc.moveDown(0.8);
+    doc.fontSize(10).fillColor(vinho).text("Obrigado pela preferência!", { align: "center" });
+    doc.moveDown(0.35);
+    doc.fontSize(16).fillColor(vinho).text("Essência & Charme", { align: "center" });
+    doc.fontSize(10).fillColor("#555555").text("By Eliana Natália", { align: "center" });
+    doc.fontSize(9).fillColor("#555555").text("Comprovante de venda", { align: "center" });
 
-      // Rodapé solicitado
-      doc
-        .fontSize(10)
-        .fillColor(cor)
-        .text("Obrigado pela preferência!", {
-          align: "center"
-        });
-
-      doc.moveDown(0.4);
-
-      doc
-        .fontSize(16)
-        .fillColor(cor)
-        .text("Essência & Charme", {
-          align: "center"
-        });
-
-      doc
-        .fontSize(10)
-        .fillColor("#555555")
-        .text("By Eliana Natália", {
-          align: "center"
-        });
-
-      doc
-        .fontSize(9)
-        .fillColor("#555555")
-        .text("Comprovante de venda", {
-          align: "center"
-        });
-
-      doc.end();
-    } catch (error) {
-      console.error(
-        "Erro ao gerar PDF da venda:",
-        error
-      );
-
-      if (!res.headersSent) {
-        res.status(500).json({
-          error: "Não foi possível gerar o PDF da venda.",
-          detalhe: error.message
-        });
-      } else {
-        res.end();
-      }
+    doc.end();
+  } catch (error) {
+    console.error("Erro ao gerar PDF da venda:", error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Não foi possível gerar o PDF da venda.", detalhe: error.message });
+    } else {
+      res.end();
     }
   }
+});
+
+
+
+/* =========================
+   PÁGINA
+========================= */
+
+
+app.use(
+(req,res,next)=>{
+
+
+if(
+
+req.method==="GET"
+
+&&
+
+!req.path.startsWith("/api/")
+
+){
+
+
+return res.sendFile(
+
+path.join(
+
+__dirname,
+
+"public",
+
+"index.html"
+
+)
+
 );
+
+
+}
+
+
+next();
+
+
+}
+
+);
+
+
+
+
+
+
+/* =========================
+   START
+========================= */
+
+
+initDb()
+
+.then(()=>{
+
+
+app.listen(
+
+PORT,
+
+"0.0.0.0",
+
+()=>{
+
+
+console.log(
+
+`🌸 Essência & Charme online na porta ${PORT}`
+
+);
+
+
+}
+
+);
+
+
+})
+
+.catch(error=>{
+
+
+console.error(
+
+"Erro ao iniciar:",
+
+error
+
+);
+
+
+
+process.exit(1);
+
+
+});
