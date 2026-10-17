@@ -1345,7 +1345,7 @@ async function excluirVenda(id){
 
 
         alert(
-            "Erro ao excluir venda"
+            error.message || "Erro ao excluir venda"
         );
 
 
