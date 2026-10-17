@@ -1743,88 +1743,39 @@ status
 
 
 
-for(
-const item of produtos
-){
-
-
-await connection.query(
-
-`
-
-INSERT INTO sale_items
-
-(
-
-sale_id,
-
-product_id,
-
-qty,
-
-price,
-
-cost
-
-)
-
-
-VALUES
-
-($1,$2,$3,$4,$5)
-
-`
-
-,
-
-[
-
-venda.id,
-
-item.produto.id,
-
-item.quantidade,
-
-item.produto.price,
-
-item.produto.cost
-
-]
-
-);
-
-
-
-
-
-await connection.query(
-
-`
-
-UPDATE products
-
-SET stock =
-stock-$1
-
-WHERE id=$2
-
-`
-
-,
-
-[
-
-item.quantidade,
-
-item.produto.id
-
-]
-
-);
-
-
+// Detecta a coluna de quantidade existente no banco. Algumas versões antigas
+// usam "quantity" em vez de "qty"; preservamos os dados existentes.
+const saleItemColumnsResult = await connection.query(`
+  SELECT column_name
+  FROM information_schema.columns
+  WHERE table_schema = current_schema() AND table_name = 'sale_items'
+`);
+const saleItemColumns = new Set(saleItemColumnsResult.rows.map(row => row.column_name));
+const saleItemQtyColumn = saleItemColumns.has("qty") ? "qty" :
+  (saleItemColumns.has("quantity") ? "quantity" : null);
+if (!saleItemQtyColumn) {
+  throw new Error('A tabela sale_items não possui a coluna qty nem quantity.');
 }
 
+for (const item of produtos) {
+  await connection.query(`
+    INSERT INTO sale_items
+      (sale_id, product_id, ${saleItemQtyColumn}, price, cost)
+    VALUES ($1, $2, $3, $4, $5)
+  `, [
+    venda.id,
+    item.produto.id,
+    item.quantidade,
+    item.produto.price,
+    item.produto.cost
+  ]);
+
+  await connection.query(`
+    UPDATE products
+    SET stock = stock - $1
+    WHERE id = $2
+  `, [item.quantidade, item.produto.id]);
+}
 
 
 
