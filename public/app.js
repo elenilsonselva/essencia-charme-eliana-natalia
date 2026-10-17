@@ -1045,6 +1045,14 @@ function renderVendas(){
 
 
 
+    <button onclick="pdfVenda(${venda.id})">
+
+    PDF
+
+    </button>
+
+
+
     <button onclick="excluirVenda(${venda.id})">
 
     Excluir
@@ -2019,6 +2027,30 @@ async function verVenda(id) {
     alert(`VENDA #${v.id}\nCliente: ${v.client || "Consumidor"}\nData: ${v.date ? new Date(v.date).toLocaleString("pt-BR") : "—"}\n\n${linhas}\n\nDesconto: ${money(v.discount)}\nTOTAL: ${money(v.total)}\nPagamento: ${v.payment || "—"}\nParcelas: ${v.installments || 1}`);
   } catch (e) { alert("Não foi possível abrir a venda: " + e.message); }
 }
+async function pdfVenda(id) {
+  try {
+    const response = await fetch(`/api/sales/${Number(id)}/pdf`, { credentials: "same-origin" });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || `Não foi possível gerar o PDF da venda #${id}.`);
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const opened = window.open(url, "_blank");
+    if (!opened) {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `venda-${id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (error) {
+    alert(error.message || "Erro ao gerar o PDF da venda.");
+  }
+}
+
 async function verParcelas(id) {
   try {
     const rows = await api(`/api/installments?sale_id=${id}`);
@@ -2080,6 +2112,7 @@ window.pdfPagamento = pdfPagamento;
 window.closeModal = closeModal;
 window.verVenda = verVenda;
 window.verParcelas = verParcelas;
+window.pdfVenda = pdfVenda;
 window.excluirVenda = excluirVenda;
 window.showPage = showPage;
 window.newSale = newSale;
