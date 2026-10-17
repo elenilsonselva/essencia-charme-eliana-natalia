@@ -1973,10 +1973,18 @@ async function salvarVenda(event) {
 }
 async function verVenda(id) {
   try {
-    const data = await api(`/api/sales/${id}/details`);
+    const [data, parcelas] = await Promise.all([
+      api(`/api/sales/${id}/details`),
+      api(`/api/installments?sale_id=${id}`)
+    ]);
     const v = data.sale;
     const linhas = (data.items || []).map(i => `• ${i.name || `Produto #${i.product_id || i.id || "?"}`} × ${i.display_qty ?? i.qty ?? i.quantity ?? 0} — ${money(Number(i.display_price ?? i.price ?? 0)*Number(i.display_qty ?? i.qty ?? i.quantity ?? 0))}`).join("\n") || "Nenhum item detalhado.";
-    alert(`VENDA #${v.id}\nCliente: ${v.client || "Consumidor"}\nData: ${v.date ? new Date(v.date).toLocaleString("pt-BR") : "—"}\n\n${linhas}\n\nDesconto: ${money(v.discount)}\nTOTAL: ${money(v.total)}\nPagamento: ${v.payment || "—"}\nParcelas: ${v.installments || 1}`);
+    const vencimentos = (parcelas || []).map(p => {
+      const vencimento = p.due_date ? new Date(`${String(p.due_date).slice(0,10)}T12:00:00`).toLocaleDateString("pt-BR") : "sem data";
+      const numero = p.display_installment_no ?? p.number ?? p.installment_no ?? 1;
+      return `${numero}/${p.total_installments ?? v.installments ?? parcelas.length} — vencimento: ${vencimento} — ${p.paid ? "Paga" : "Pendente"}`;
+    }).join("\n");
+    alert(`VENDA #${v.id}\nCliente: ${v.client || "Consumidor"}\nData: ${v.date ? new Date(v.date).toLocaleString("pt-BR") : "—"}\n\n${linhas}\n\nDesconto: ${money(v.discount)}\nTOTAL: ${money(v.total)}\nPagamento: ${v.payment || "—"}\nParcelas: ${v.installments || 1}${vencimentos ? `\n\nVencimento(s):\n${vencimentos}` : ""}`);
   } catch (e) { alert("Não foi possível abrir a venda: " + e.message); }
 }
 async function pdfVenda(id) {
