@@ -1968,6 +1968,66 @@ connection.release();
 
 
 
+// Exclui uma venda em transação e devolve ao estoque todos os itens vendidos.
+app.delete("/api/sales/:id", requireAuth, async (req, res) => {
+  const saleId = Number(req.params.id);
+  if (!Number.isInteger(saleId) || saleId < 1) {
+    return res.status(400).json({ error: "Número de venda inválido" });
+  }
+
+  const connection = await pool.connect();
+  try {
+    await connection.query("BEGIN");
+
+    // Bloqueia a venda para evitar duas exclusões simultâneas.
+    const saleResult = await connection.query(
+      "SELECT id FROM sales WHERE id = $1 FOR UPDATE",
+      [saleId]
+    );
+    if (!saleResult.rowCount) {
+      await connection.query("ROLLBACK");
+      return res.status(404).json({ error: "Venda não encontrada" });
+    }
+
+    // Agrega por produto para restaurar corretamente inclusive vendas com linhas repetidas.
+    const itemsResult = await connection.query(`
+      SELECT product_id, SUM(qty)::integer AS qty
+      FROM sale_items
+      WHERE sale_id = $1 AND product_id IS NOT NULL
+      GROUP BY product_id
+    `, [saleId]);
+
+    for (const item of itemsResult.rows) {
+      const qty = Number(item.qty) || 0;
+      if (qty <= 0) continue;
+
+      const productResult = await connection.query(
+        "UPDATE products SET stock = COALESCE(stock, 0) + $1 WHERE id = $2 RETURNING id",
+        [qty, item.product_id]
+      );
+
+      // Registra a devolução para manter o histórico de movimentações do estoque.
+      if (productResult.rowCount) {
+        await connection.query(`
+          INSERT INTO stock_moves (product_id, qty, type, note)
+          VALUES ($1, $2, $3, $4)
+        `, [item.product_id, qty, "ENTRADA", `Restituição por exclusão da venda #${saleId}`]);
+      }
+    }
+
+    // As linhas e parcelas são removidas por ON DELETE CASCADE nas tabelas-base.
+    await connection.query("DELETE FROM sales WHERE id = $1", [saleId]);
+    await connection.query("COMMIT");
+    return res.json({ ok: true, message: "Venda excluída e estoque restituído" });
+  } catch (error) {
+    await connection.query("ROLLBACK").catch(() => {});
+    console.error("Erro ao excluir venda:", error);
+    return res.status(500).json({ error: "Não foi possível excluir a venda e restituir o estoque. Nenhuma alteração foi confirmada." });
+  } finally {
+    connection.release();
+  }
+});
+
 // Detalhes de uma venda, incluindo os itens vendidos.
 app.get("/api/sales/:id/details", requireAuth, async (req, res) => {
   try {
