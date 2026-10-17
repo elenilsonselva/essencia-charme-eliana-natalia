@@ -1825,8 +1825,9 @@ for (const item of produtos) {
 
 
 
+// Vendas a prazo (Fiado) precisam de vencimento mesmo quando são em parcela única.
 if(
-parcelasQtd > 1
+parcelasQtd > 1 || payment === "Fiado"
 ){
 
 
@@ -2555,7 +2556,7 @@ app.get("/api/sales/:id/pdf", requireAuth, async (req, res) => {
         const totalParcelas = parcela.total_installments ?? venda.installments ?? parcelas.length;
         const valor = parcela.amount ?? parcela.value ?? 0;
         const vencimento = parcela.due_date
-          ? new Date(parcela.due_date).toLocaleDateString("pt-BR")
+          ? new Date(`${String(parcela.due_date).slice(0, 10)}T12:00:00`).toLocaleDateString("pt-BR")
           : "Sem vencimento";
         doc.fontSize(9).fillColor("#333333").text(
           `${numero}/${totalParcelas} - ${brl(valor)} - ${vencimento} - ${parcela.paid ? "Paga" : "Pendente"}`
