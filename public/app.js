@@ -161,9 +161,12 @@ async function carregarRelatorios() {
     const d = await api("/api/reports");
     const list = d.sales || [];
     if ($("reportSales")) $("reportSales").textContent = money(list.reduce((sum, v) => sum + Number(v.total || 0), 0));
+    const inst = await api("/api/installments");
     if ($("reportInstallments")) {
-      const inst = await api("/api/installments");
       $("reportInstallments").textContent = money(inst.filter(i => !i.paid).reduce((sum, i) => sum + Number(i.amount || 0), 0));
+    }
+    if ($("reportInstallmentsReceived")) {
+      $("reportInstallmentsReceived").textContent = money(inst.filter(i => i.paid).reduce((sum, i) => sum + Number(i.amount || 0), 0));
     }
   } catch (e) { console.warn("Relatórios:", e.message); }
 }
@@ -698,71 +701,20 @@ async function carregarClientes(){
 
 
 function renderClientes(){
-
-
-    const tabela =
-    $("clientsBody");
-
-
-
-    if(!tabela)
-
-        return;
-
-
-
-    tabela.innerHTML =
-
-    clients.map(cliente=>`
-
-
-        <tr>
-
-
-        <td>
-
-        ${escapeHtml(cliente.name)}
-
-        </td>
-
-
-        <td>
-
-        ${escapeHtml(cliente.phone || "")}
-
-        </td>
-
-
-        <td>
-
-
-        <button onclick="editarCliente(${cliente.id})">
-
-        Editar
-
-        </button>
-
-
-        <button onclick="excluirCliente(${cliente.id})">
-
-        Excluir
-
-        </button>
-
-
-        </td>
-
-
-        </tr>
-
-
-    `).join("");
-
-
+  const tabela = $("clientsBody");
+  if (!tabela) return;
+  tabela.innerHTML = clients.map(cliente => `
+    <tr>
+      <td>${escapeHtml(cliente.name || "")}</td>
+      <td>${escapeHtml(cliente.phone || "")}</td>
+      <td>${escapeHtml(cliente.address || "")}</td>
+      <td class="actions-cell">
+        <button onclick="editarCliente(${cliente.id})">Editar</button>
+        <button onclick="excluirCliente(${cliente.id})">Excluir</button>
+      </td>
+    </tr>
+  `).join("");
 }
-
-
-
 
 
 // ================================
