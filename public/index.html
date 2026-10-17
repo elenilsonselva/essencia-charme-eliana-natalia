@@ -1319,6 +1319,33 @@ R$ 0,00
 
 </section>
 
+<!-- MODAL NOVA VENDA -->
+<div id="saleModal" class="modal">
+  <div class="modal-box sale-modal-box">
+    <h2>Nova Venda</h2>
+    <form id="saleForm" onsubmit="salvarVenda(event)">
+      <label for="saleClient">Cliente</label>
+      <select id="saleClient"><option value="">Consumidor</option></select>
+      <label for="saleProduct">Produto</label>
+      <select id="saleProduct" required><option value="">Selecione um produto</option></select>
+      <div class="sale-add-row">
+        <div><label for="saleQty">Quantidade</label><input id="saleQty" type="number" min="1" value="1" required></div>
+        <button type="button" onclick="adicionarItemVenda()">Adicionar produto</button>
+      </div>
+      <div id="saleItemsList" class="sale-items-list">Nenhum produto adicionado.</div>
+      <label for="saleDiscount">Desconto (R$)</label><input id="saleDiscount" type="number" min="0" step="0.01" value="0">
+      <label for="salePayment">Forma de pagamento</label>
+      <select id="salePayment"><option>Dinheiro</option><option>PIX</option><option>Cartão</option><option>Transferência</option><option>Fiado</option></select>
+      <label for="saleInstallments">Parcelas</label>
+      <select id="saleInstallments"><option value="1">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="12">12x</option></select>
+      <label for="saleDueDate">Vencimento da primeira parcela</label><input id="saleDueDate" type="date">
+      <p>Total: <strong id="saleTotal">R$ 0,00</strong></p>
+      <button type="submit">Salvar venda</button>
+      <button type="button" onclick="closeModal('saleModal')">Cancelar</button>
+    </form>
+  </div>
+</div>
+
 <!-- =================================================
 FINAL
 ================================================= -->
