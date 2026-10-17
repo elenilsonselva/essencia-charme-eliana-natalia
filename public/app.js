@@ -74,6 +74,77 @@ function escapeHtml(value){
 
 
 
+// Funções de interface que estavam ausentes no pacote original.
+function openClientModal() {
+  const form = $("clientForm");
+  if (form) form.reset();
+  if ($("clientId")) $("clientId").value = "";
+  if ($("clientModal")) $("clientModal").style.display = "flex";
+}
+function openProductModal() {
+  const form = $("productForm");
+  if (form) form.reset();
+  if ($("productId")) $("productId").value = "";
+  calcularLucro();
+  if ($("productModal")) $("productModal").style.display = "flex";
+}
+function calcularLucro() {
+  const cost = Number($("productCost")?.value || 0);
+  const price = Number($("productPrice")?.value || 0);
+  if ($("productProfit")) $("productProfit").textContent = money(price - cost);
+  if ($("productMargin")) $("productMargin").textContent = (price > 0 ? ((price-cost)/price*100) : 0).toLocaleString("pt-BR", {maximumFractionDigits: 1}) + "%";
+}
+async function editarProduto(id) {
+  const item = products.find(p => Number(p.id) === Number(id));
+  if (!item) return;
+  $("productId").value = item.id;
+  $("productName").value = item.name || "";
+  $("productBrand").value = item.brand || "";
+  $("productCost").value = item.cost || 0;
+  $("productPrice").value = item.price || 0;
+  $("productStock").value = item.stock || 0;
+  calcularLucro();
+  $("productModal").style.display = "flex";
+}
+async function editarCliente(id) {
+  const item = clients.find(c => Number(c.id) === Number(id));
+  if (!item) return;
+  $("clientId").value = item.id;
+  $("clientName").value = item.name || "";
+  $("clientPhone").value = item.phone || "";
+  $("clientAddress").value = item.address || "";
+  $("clientNotes").value = item.notes || "";
+  $("clientModal").style.display = "flex";
+}
+async function excluirCliente(id) {
+  if (!confirm("Deseja excluir este cliente?")) return;
+  try { await api(`/api/clients/${id}`, {method:"DELETE"}); await carregarClientes(); }
+  catch (e) { alert(e.message); }
+}
+async function carregarDashboard() {
+  try {
+    const d = await api("/api/dashboard");
+    if ($("dashboardSales")) $("dashboardSales").textContent = money(d.today?.total || 0);
+    if ($("dashboardClients")) $("dashboardClients").textContent = String(clients.length);
+    if ($("dashboardStock")) $("dashboardStock").textContent = String(d.low || 0);
+    if ($("dashboardRevenue")) $("dashboardRevenue").textContent = money(d.today?.total || 0);
+  } catch (e) { console.warn("Dashboard:", e.message); }
+}
+function aplicarPermissoes() {
+  document.querySelectorAll(".admin-only").forEach(el => { el.style.display = isAdmin() ? "" : "none"; });
+}
+async function carregarRelatorios() {
+  try {
+    const d = await api("/api/reports");
+    const list = d.sales || [];
+    if ($("reportSales")) $("reportSales").textContent = money(list.reduce((sum, v) => sum + Number(v.total || 0), 0));
+    if ($("reportInstallments")) {
+      const inst = await api("/api/installments");
+      $("reportInstallments").textContent = money(inst.filter(i => !i.paid).reduce((sum, i) => sum + Number(i.amount || 0), 0));
+    }
+  } catch (e) { console.warn("Relatórios:", e.message); }
+}
+
 // ================================
 // COMUNICAÇÃO COM SERVIDOR
 // ================================
@@ -360,9 +431,7 @@ function atualizarUsuario(){
 
 
 function isAdmin(){
-
-    return currentUser.tipo==="admin";
-
+    return currentUser.tipo === "admin" || currentUser.nome === "admin";
 }
 
 
@@ -1635,101 +1704,23 @@ async function salvarCliente(event){
 
 
 async function salvarProduto(event){
-
-
-    if(event)
-
-        event.preventDefault();
-
-
-
-    const id =
-    $("productId")?.value;
-
-
-
-    const body={
-
-
-        name:
-        $("productName").value,
-
-
-        brand:
-        $("productBrand").value || "",
-
-
-        cost:
-        Number(
-            $("productCost").value || 0
-        ),
-
-
-        price:
-        Number(
-            $("productPrice").value || 0
-        ),
-
-
-        stock:
-        Number(
-            $("productStock").value || 0
-        )
-
-
-    };
-
-
-
-    await api(
-
-        id
-
-        ?
-
-        `/api/products/${id}`
-
-        :
-
-        "/api/products",
-
-        {
-
-            method:
-            id
-            ?
-            "PUT"
-            :
-            "POST",
-
-            body
-
-        }
-
-    );
-
-
-
+  if(event) event.preventDefault();
+  const id = $("productId")?.value;
+  const body = {
+    name: $("productName").value.trim(),
+    brand: $("productBrand").value || "",
+    cost: Number($("productCost").value || 0),
+    price: Number($("productPrice").value || 0),
+    stock: Number($("productStock").value || 0)
+  };
+  if (!body.name) return alert("Informe o nome do produto.");
+  try {
+    await api(id ? `/api/products/${id}` : "/api/products", {method:id ? "PUT" : "POST", body});
     await carregarProdutos();
-
-
-
-    closeModal(
-        "productModal"
-    );
-
-
-
-    alert(
-        "Produto salvo"
-    );
-
-
+    closeModal("productModal");
+    alert("Produto salvo com sucesso.");
+  } catch (error) { alert("Não foi possível salvar o produto: " + error.message); }
 }
-
-
-
-
 
 
 
@@ -1869,8 +1860,7 @@ async()=>{
 
 
     configurarMenu();
-
-
+    $("saleDiscount")?.addEventListener("input", renderItensVenda);
 
     const entrou =
     await checkLogin();
@@ -1899,114 +1889,103 @@ async()=>{
 
 
 // ================================
-// NOVA VENDA
+// NOVA VENDA E CONSULTA
 // ================================
-
-function newSale(){
-
-    showPage("sales");
-
-
-    window.currentSale = {
-
-        client_id:null,
-
-        items:[],
-
-        discount:0,
-
-        payment:"Dinheiro",
-
-        installments:1
-
-    };
-
-
-    const modal =
-    document.getElementById(
-        "saleModal"
-    );
-
-
-    if(modal){
-
-        modal.style.display="flex";
-
-    }
-    else{
-
-        console.error(
-            "Modal de venda não encontrado: saleModal"
-        );
-
-        alert(
-            "Erro: tela de venda não encontrada"
-        );
-
-    }
-
+let saleDraftItems = [];
+function newSale() {
+  saleDraftItems = [];
+  showPage("sales");
+  const form = $("saleForm"); if (form) form.reset();
+  if ($("saleDiscount")) $("saleDiscount").value = "0";
+  preencherSelectsVenda(); renderItensVenda();
+  const modal = $("saleModal");
+  if (modal) modal.style.display = "flex";
+  else alert("A tela de nova venda não foi carregada. Atualize a página.");
+}
+function preencherSelectsVenda() {
+  if ($("saleClient")) $("saleClient").innerHTML = '<option value="">Consumidor</option>' + clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+  if ($("saleProduct")) $("saleProduct").innerHTML = '<option value="">Selecione um produto</option>' + products.map(p => `<option value="${p.id}">${escapeHtml(p.name)} — ${money(p.price)} (estoque: ${Number(p.stock||0)})</option>`).join("");
+}
+function adicionarItemVenda() {
+  const id = Number($("saleProduct")?.value);
+  const qty = Number($("saleQty")?.value || 1);
+  const product = products.find(p => Number(p.id) === id);
+  if (!product) return alert("Cadastre ou selecione um produto.");
+  if (!Number.isInteger(qty) || qty < 1) return alert("Informe uma quantidade válida.");
+  const existing = saleDraftItems.find(i => i.product_id === id);
+  const totalQty = qty + (existing?.qty || 0);
+  if (totalQty > Number(product.stock || 0)) return alert(`Estoque insuficiente para ${product.name}. Disponível: ${product.stock || 0}.`);
+  if (existing) existing.qty = totalQty; else saleDraftItems.push({product_id:id, qty});
+  renderItensVenda();
+}
+function renderItensVenda() {
+  const box = $("saleItemsList");
+  let subtotal = 0;
+  if (box) box.innerHTML = saleDraftItems.length ? saleDraftItems.map(item => {
+    const p = products.find(x => Number(x.id) === item.product_id);
+    const line = Number(p?.price || 0) * item.qty; subtotal += line;
+    return `<div class="sale-item-row"><span>${escapeHtml(p?.name || "Produto removido")} × ${item.qty}</span><strong>${money(line)}</strong><button type="button" onclick="removerItemVenda(${item.product_id})">Remover</button></div>`;
+  }).join("") : "Nenhum produto adicionado.";
+  const total = Math.max(0, subtotal - Number($("saleDiscount")?.value || 0));
+  if ($("saleTotal")) $("saleTotal").textContent = money(total);
+}
+function removerItemVenda(id) { saleDraftItems = saleDraftItems.filter(i => i.product_id !== Number(id)); renderItensVenda(); }
+async function salvarVenda(event) {
+  if (event) event.preventDefault();
+  if (!saleDraftItems.length) return alert("Adicione pelo menos um produto à venda.");
+  const body = {
+    client_id: $("saleClient")?.value || null,
+    items: saleDraftItems,
+    discount: Number($("saleDiscount")?.value || 0),
+    payment: $("salePayment")?.value || "Dinheiro",
+    installments: Number($("saleInstallments")?.value || 1),
+    first_due_date: $("saleDueDate")?.value || new Date().toISOString().slice(0,10)
+  };
+  try {
+    await api("/api/sales", {method:"POST", body});
+    closeModal("saleModal");
+    await Promise.all([carregarVendas(), carregarProdutos(), carregarDashboard()]);
+    saleDraftItems = [];
+    alert("Venda registrada com sucesso.");
+  } catch (e) { alert("Não foi possível registrar a venda: " + e.message); }
+}
+async function verVenda(id) {
+  try {
+    const data = await api(`/api/sales/${id}/details`);
+    const v = data.sale;
+    const linhas = (data.items || []).map(i => `• ${i.name || "Produto"} × ${i.qty} — ${money(Number(i.price||0)*Number(i.qty||0))}`).join("\n") || "Nenhum item detalhado.";
+    alert(`VENDA #${v.id}\nCliente: ${v.client || "Consumidor"}\nData: ${v.date ? new Date(v.date).toLocaleString("pt-BR") : "—"}\n\n${linhas}\n\nDesconto: ${money(v.discount)}\nTOTAL: ${money(v.total)}\nPagamento: ${v.payment || "—"}\nParcelas: ${v.installments || 1}`);
+  } catch (e) { alert("Não foi possível abrir a venda: " + e.message); }
+}
+async function verParcelas(id) {
+  try {
+    const rows = await api(`/api/installments?sale_id=${id}`);
+    if (!rows.length) return alert(`A venda #${id} não possui parcelas cadastradas. Vendas à vista não geram parcelas.`);
+    alert(`PARCELAS DA VENDA #${id}\n\n` + rows.map(p => `${p.number}/${p.total_installments} — ${money(p.amount)} — vencimento ${new Date(`${p.due_date}T12:00:00`).toLocaleDateString("pt-BR")} — ${p.paid ? "PAGA" : "EM ABERTO"}`).join("\n"));
+  } catch (e) { alert("Não foi possível consultar as parcelas: " + e.message); }
 }
 
-
-// ================================
-// EXPORTAR FUNÇÕES
-// ================================
-
-
-
-window.login =
-login;
-
-
-window.logout =
-logout;
-
-
-window.salvarCliente =
-salvarCliente;
-
-
-window.salvarProduto =
-salvarProduto;
-
-
-window.openClientModal =
-openClientModal;
-
-
-window.openProductModal =
-openProductModal;
-
-
-window.openPaymentModal =
-openPaymentModal;
-
-
-window.savePayment =
-savePayment;
-
-
-window.pdfPagamento =
-pdfPagamento;
-
-
-window.closeModal =
-closeModal;
-
-
-window.verVenda =
-verVenda;
-
-
-window.verParcelas =
-verParcelas;
-
-
-window.excluirVenda =
-excluirVenda;
-
-
-window.showPage =
-showPage;
-
+// Exportar funções usadas pelos botões inline.
+window.login = login;
+window.logout = logout;
+window.salvarCliente = salvarCliente;
+window.salvarProduto = salvarProduto;
+window.openClientModal = openClientModal;
+window.openProductModal = openProductModal;
+window.openPaymentModal = openPaymentModal;
+window.savePayment = savePayment;
+window.pdfPagamento = pdfPagamento;
+window.closeModal = closeModal;
+window.verVenda = verVenda;
+window.verParcelas = verParcelas;
+window.excluirVenda = excluirVenda;
+window.showPage = showPage;
 window.newSale = newSale;
+window.salvarVenda = salvarVenda;
+window.adicionarItemVenda = adicionarItemVenda;
+window.removerItemVenda = removerItemVenda;
+window.calcularLucro = calcularLucro;
+window.editarProduto = editarProduto;
+window.editarCliente = editarCliente;
+window.excluirCliente = excluirCliente;
+
