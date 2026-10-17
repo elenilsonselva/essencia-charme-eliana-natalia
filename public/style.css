@@ -728,18 +728,20 @@ body{
 
 
 .sidebar nav{
-
-
     display:flex;
-
-
     flex-direction:column;
-
-
     gap:8px;
-
-
+    max-height:calc(100vh - 300px);
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding-right:6px;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(255,255,255,.65) rgba(255,255,255,.12);
 }
+
+.sidebar nav::-webkit-scrollbar{width:7px;}
+.sidebar nav::-webkit-scrollbar-track{background:rgba(255,255,255,.12);border-radius:8px;}
+.sidebar nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.65);border-radius:8px;}
 
 
 
@@ -2139,3 +2141,7 @@ td{
 .purchase-item-row { display:grid; grid-template-columns:minmax(180px, 2fr) minmax(90px, .7fr) minmax(130px, 1fr) auto; gap:8px; align-items:center; }
 .purchase-item-row input { min-width:0; }
 @media(max-width:700px) { .purchase-item-row { grid-template-columns:1fr 1fr; } .purchase-item-row .purchase-product-name { grid-column:1 / -1; } }
+
+/* Ajustes pontuais das tabelas: coluna Ações */
+.actions-cell{white-space:nowrap; vertical-align:middle;}
+.actions-cell button{margin:3px 2px;}
