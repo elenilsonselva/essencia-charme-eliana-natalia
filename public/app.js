@@ -619,6 +619,7 @@ function showPage(page){
         carregarRelatorios();
 
     }
+    if(page==="purchases") carregarCompras();
 
 
 
@@ -1880,6 +1881,8 @@ async()=>{
 
     configurarMenu();
     $("saleDiscount")?.addEventListener("input", renderItensVenda);
+    $("purchaseForm")?.addEventListener("submit", salvarCompra);
+    if ($("purchaseItems")) adicionarLinhaCompra();
 
     const entrou =
     await checkLogin();
@@ -2012,7 +2015,7 @@ async function verVenda(id) {
   try {
     const data = await api(`/api/sales/${id}/details`);
     const v = data.sale;
-    const linhas = (data.items || []).map(i => `• ${i.name || "Produto"} × ${i.qty} — ${money(Number(i.price||0)*Number(i.qty||0))}`).join("\n") || "Nenhum item detalhado.";
+    const linhas = (data.items || []).map(i => `• ${i.name || `Produto #${i.product_id || i.id || "?"}`} × ${i.display_qty ?? i.qty ?? i.quantity ?? 0} — ${money(Number(i.display_price ?? i.price ?? 0)*Number(i.display_qty ?? i.qty ?? i.quantity ?? 0))}`).join("\n") || "Nenhum item detalhado.";
     alert(`VENDA #${v.id}\nCliente: ${v.client || "Consumidor"}\nData: ${v.date ? new Date(v.date).toLocaleString("pt-BR") : "—"}\n\n${linhas}\n\nDesconto: ${money(v.discount)}\nTOTAL: ${money(v.total)}\nPagamento: ${v.payment || "—"}\nParcelas: ${v.installments || 1}`);
   } catch (e) { alert("Não foi possível abrir a venda: " + e.message); }
 }
@@ -2020,8 +2023,47 @@ async function verParcelas(id) {
   try {
     const rows = await api(`/api/installments?sale_id=${id}`);
     if (!rows.length) return alert(`A venda #${id} não possui parcelas cadastradas. Vendas à vista não geram parcelas.`);
-    alert(`PARCELAS DA VENDA #${id}\n\n` + rows.map(p => `${p.number}/${p.total_installments} — ${money(p.amount)} — vencimento ${new Date(`${p.due_date}T12:00:00`).toLocaleDateString("pt-BR")} — ${p.paid ? "PAGA" : "EM ABERTO"}`).join("\n"));
+    alert(`PARCELAS DA VENDA #${id}\n\n` + rows.map(p => `${p.display_installment_no ?? p.number ?? p.installment_no ?? "?"}/${p.total_installments ?? "?"} — ${money(p.amount)} — vencimento ${p.due_date ? new Date(`${p.due_date}T12:00:00`).toLocaleDateString("pt-BR") : "sem data"} — ${p.paid ? "PAGA" : "EM ABERTO"}`).join("\n"));
   } catch (e) { alert("Não foi possível consultar as parcelas: " + e.message); }
+}
+
+// ================================
+// COMPRAS E PDF DO FORNECEDOR
+// ================================
+async function carregarCompras() {
+  try {
+    const rows = await api('/api/purchases');
+    const body = $('purchasesBody');
+    if (!body) return;
+    body.innerHTML = rows.map(p => `<tr><td>#${p.id}</td><td>${escapeHtml(p.supplier_name || 'Fornecedor')}</td><td>${money(p.total)}</td><td>${p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : '—'}</td><td><button type="button" onclick="pdfCompra(${Number(p.id)})">PDF / PIX</button></td></tr>`).join('') || '<tr><td colspan="5">Nenhuma compra cadastrada.</td></tr>';
+  } catch (e) { console.error('Erro ao carregar compras:', e); }
+}
+function adicionarLinhaCompra() {
+  const container = $('purchaseItems'); if (!container) return;
+  const row = document.createElement('div'); row.className = 'purchase-item-row';
+  row.innerHTML = '<input class="purchase-product-name" placeholder="Nome do produto" required><input class="purchase-product-qty" type="number" min="0.001" step="0.001" value="1" required aria-label="Quantidade"><input class="purchase-product-price" type="number" min="0" step="0.01" placeholder="Preço unitário" required aria-label="Preço unitário"><button type="button" class="purchase-remove-row">Remover</button>';
+  row.querySelector('.purchase-remove-row').addEventListener('click', () => { if (container.children.length > 1) row.remove(); else row.querySelectorAll('input').forEach(i => i.value = i.classList.contains('purchase-product-qty') ? '1' : ''); });
+  container.appendChild(row);
+}
+async function salvarCompra(event) {
+  if (event) event.preventDefault();
+  const items = Array.from(document.querySelectorAll('.purchase-item-row')).map(row => ({ product_name: row.querySelector('.purchase-product-name')?.value.trim(), qty: Number(row.querySelector('.purchase-product-qty')?.value), unit_price: Number(row.querySelector('.purchase-product-price')?.value) }));
+  try {
+    const result = await api('/api/purchases', { method: 'POST', body: { supplier_name: $('purchaseSupplier')?.value.trim(), supplier_pix_key: $('purchasePixKey')?.value.trim(), supplier_pix_name: $('purchasePixName')?.value.trim(), supplier_pix_city: $('purchasePixCity')?.value.trim(), items } });
+    await carregarCompras();
+    $('purchaseForm')?.reset();
+    $('purchaseItems').innerHTML = '';
+    adicionarLinhaCompra();
+    if (confirm(`Compra #${result.id} registrada. Deseja abrir o PDF com os dados PIX do fornecedor?`)) pdfCompra(result.id);
+  } catch (e) { alert('Não foi possível registrar a compra: ' + e.message); }
+}
+async function pdfCompra(id) {
+  try {
+    const response = await fetch(`/api/purchases/${id}/pdf`, { credentials: 'same-origin' });
+    if (!response.ok) { const data = await response.json().catch(() => ({})); throw new Error(data.error || 'Não foi possível gerar o PDF.'); }
+    const url = URL.createObjectURL(await response.blob());
+    window.open(url, '_blank');
+  } catch (e) { alert(e.message); }
 }
 
 // Exportar funções usadas pelos botões inline.
@@ -2049,4 +2091,8 @@ window.calcularLucro = calcularLucro;
 window.editarProduto = editarProduto;
 window.editarCliente = editarCliente;
 window.excluirCliente = excluirCliente;
+window.carregarCompras = carregarCompras;
+window.adicionarLinhaCompra = adicionarLinhaCompra;
+window.salvarCompra = salvarCompra;
+window.pdfCompra = pdfCompra;
 
