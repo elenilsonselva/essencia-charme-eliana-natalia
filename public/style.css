@@ -2106,3 +2106,29 @@ td{
 .photo-help { margin: -5px 0 0; color: #777; font-size: 12px; }
 .product-photo-preview { width: 100%; min-height: 150px; max-height: 240px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px dashed #d7b8e7; border-radius: 14px; background: #fffafd; color: #927b9e; }
 .product-photo-preview img { display: block; max-width: 100%; max-height: 230px; object-fit: contain; }
+
+/* Cadastro de produto: permite rolar a janela quando o formulário ultrapassa a tela */
+#productModal {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 0;
+  align-items: flex-start;
+}
+
+#productModal .modal-box {
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  margin: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 600px) {
+  #productModal { padding: 8px 0; }
+  #productModal .modal-box {
+    max-height: calc(100vh - 16px);
+    padding: 22px 18px;
+    border-radius: 22px;
+  }
+}
