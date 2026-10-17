@@ -979,6 +979,14 @@ function renderVendas(){
 
     <td>
 
+    ${Number(venda.installments || venda.installment_count || 1)}
+
+    </td>
+
+
+
+    <td class="actions-cell sales-actions-cell">
+
 
 
     <button onclick="verVenda(${venda.id})">
