@@ -2777,18 +2777,18 @@ align:"center"
 
 
 
+const tamanhoQR = 120;
+const xQR = (doc.page.width - tamanhoQR) / 2;
+
 doc.image(
-imagem,
-{
-
-fit:[120,120],
-
-align:"center"
-
-}
-
+  imagem,
+  xQR,
+  doc.y,
+  {
+    width: tamanhoQR,
+    height: tamanhoQR
+  }
 );
-
 
 
 doc.fontSize(8)
