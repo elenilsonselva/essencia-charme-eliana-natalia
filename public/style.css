@@ -2132,3 +2132,10 @@ td{
     border-radius: 22px;
   }
 }
+
+
+/* Formulário de compras */
+.purchase-items { display:flex; flex-direction:column; gap:10px; }
+.purchase-item-row { display:grid; grid-template-columns:minmax(180px, 2fr) minmax(90px, .7fr) minmax(130px, 1fr) auto; gap:8px; align-items:center; }
+.purchase-item-row input { min-width:0; }
+@media(max-width:700px) { .purchase-item-row { grid-template-columns:1fr 1fr; } .purchase-item-row .purchase-product-name { grid-column:1 / -1; } }
