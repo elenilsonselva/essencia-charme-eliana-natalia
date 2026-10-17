@@ -1796,6 +1796,7 @@ function configurarMenu(){
 
 
 function configurarEventos(){
+    $("saleProductSearch")?.addEventListener("input", renderCatalogoVenda);
 
 
 
@@ -1903,12 +1904,52 @@ function newSale() {
   else alert("A tela de nova venda não foi carregada. Atualize a página.");
 }
 function preencherSelectsVenda() {
-  if ($("saleClient")) $("saleClient").innerHTML = '<option value="">Consumidor</option>' + clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
-  if ($("saleProduct")) $("saleProduct").innerHTML = '<option value="">Selecione um produto</option>' + products.map(p => `<option value="${p.id}">${escapeHtml(p.name)} — ${money(p.price)} (estoque: ${Number(p.stock||0)})</option>`).join("");
+  if ($("saleClient")) {
+    $("saleClient").innerHTML = '<option value="">Consumidor</option>' + clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+  }
+  renderCatalogoVenda();
+}
+function renderCatalogoVenda() {
+  const grid = $("saleProductsGrid");
+  if (!grid) return;
+  const query = ($("saleProductSearch")?.value || "").trim().toLocaleLowerCase("pt-BR");
+  const filtered = products.filter(p => `${p.name || ""} ${p.brand || ""} ${p.code || ""}`.toLocaleLowerCase("pt-BR").includes(query));
+  if (!filtered.length) {
+    grid.innerHTML = '<p class="sale-empty-products">Nenhum produto encontrado.</p>';
+    return;
+  }
+  grid.innerHTML = filtered.map(p => {
+    const stock = Number(p.stock || 0);
+    const photo = p.photo ? `<img src="${escapeHtml(p.photo)}" alt="${escapeHtml(p.name)}" loading="lazy">` : '<div class="sale-product-placeholder" aria-label="Produto sem foto"><span>✿</span></div>';
+    return `<article class="sale-product-card">
+      <div class="sale-product-image">${photo}${stock < 1 ? '<span class="sale-stock-badge sold-out">Sem estoque</span>' : `<span class="sale-stock-badge">Estoque: ${stock}</span>`}</div>
+      <div class="sale-product-info">
+        <h4 title="${escapeHtml(p.name || "Produto")}">${escapeHtml(p.name || "Produto")}</h4>
+        <p class="sale-product-brand">${escapeHtml(p.brand || "")}</p>
+        <strong class="sale-product-price">${money(p.price)}</strong>
+        <div class="sale-card-actions"><input id="sale-card-qty-${p.id}" type="number" min="1" max="${Math.max(1,stock)}" value="1" aria-label="Quantidade de ${escapeHtml(p.name)}" ${stock < 1 ? "disabled" : ""}><button type="button" onclick="adicionarProdutoCatalogo(${Number(p.id)})" ${stock < 1 ? "disabled" : ""}>Adicionar</button></div>
+      </div>
+    </article>`;
+  }).join("");
+}
+function adicionarProdutoCatalogo(id) {
+  const input = $(`sale-card-qty-${id}`);
+  const qty = Number(input?.value || 1);
+  if ($("saleProductSearch")) { /* mantém a busca ao adicionar */ }
+  const product = products.find(p => Number(p.id) === Number(id));
+  if (!product) return alert("Produto não encontrado. Atualize a página e tente novamente.");
+  if (!Number.isInteger(qty) || qty < 1) return alert("Informe uma quantidade válida.");
+  const existing = saleDraftItems.find(i => Number(i.product_id) === Number(id));
+  const totalQty = qty + (existing?.qty || 0);
+  if (totalQty > Number(product.stock || 0)) return alert(`Estoque insuficiente para ${product.name}. Disponível: ${product.stock || 0}.`);
+  if (existing) existing.qty = totalQty; else saleDraftItems.push({product_id:Number(id), qty});
+  renderItensVenda();
+  if (input) input.value = "1";
 }
 function adicionarItemVenda() {
   const id = Number($("saleProduct")?.value);
   const qty = Number($("saleQty")?.value || 1);
+  if (!id) return alert("Selecione um produto no catálogo.");
   const product = products.find(p => Number(p.id) === id);
   if (!product) return alert("Cadastre ou selecione um produto.");
   if (!Number.isInteger(qty) || qty < 1) return alert("Informe uma quantidade válida.");
@@ -1983,6 +2024,7 @@ window.showPage = showPage;
 window.newSale = newSale;
 window.salvarVenda = salvarVenda;
 window.adicionarItemVenda = adicionarItemVenda;
+window.adicionarProdutoCatalogo = adicionarProdutoCatalogo;
 window.removerItemVenda = removerItemVenda;
 window.calcularLucro = calcularLucro;
 window.editarProduto = editarProduto;
