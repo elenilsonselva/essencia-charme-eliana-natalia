@@ -2099,3 +2099,10 @@ td{
   #saleModal .sale-product-info { padding: 9px; }
   #saleModal .sale-card-actions { grid-template-columns: 58px minmax(0, 1fr); }
 }
+
+
+/* Cadastro de foto do produto */
+#productPhoto { padding: 10px; background: #fffafd; }
+.photo-help { margin: -5px 0 0; color: #777; font-size: 12px; }
+.product-photo-preview { width: 100%; min-height: 150px; max-height: 240px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px dashed #d7b8e7; border-radius: 14px; background: #fffafd; color: #927b9e; }
+.product-photo-preview img { display: block; max-width: 100%; max-height: 230px; object-fit: contain; }
