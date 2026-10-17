@@ -215,15 +215,7 @@ data-page="payments">
 
 <button class="nav-item admin-only" data-page="purchases">🧾 Compras</button>
 
-<button
 
-class="nav-item admin-only"
-
-data-page="stock">
-
-📦 Estoque
-
-</button>
 
 
 
@@ -715,10 +707,6 @@ Venda
 
 <th>
 Lucro
-</th>
-
-<th>
-Margem
 </th>
 
 <th>
@@ -1230,83 +1218,6 @@ Cancelar
 
 
 <!-- =================================================
-ESTOQUE
-================================================= -->
-
-<section
-id="page-stock"
-class="page admin-only">
-
-
-<div class="section-header">
-
-<h2>
-📦 Estoque
-</h2>
-
-</div>
-
-
-<div class="table-box">
-
-<table>
-
-<thead>
-
-<tr>
-
-<th>
-Produto
-</th>
-
-<th>
-Quantidade
-</th>
-
-<th>
-Movimentação
-</th>
-
-</tr>
-
-</thead>
-
-
-<tbody id="stockBody">
-
-</tbody>
-
-
-</table>
-
-</div>
-
-
-</section>
-
-<!-- COMPRAS -->
-<section id="page-purchases" class="page admin-only">
-  <div class="section-header"><h2>🧾 Compras e pagamentos a fornecedores</h2></div>
-  <div class="table-box">
-    <h3>Registrar compra</h3>
-    <form id="purchaseForm">
-      <label for="purchaseSupplier">Nome do fornecedor</label><input id="purchaseSupplier" required placeholder="Razão social ou nome do fornecedor">
-      <label for="purchasePixKey">Chave PIX do fornecedor (opcional)</label><input id="purchasePixKey" placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória">
-      <label for="purchasePixName">Nome do beneficiário (opcional)</label><input id="purchasePixName" placeholder="Nome do titular da chave PIX">
-      <label for="purchasePixCity">Cidade do beneficiário (opcional)</label><input id="purchasePixCity" placeholder="Cidade">
-      <h3>Produtos da compra</h3>
-      <div id="purchaseItems" class="purchase-items"></div>
-      <button type="button" onclick="adicionarLinhaCompra()">+ Adicionar produto</button>
-      <button type="submit">Registrar compra e gerar PDF</button>
-    </form>
-  </div>
-  <div class="table-box" style="margin-top:20px">
-    <h3>Compras registradas</h3>
-    <table><thead><tr><th>Nº</th><th>Fornecedor</th><th>Total</th><th>Data</th><th>Ações</th></tr></thead><tbody id="purchasesBody"><tr><td colspan="5">Carregando...</td></tr></tbody></table>
-  </div>
-</section>
-
-<!-- =================================================
 RELATÓRIOS
 ================================================= -->
 <section
@@ -1346,6 +1257,18 @@ Parcelas abertas
 </h3>
 
 <strong id="reportInstallments">
+R$ 0,00
+</strong>
+
+</div>
+
+<div class="card">
+
+<h3>
+Parcelas recebidas
+</h3>
+
+<strong id="reportInstallmentsReceived">
 R$ 0,00
 </strong>
 
