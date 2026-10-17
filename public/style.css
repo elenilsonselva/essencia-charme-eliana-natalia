@@ -2149,12 +2149,14 @@ td{
 
 /* Tabela de vendas: parcelas visíveis e ações alinhadas à direita */
 .sales-table { width: 100%; table-layout: fixed; }
-.sales-table th:nth-child(1), .sales-table td:nth-child(1) { width: 12%; }
-.sales-table th:nth-child(2), .sales-table td:nth-child(2) { width: 23%; }
-.sales-table th:nth-child(3), .sales-table td:nth-child(3) { width: 15%; }
-.sales-table th:nth-child(4), .sales-table td:nth-child(4) { width: 20%; }
-.sales-table th:nth-child(5), .sales-table td:nth-child(5) { width: 30%; }
+.sales-table th:nth-child(1), .sales-table td:nth-child(1) { width: 10%; }
+.sales-table th:nth-child(2), .sales-table td:nth-child(2) { width: 19%; }
+.sales-table th:nth-child(3), .sales-table td:nth-child(3) { width: 12%; }
+.sales-table th:nth-child(4), .sales-table td:nth-child(4) { width: 14%; }
+.sales-table th:nth-child(5), .sales-table td:nth-child(5) { width: 45%; }
 .sales-table .sales-actions-heading, .sales-table .sales-actions-cell { text-align: right; }
 .sales-table .sales-actions-cell { white-space: nowrap; }
-.sales-table .sales-actions-cell button { margin: 3px 0 3px 4px; }
+.sales-table .sales-actions-cell button { margin: 3px 0 3px 4px; padding: 10px 16px; white-space: nowrap; }
+.sales-table th, .sales-table td { box-sizing: border-box; }
+.sales-table .sales-actions-cell { padding-right: 12px; }
 @media (max-width: 900px) { .sales-table { min-width: 900px; } }
