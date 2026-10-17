@@ -375,6 +375,75 @@ return parcelas;
 
 async function initDb(){
 
+// Cria as tabelas-base antes das tabelas dependentes. IF NOT EXISTS preserva os dados existentes.
+await pool.query(`
+CREATE TABLE IF NOT EXISTS products (
+  id SERIAL PRIMARY KEY,
+  code TEXT,
+  name TEXT NOT NULL,
+  brand TEXT DEFAULT '',
+  size TEXT DEFAULT '',
+  cost NUMERIC(12,2) DEFAULT 0,
+  price NUMERIC(12,2) DEFAULT 0,
+  stock INTEGER DEFAULT 0,
+  min_stock INTEGER DEFAULT 1,
+  photo TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS clients (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  phone TEXT DEFAULT '',
+  address TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS sales (
+  id SERIAL PRIMARY KEY,
+  client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+  total NUMERIC(12,2) DEFAULT 0,
+  discount NUMERIC(12,2) DEFAULT 0,
+  payment TEXT DEFAULT 'Dinheiro',
+  installments INTEGER DEFAULT 1,
+  status TEXT DEFAULT 'paid',
+  date TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS sale_items (
+  id SERIAL PRIMARY KEY,
+  sale_id INTEGER NOT NULL REFERENCES sales(id) ON DELETE CASCADE,
+  product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,
+  qty INTEGER NOT NULL DEFAULT 1,
+  price NUMERIC(12,2) DEFAULT 0,
+  cost NUMERIC(12,2) DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS stock_moves (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,
+  qty INTEGER DEFAULT 0,
+  type TEXT DEFAULT '',
+  note TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS total NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS discount NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS payment TEXT DEFAULT 'Dinheiro';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS installments INTEGER DEFAULT 1;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'paid';
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS date TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE products ADD COLUMN IF NOT EXISTS code TEXT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS brand TEXT DEFAULT '';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS size TEXT DEFAULT '';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS cost NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS price NUMERIC(12,2) DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 0;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS min_stock INTEGER DEFAULT 1;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS photo TEXT;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS phone TEXT DEFAULT '';
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS address TEXT DEFAULT '';
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT '';
+`);
 
 await pool.query(`
 
@@ -1899,6 +1968,22 @@ connection.release();
 
 
 
+// Detalhes de uma venda, incluindo os itens vendidos.
+app.get("/api/sales/:id/details", requireAuth, async (req, res) => {
+  try {
+    const saleResult = await pool.query(`
+      SELECT s.*, c.name AS client FROM sales s
+      LEFT JOIN clients c ON c.id = s.client_id WHERE s.id = $1
+    `, [req.params.id]);
+    if (!saleResult.rows.length) return res.status(404).json({ error: "Venda não encontrada" });
+    const items = await pool.query(`
+      SELECT si.*, p.name, p.size FROM sale_items si
+      LEFT JOIN products p ON p.id = si.product_id WHERE si.sale_id = $1 ORDER BY si.id
+    `, [req.params.id]);
+    res.json({ sale: saleResult.rows[0], items: items.rows });
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
 /* =========================
    PARCELAS
 ========================= */
@@ -1937,12 +2022,11 @@ LEFT JOIN clients c
 ON c.id=s.client_id
 
 
+WHERE ($1::integer IS NULL OR si.sale_id = $1)
 ORDER BY si.due_date
 
 
-`
-
-);
+`, [req.query.sale_id ? Number(req.query.sale_id) : null]);
 
 
 
