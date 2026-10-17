@@ -85,8 +85,29 @@ function openProductModal() {
   const form = $("productForm");
   if (form) form.reset();
   if ($("productId")) $("productId").value = "";
+  mostrarFotoProduto(null);
   calcularLucro();
   if ($("productModal")) $("productModal").style.display = "flex";
+}
+function mostrarFotoProduto(src) {
+  const preview = $("productPhotoPreview");
+  if (!preview) return;
+  preview.innerHTML = src ? `<img src="${escapeHtml(src)}" alt="Prévia da foto do produto">` : '<span>A foto aparecerá aqui</span>';
+}
+function previewProductPhoto() {
+  const file = $("productPhoto")?.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    alert("Selecione um arquivo de imagem.");
+    $("productPhoto").value = "";
+    return;
+  }
+  if (file.size > 4 * 1024 * 1024) {
+    alert("A foto deve ter no máximo 4 MB.");
+    $("productPhoto").value = "";
+    return;
+  }
+  mostrarFotoProduto(URL.createObjectURL(file));
 }
 function calcularLucro() {
   const cost = Number($("productCost")?.value || 0);
@@ -103,6 +124,8 @@ async function editarProduto(id) {
   $("productCost").value = item.cost || 0;
   $("productPrice").value = item.price || 0;
   $("productStock").value = item.stock || 0;
+  if ($("productPhoto")) $("productPhoto").value = "";
+  mostrarFotoProduto(item.photo || null);
   calcularLucro();
   $("productModal").style.display = "flex";
 }
@@ -168,18 +191,9 @@ async function api(url, options={}){
 
 
 
-    if(
-        config.body &&
-        typeof config.body !== "string"
-    ){
-
-        config.headers["Content-Type"] =
-        "application/json";
-
-
-        config.body =
-        JSON.stringify(config.body);
-
+    if (config.body && typeof config.body !== "string" && !(typeof FormData !== "undefined" && config.body instanceof FormData)) {
+        config.headers["Content-Type"] = "application/json";
+        config.body = JSON.stringify(config.body);
     }
 
 
@@ -1706,16 +1720,20 @@ async function salvarCliente(event){
 async function salvarProduto(event){
   if(event) event.preventDefault();
   const id = $("productId")?.value;
-  const body = {
-    name: $("productName").value.trim(),
-    brand: $("productBrand").value || "",
-    cost: Number($("productCost").value || 0),
-    price: Number($("productPrice").value || 0),
-    stock: Number($("productStock").value || 0)
-  };
-  if (!body.name) return alert("Informe o nome do produto.");
+  const name = $("productName").value.trim();
+  if (!name) return alert("Informe o nome do produto.");
+
+  const formData = new FormData();
+  formData.append("name", name);
+  formData.append("brand", $("productBrand").value || "");
+  formData.append("cost", String(Number($("productCost").value || 0)));
+  formData.append("price", String(Number($("productPrice").value || 0)));
+  formData.append("stock", String(Number($("productStock").value || 0)));
+  const photo = $("productPhoto")?.files?.[0];
+  if (photo) formData.append("photo", photo);
+
   try {
-    await api(id ? `/api/products/${id}` : "/api/products", {method:id ? "PUT" : "POST", body});
+    await api(id ? `/api/products/${id}` : "/api/products", {method:id ? "PUT" : "POST", body:formData});
     await carregarProdutos();
     closeModal("productModal");
     alert("Produto salvo com sucesso.");
@@ -2013,6 +2031,7 @@ window.salvarCliente = salvarCliente;
 window.salvarProduto = salvarProduto;
 window.openClientModal = openClientModal;
 window.openProductModal = openProductModal;
+window.previewProductPhoto = previewProductPhoto;
 window.openPaymentModal = openPaymentModal;
 window.savePayment = savePayment;
 window.pdfPagamento = pdfPagamento;
