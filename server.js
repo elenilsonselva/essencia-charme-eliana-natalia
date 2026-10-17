@@ -2339,41 +2339,30 @@ requireAuth,
 async(req,res)=>{
 
 
-const result =
-await pool.query(
-
-`
-
-SELECT
-
-s.*,
-
-c.name client
-
-
+const result = await pool.query(`
+SELECT s.*, c.name client
 FROM sales s
-
-
-LEFT JOIN clients c
-
-ON c.id=s.client_id
-
-
+LEFT JOIN clients c ON c.id=s.client_id
 ORDER BY s.id DESC
+`);
 
+// Usa o custo gravado em cada item no momento da venda, sem alterar dados existentes.
+const columns = await pool.query(`
+  SELECT column_name FROM information_schema.columns
+  WHERE table_schema = current_schema() AND table_name = 'sale_items'
+`);
+const columnNames = new Set(columns.rows.map(row => row.column_name));
+const qtyColumn = columnNames.has('qty') ? 'qty' : (columnNames.has('quantity') ? 'quantity' : null);
+let profit = 0;
+if (qtyColumn && columnNames.has('price') && columnNames.has('cost')) {
+  const profitResult = await pool.query(`
+    SELECT COALESCE(SUM((COALESCE(si.price, 0) - COALESCE(si.cost, 0)) * COALESCE(si.${qtyColumn}, 1)), 0) AS profit
+    FROM sale_items si
+  `);
+  profit = Number(profitResult.rows[0]?.profit || 0);
+}
 
-`
-
-);
-
-
-
-res.json({
-
-sales:
-result.rows
-
-});
+res.json({ sales: result.rows, profit });
 
 
 }
