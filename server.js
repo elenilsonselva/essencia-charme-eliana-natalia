@@ -221,10 +221,30 @@ return token;
 ========================= */
 
 
-const money =
-value =>
-Number(value || 0)
-.toFixed(2);
+const money = value => Number(value || 0).toFixed(2);
+
+function pixField(id, value) {
+  const text = String(value ?? '');
+  return `${id}${String(text.length).padStart(2, '0')}${text}`;
+}
+function crc16CCITT(payload) {
+  let crc = 0xFFFF;
+  for (let i = 0; i < payload.length; i++) {
+    crc ^= payload.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1);
+    crc &= 0xFFFF;
+  }
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+function buildPixPayload({ key, name, city, amount, txid = '***' }) {
+  const clean = (value, max) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9 $%*+\-./:]/g, '').toUpperCase().slice(0, max);
+  const merchant = pixField('00', 'BR.GOV.BCB.PIX') + pixField('01', String(key).trim());
+  let payload = pixField('00', '01') + pixField('26', merchant) + pixField('52', '0000') + pixField('53', '986');
+  if (Number(amount) > 0) payload += pixField('54', Number(amount).toFixed(2));
+  payload += pixField('58', 'BR') + pixField('59', clean(name, 25) || 'FORNECEDOR') + pixField('60', clean(city, 15) || 'BRASIL');
+  payload += pixField('62', pixField('05', clean(txid, 25) || '***')) + '6304';
+  return payload + crc16CCITT(payload);
+}
 
 
 
@@ -443,6 +463,23 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS photo TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS phone TEXT DEFAULT '';
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS address TEXT DEFAULT '';
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT '';
+CREATE TABLE IF NOT EXISTS purchases (
+  id SERIAL PRIMARY KEY,
+  supplier_name TEXT NOT NULL,
+  supplier_pix_key TEXT DEFAULT '',
+  supplier_pix_name TEXT DEFAULT '',
+  supplier_pix_city TEXT DEFAULT '',
+  total NUMERIC(12,2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS purchase_items (
+  id SERIAL PRIMARY KEY,
+  purchase_id INTEGER NOT NULL REFERENCES purchases(id) ON DELETE CASCADE,
+  product_name TEXT NOT NULL,
+  qty NUMERIC(12,3) NOT NULL DEFAULT 1,
+  unit_price NUMERIC(12,2) NOT NULL DEFAULT 0,
+  line_total NUMERIC(12,2) NOT NULL DEFAULT 0
+);
 `);
 
 await pool.query(`
@@ -2023,9 +2060,16 @@ app.get("/api/sales/:id/details", requireAuth, async (req, res) => {
       LEFT JOIN clients c ON c.id = s.client_id WHERE s.id = $1
     `, [req.params.id]);
     if (!saleResult.rows.length) return res.status(404).json({ error: "Venda não encontrada" });
+    const colResult = await pool.query(`SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'sale_items'`);
+    const cols = new Set(colResult.rows.map(r => r.column_name));
+    const qtyColumn = cols.has('qty') ? 'qty' : (cols.has('quantity') ? 'quantity' : null);
+    if (!qtyColumn) throw new Error('A tabela sale_items não possui coluna de quantidade reconhecida.');
     const items = await pool.query(`
-      SELECT si.*, p.name, p.size FROM sale_items si
-      LEFT JOIN products p ON p.id = si.product_id WHERE si.sale_id = $1 ORDER BY si.id
+      SELECT si.*, COALESCE(p.name, 'Produto #' || COALESCE(si.product_id::text, si.id::text)) AS name,
+             COALESCE(p.size, '') AS size, si.${qtyColumn} AS display_qty,
+             COALESCE(si.price, 0) AS display_price
+      FROM sale_items si LEFT JOIN products p ON p.id = si.product_id
+      WHERE si.sale_id = $1 ORDER BY si.id
     `, [req.params.id]);
     res.json({ sale: saleResult.rows[0], items: items.rows });
   } catch (error) { res.status(500).json({ error: error.message }); }
@@ -2050,7 +2094,7 @@ await pool.query(
 SELECT
 
 si.*,
-
+COALESCE(si.number, si.installment_no, 1) AS display_installment_no,
 s.total,
 
 c.name client
@@ -2342,6 +2386,80 @@ result.rows
 
 
 /* =========================
+   COMPRAS E PDF COM PIX DO FORNECEDOR
+========================= */
+app.get('/api/purchases', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM purchases ORDER BY id DESC LIMIT 300');
+    res.json(result.rows);
+  } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.post('/api/purchases', requireAuth, async (req, res) => {
+  const { supplier_name, supplier_pix_key, supplier_pix_name, supplier_pix_city, items } = req.body || {};
+  if (!String(supplier_name || '').trim()) return res.status(400).json({ error: 'Informe o nome do fornecedor.' });
+  if (!Array.isArray(items) || !items.length) return res.status(400).json({ error: 'Adicione pelo menos um item à compra.' });
+  const cleanItems = items.map(i => ({
+    product_name: String(i.product_name || '').trim(),
+    qty: Number(i.qty), unit_price: Number(i.unit_price)
+  }));
+  if (cleanItems.some(i => !i.product_name || !Number.isFinite(i.qty) || i.qty <= 0 || !Number.isFinite(i.unit_price) || i.unit_price < 0))
+    return res.status(400).json({ error: 'Confira nome, quantidade e preço de cada produto.' });
+  const total = cleanItems.reduce((sum, i) => sum + i.qty * i.unit_price, 0);
+  const cx = await pool.connect();
+  try {
+    await cx.query('BEGIN');
+    const purchase = (await cx.query(`INSERT INTO purchases (supplier_name, supplier_pix_key, supplier_pix_name, supplier_pix_city, total) VALUES ($1,$2,$3,$4,$5) RETURNING *`, [String(supplier_name).trim(), String(supplier_pix_key || '').trim(), String(supplier_pix_name || '').trim(), String(supplier_pix_city || '').trim(), total])).rows[0];
+    for (const item of cleanItems) await cx.query(`INSERT INTO purchase_items (purchase_id, product_name, qty, unit_price, line_total) VALUES ($1,$2,$3,$4,$5)`, [purchase.id, item.product_name, item.qty, item.unit_price, item.qty * item.unit_price]);
+    await cx.query('COMMIT');
+    res.json({ id: purchase.id, total: purchase.total });
+  } catch (error) { await cx.query('ROLLBACK').catch(()=>{}); res.status(500).json({ error: error.message }); }
+  finally { cx.release(); }
+});
+
+app.get('/api/purchases/:id/pdf', requireAuth, async (req, res) => {
+  try {
+    const purchase = (await pool.query('SELECT * FROM purchases WHERE id=$1', [req.params.id])).rows[0];
+    if (!purchase) return res.status(404).json({ error: 'Compra não encontrada.' });
+    const items = (await pool.query('SELECT * FROM purchase_items WHERE purchase_id=$1 ORDER BY id', [purchase.id])).rows;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="compra-${purchase.id}.pdf"`);
+    const doc = new PDFDocument({ size: 'A4', margin: 42 });
+    doc.pipe(res);
+    doc.fillColor('#8f4e5d').fontSize(20).text('Essência & Charme', { align: 'center' });
+    doc.fillColor('#333').fontSize(13).text(`Pedido de compra #${purchase.id}`, { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(11).text(`Fornecedor: ${purchase.supplier_name}`);
+    doc.text(`Data: ${new Date(purchase.created_at).toLocaleDateString('pt-BR')}`);
+    doc.moveDown();
+    doc.fontSize(10).text('PRODUTO                                      QTD.        UNITÁRIO          TOTAL');
+    doc.moveDown(0.5);
+    for (const item of items) {
+      doc.text(`${item.product_name}  |  ${item.qty}  |  R$ ${money(item.unit_price).replace('.', ',')}  |  R$ ${money(item.line_total).replace('.', ',')}`);
+    }
+    doc.moveDown();
+    doc.fontSize(15).fillColor('#8f4e5d').text(`TOTAL: R$ ${money(purchase.total).replace('.', ',')}`);
+    doc.moveDown();
+    if (purchase.supplier_pix_key) {
+      doc.fillColor('#333').fontSize(12).text('DADOS PARA PAGAMENTO PIX');
+      if (purchase.supplier_pix_name) doc.fontSize(10).text(`Beneficiário: ${purchase.supplier_pix_name}`);
+      if (purchase.supplier_pix_city) doc.fontSize(10).text(`Cidade: ${purchase.supplier_pix_city}`);
+      doc.fontSize(10).text(`Chave PIX: ${purchase.supplier_pix_key}`);
+      doc.moveDown(0.5);
+      const pixPayload = buildPixPayload({ key: purchase.supplier_pix_key, name: purchase.supplier_pix_name || purchase.supplier_name, city: purchase.supplier_pix_city || 'BRASIL', amount: purchase.total, txid: `COMPRA${purchase.id}` });
+      const pixQrData = await QRCode.toDataURL(pixPayload, { errorCorrectionLevel: 'M', margin: 1, width: 220 });
+      const pixQrBuffer = Buffer.from(pixQrData.split(',')[1], 'base64');
+      doc.image(pixQrBuffer, { fit: [145, 145], align: 'center' });
+      doc.moveDown(0.5);
+      doc.fontSize(9).fillColor('#555').text('Leia o QR Code no aplicativo do seu banco e confira os dados do beneficiário e o valor antes de confirmar o pagamento.', { align: 'center' });
+    } else {
+      doc.fontSize(10).text('Dados PIX do fornecedor não informados. Solicite a chave PIX ao fornecedor antes de efetuar o pagamento.');
+    }
+    doc.end();
+  } catch (error) { console.error('Erro ao gerar PDF de compra:', error); if (!res.headersSent) res.status(500).json({ error: error.message }); }
+});
+
+/* =========================
    PDF VENDA + PIX
 ========================= */
 
@@ -2396,40 +2514,17 @@ return res.status(404)
 
 
 
-const itens =
-(
-  await pool.query(
-
-  `
-
-  SELECT
-
-  si.*,
-
-  p.name,
-
-  p.size
-
-
-  FROM sale_items si
-
-
-  JOIN products p
-
-  ON p.id=si.product_id
-
-
-  WHERE si.sale_id=$1
-
-
-  `,
-
-  [
-    venda.id
-  ]
-
-  )
-).rows;
+const saleItemColumnsResult = await pool.query(`SELECT column_name FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'sale_items'`);
+const saleItemColumnNames = new Set(saleItemColumnsResult.rows.map(r => r.column_name));
+const pdfQtyColumn = saleItemColumnNames.has('qty') ? 'qty' : (saleItemColumnNames.has('quantity') ? 'quantity' : null);
+if (!pdfQtyColumn) return res.status(500).json({ error: 'A tabela sale_items não possui coluna de quantidade reconhecida.' });
+const itens = (await pool.query(`
+  SELECT si.*, COALESCE(p.name, 'Produto #' || COALESCE(si.product_id::text, si.id::text)) AS name,
+         COALESCE(p.size, '') AS size, si.${pdfQtyColumn} AS display_qty,
+         COALESCE(si.price, 0) AS display_price
+  FROM sale_items si LEFT JOIN products p ON p.id = si.product_id
+  WHERE si.sale_id = $1 ORDER BY si.id
+`, [venda.id])).rows;
 
 
 
@@ -2537,26 +2632,18 @@ doc.moveDown();
 itens.forEach(item=>{
 
 
-const quantidade =
-Number(
-    item.qty ||
-    item.quantity ||
-    item.quantidade ||
-    0
-);
+const quantidade = Number(item.display_qty ?? item.qty ?? item.quantity ?? item.quantidade ?? 0);
 
 
 const valor =
 quantidade *
-Number(
-    item.price || 0
-);
+Number(item.display_price ?? item.price ?? 0);
 
 
 
 doc.text(
 
-`${item.qty}x ${item.name}${item.size ? " - "+item.size : ""}`
+`${quantidade}x ${item.name || `Produto #${item.product_id || item.id}`}${item.size ? " - "+item.size : ""}`
 
 );
 
